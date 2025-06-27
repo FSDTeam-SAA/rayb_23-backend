@@ -9,31 +9,31 @@ const router = Router();
 router.post("/register", userController.createNewAccount);
 router.post(
   "/verify-email",
-  auth(USER_ROLE.employee, USER_ROLE.company_admin, USER_ROLE.admin),
+  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.verifyEmail
 );
 
 router.post(
   "/resend-otp",
-  auth(USER_ROLE.employee, USER_ROLE.company_admin, USER_ROLE.admin),
+  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.resendOtpCode
 );
 
 router.get(
   "/",
-  auth(USER_ROLE.employee, USER_ROLE.company_admin, USER_ROLE.admin),
+  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.getAllUsers
 );
 
 router.get(
   "/profile",
-  auth(USER_ROLE.employee, USER_ROLE.company_admin, USER_ROLE.admin),
+  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.getMyProfile
 );
 
 router.put(
   "/update-profile",
-  auth(USER_ROLE.employee, USER_ROLE.company_admin, USER_ROLE.admin),
+  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   upload.single("image"),
   (req, res, next) => {
     if (req.body?.data) {

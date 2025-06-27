@@ -11,7 +11,6 @@ uploaderInfo:{
         ref: 'User',
         required: true
 },
-
     uploaderName: {
       type: String,
         required: true
@@ -20,7 +19,6 @@ uploaderInfo:{
       type: String,
         required: true
     },
-
 },
   businessInfo: {
     businessName: {
