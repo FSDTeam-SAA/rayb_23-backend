@@ -4,4 +4,7 @@ const router = express.Router();
 
 
 // Create new business
-router.post("/", createBusiness);
+router.post("/create", createBusiness);
+
+const businessRouter = router;
+module.exports = businessRouter;

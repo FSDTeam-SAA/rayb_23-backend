@@ -2,6 +2,8 @@ const { Schema, model } = require("mongoose");
 const config = require("../../config");
 const bcrypt = require("bcrypt");
 
+//TODO:  need phone verification
+
 const userModel = new Schema(
   {
     name: {
@@ -13,9 +15,11 @@ const userModel = new Schema(
       required: true,
       unique: [true, "Email is required"],
     },
+    bio: { type: String, default: null },
     password: {
       type: String,
       required: [true, "Password is required"],
+      min: [8, "Password must be at least 8 characters"],
     },
     phone: {
       type: String,
@@ -31,23 +35,15 @@ const userModel = new Schema(
     otpExpires: { type: Date, default: null },
     resetPasswordOtp: { type: String, default: null },
     resetPasswordOtpExpires: { type: Date, default: null },
-    role: {
+    userType: {
       type: String,
-      enum: ["company_admin", "admin"],
-      default: "company_admin",
+      enum: ["user", "bussinessMan"],
+      default: "user", //! check this ageain
     },
-    shop: {
-      type: Schema.Types.ObjectId,
-      ref: "Shop",
-    },
-    isShopCreated: {
+    isActive: {
       type: Boolean,
-      default: false,
+      default: true,
     },
-    employeeCount: {
-      type: Number,
-      default: 0,
-    }
   },
   { timestamps: true, versionKey: false }
 );
