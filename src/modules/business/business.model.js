@@ -16,9 +16,10 @@ const businessSchema = new mongoose.Schema({
         description: { type: String, required: true }
     },
 
-    instrumentInfo: [instrumentSchema],
+    instrumentInfo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Instrument' }],
+    lessonServicePrice: { type: mongoose.Schema.Types.ObjectId, ref: 'LessonService' },
+    userEmail: { type: String},
 
-    lessonServicePrice: lessonServiceSchema,
 
     businessHours: [{
         day: {
