@@ -5,13 +5,10 @@ const { sendImageToCloudinary } = require("../../utils/cloudnary");
 // Create new business
 exports.createBusiness = async (req, res) => {
   try {
-    const { email: userEmail } = req.user;
-    if (!userEmail) {
-      return res.status(400).json({
-        status: false,
-        message: "User not found",
-      });
-    }
+    // const { email: userEmail } = req.user;
+    // if (!userEmail) {
+    //   return res.status(400).json({ status: false, message: "User not found" });
+    // }
 
     const files = req.files;
     if (!files || files.length === 0) {
@@ -22,30 +19,27 @@ exports.createBusiness = async (req, res) => {
       });
     }
 
-    // Upload all images to Cloudinary and collect URLs
+    // ✅ parse `data` string into object
+    const data = JSON.parse(req.body.data);
+
+    // upload images
     const uploadedImages = await Promise.all(
       files.map(async (file) => {
         const imageName = `business/${Date.now()}_${file.originalname}`;
-        const path = file.path;
-        const { secure_url } = await sendImageToCloudinary(imageName, path);
+        const { secure_url } = await sendImageToCloudinary(imageName, file.path);
         return secure_url;
       })
     );
 
     const newBusiness = new Business({
       businessInfo: {
-        businessName: req.body.businessName,
-        businessPhoto: uploadedImages, // Array of URLs
-        businessAddress: req.body.businessAddress,
-        businessPhone: req.body.businessPhone,
-        businessEmail: req.body.businessEmail,
-        businessWebsite: req.body.businessWebsite,
-        businessDescription: req.body.businessDescription
+        ...data.businessInfo,
+        image: uploadedImages
       },
-      instrumentInfo: req.body.instrumentInfo || [],
-      lessonServicePrice: req.body.lessonServicePrice || {},
-      businessHours: req.body.businessHours || [],
-      userEmail // Associate the business with the user's email
+      instrumentInfo: data.instrumentInfo || [],
+      lessonServicePrice: data.lessonServicePrice || {},
+      businessHours: data.businessHours || [],
+    //   userEmail
     });
 
     const savedBusiness = await newBusiness.save();
@@ -59,6 +53,7 @@ exports.createBusiness = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 
 // Get all businesses
