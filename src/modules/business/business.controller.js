@@ -1,3 +1,4 @@
+const { default: status } = require("http-status");
 const Business = require("./business.model");
 
 // Create new business
@@ -5,7 +6,11 @@ exports.createBusiness = async (req, res) => {
   try {
     const newBusiness = new Business(req.body);
     const savedBusiness = await newBusiness.save();
-    res.status(201).json(savedBusiness);
+    res.status(201).json({
+        status:true,
+        message: "Business created successfully",
+        data: savedBusiness
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
