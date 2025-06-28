@@ -35,7 +35,7 @@ const loginUser = async (payload) => {
   const tokenPayload = {
     userId: user._id,
     email: user.email,
-    role: user.role,
+    userType: user.userType,
   };
 
   const accessToken = createToken(
@@ -79,7 +79,7 @@ const LoginRefreshToken = async (token) => {
 
   const JwtPayload = {
     userId: userData._id,
-    role: userData.role,
+    userType: userData.userType,
     email: userData.email,
   };
 
@@ -115,7 +115,7 @@ const forgotPassword = async (email) => {
   const JwtToken = {
     userId: isExistingUser._id,
     email: isExistingUser.email,
-    role: isExistingUser.role,
+    userType: isExistingUser.userType,
   };
 
   const accessToken = createToken(
@@ -157,7 +157,7 @@ const verifyToken = async (otp, email) => {
   const JwtToken = {
     userId: isExistingUser._id,
     email: isExistingUser.email,
-    role: isExistingUser.role,
+    userType: isExistingUser.userType,
   };
 
   const accessToken = createToken(
