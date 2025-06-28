@@ -1,6 +1,4 @@
 const mongoose = require("mongoose");
-const { instrumentSchema } = require("../instrument/instrument.model");
-const { lessonServiceSchema } = require("../lessonService/lessonService.model");
 
 const businessSchema = new mongoose.Schema({
     businessInfo: {
@@ -18,7 +16,7 @@ const businessSchema = new mongoose.Schema({
 
     instrumentInfo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Instrument' }],
     lessonServicePrice: { type: mongoose.Schema.Types.ObjectId, ref: 'LessonService' },
-    userEmail: { type: String},
+    userEmail: { type: String },
 
 
     businessHours: [{
@@ -29,7 +27,17 @@ const businessSchema = new mongoose.Schema({
         isOpen: { type: Boolean, default: false },
         openTime: { type: String },
         closeTime: { type: String }
-    }]
+    }],
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
+
+    userEmail: {
+        type: String,
+        required: true
+    }
 }, {
     timestamps: true
 });
