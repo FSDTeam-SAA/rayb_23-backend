@@ -1,27 +1,8 @@
 const mongoose = require("mongoose");
+const instrumentSchema = require("./business.controller").schema;
+const lessonServiceSchema = require("../lessonService/lessonService.model").schema;
 
 const businessSchema = new mongoose.Schema({
-  businessDetails: {
-    type: String,
-    required: true
-  },
-uploaderInfo:{
-    uploaderId: {
-      type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User',
-        required: true
-},
-
-    uploaderName: {
-      type: String,
-        required: true
-    },
-    uploaderEmail: {
-      type: String,
-        required: true
-    },
-
-},
   businessInfo: {
     businessName: {
       type: String,
@@ -52,66 +33,9 @@ uploaderInfo:{
     }
   },
 
-  instrumentInfo: [{
-    instrumentFamily: {
-      type: String,
-      enum: ['Strings', 'Woodwinds', 'Brass', 'Percussions'],
-      required: true
-    },
-    instrumentsName: [{
-      type: String,
-      required: true
-    }],
-    servicesPrice: [{
-      instrument: String,
-      type: {
-        type: String,
-      },
-      priceType: {
-        type: String,
-        enum: ['Exact', 'Range', 'Hourly']
-      },
-      rangePrice: {
-        min: Number,
-        max: Number
-      },
-      exactPrice: {
-        type: Number
-      },
-      hourlyPrice: {
-        type: Number
-      }
-    }],
-    buySellTrade: {
-      sellInstruments: { type: Boolean, default: false },
-      buyInstruments: { type: Boolean, default: false },
-      tradeInstruments: { type: Boolean, default: false }
-    }
-  }],
+  instrumentInfo: [instrumentSchema],
 
-  lessonServicePrice: {
-    isMusicLesson: { type: Boolean, default: false },
-    lessons: [{
-      instrument: String,
-      type: {
-        type: String,
-      },
-      priceType: {
-        type: String,
-        enum: ['Exact', 'Range', 'Hourly']
-      },
-      rangePrice: {
-        min: Number,
-        max: Number
-      },
-      exactPrice: {
-        type: Number
-      },
-      hourlyPrice: {
-        type: Number
-      }
-    }]
-  },
+  lessonServicePrice:lessonServiceSchema,
 
   businessHours: [{
     day: {
