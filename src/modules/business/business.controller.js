@@ -5,53 +5,61 @@ const { sendImageToCloudinary } = require("../../utils/cloudnary");
 // Create new business
 exports.createBusiness = async (req, res) => {
   try {
-     const { email: userEmail } = req.user;
+    const { email: userEmail } = req.user;
     if (!userEmail) {
       return res.status(400).json({
         status: false,
         message: "User not found",
       });
     }
-    const file = req.file;
-    if (!file) {
+
+    const files = req.files;
+    if (!files || files.length === 0) {
       return res.status(400).json({
         success: false,
         code: 500,
-        message: "Image is required",
+        message: "At least one image is required",
       });
     }
 
-    const imageName = `category/${Date.now()}_${file.originalname}`;
-    const path = file.path;
-    const { secure_url } = await sendImageToCloudinary(imageName, path);
+    // Upload all images to Cloudinary and collect URLs
+    const uploadedImages = await Promise.all(
+      files.map(async (file) => {
+        const imageName = `business/${Date.now()}_${file.originalname}`;
+        const path = file.path;
+        const { secure_url } = await sendImageToCloudinary(imageName, path);
+        return secure_url;
+      })
+    );
 
     const newBusiness = new Business({
-        businessInfo: {
-            businessName: req.body.businessName,
-            businessPhoto: secure_url,
-            businessAddress: req.body.businessAddress,
-            businessPhone: req.body.businessPhone,
-            businessEmail: req.body.businessEmail,
-            businessWebsite: req.body.businessWebsite,
-            businessDescription: req.body.businessDescription
-        },
-        instrumentInfo: req.body.instrumentInfo || [],
-        lessonServicePrice: req.body.lessonServicePrice || {},
-        businessHours: req.body.businessHours || [],
-        userEmail // Associate the business with the user's email
-    }
+      businessInfo: {
+        businessName: req.body.businessName,
+        businessPhoto: uploadedImages, // Array of URLs
+        businessAddress: req.body.businessAddress,
+        businessPhone: req.body.businessPhone,
+        businessEmail: req.body.businessEmail,
+        businessWebsite: req.body.businessWebsite,
+        businessDescription: req.body.businessDescription
+      },
+      instrumentInfo: req.body.instrumentInfo || [],
+      lessonServicePrice: req.body.lessonServicePrice || {},
+      businessHours: req.body.businessHours || [],
+      userEmail // Associate the business with the user's email
+    });
 
-    );
     const savedBusiness = await newBusiness.save();
     res.status(201).json({
-        status:true,
-        message: "Business created successfully",
-        data: savedBusiness
+      status: true,
+      message: "Business created successfully",
+      data: savedBusiness
     });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Get all businesses
 exports.getAllBusinesses = async (req, res) => {
