@@ -1,7 +1,6 @@
 const config = require("../config");
 const { verifyToken } = require("../utils/tokenGenerate");
 
-
 const auth = (...roles) => {
   return (req, res, next) => {
     try {
@@ -21,7 +20,7 @@ const auth = (...roles) => {
       }
       req.user = verifiedUser;
 
-      if (roles.length && !roles.includes(verifiedUser.role)) {
+      if (roles.length && !roles.includes(verifiedUser.userType)) {
         return res.status(403).json({ success: false, message: "Forbidden" });
       }
       next();

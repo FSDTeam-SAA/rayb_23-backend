@@ -1,34 +1,35 @@
 const { companyName } = require("../lib/companyName");
 
 const verificationCodeTemplate = (code) => `
-  <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 40px 20px;">
-    <div style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);">
+  <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: auto; background-color: #f3f4f6; padding: 30px;">
+    <div style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
       
-      <header style="background-color: #f0f4ff; padding: 30px; text-align: center;">
-        <h1 style="margin: 0; font-size: 26px; color: #2b3f6c;">Welcome to ${companyName}</h1>
+      <header style="background: linear-gradient(90deg, #4f46e5, #6366f1); padding: 24px; text-align: center; color: #ffffff;">
+        <h2 style="margin: 0; font-size: 24px;">Welcome to ${companyName}</h2>
+        <p style="margin: 6px 0 0; font-size: 14px;">Secure your account with the code below</p>
       </header>
 
-      <main style="padding: 30px;">
-        <p style="font-size: 17px; color: #333; line-height: 1.6;">
-          Hello,
+      <main style="padding: 30px 25px;">
+        <p style="font-size: 16px; color: #374151; line-height: 1.6; margin-bottom: 18px;">
+          Hi there,
         </p>
-        <p style="font-size: 17px; color: #333; line-height: 1.6;">
-          You requested to verify your account on <strong>${companyName}</strong>. Enter the code below to proceed:
+
+        <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+          We received a request to verify your account on <strong>${companyName}</strong>. Please use the code below:
         </p>
-        <div style="text-align: center; margin: 35px 0;">
-          <span style="display: inline-block; background-color: #edf2ff; color: #2b3f6c; font-size: 32px; font-weight: 600; padding: 18px 36px; border-radius: 12px; letter-spacing: 6px;">
+
+        <div style="text-align: center; margin: 30px 0;">
+          <span style="display: inline-block; background-color: #eef2ff; color: #4f46e5; font-size: 30px; font-weight: bold; padding: 16px 32px; border-radius: 10px; letter-spacing: 4px;">
             ${code}
           </span>
         </div>
-        <p style="font-size: 15px; color: #555;">
-          This code is valid for <strong>5 minutes</strong>.
-        </p>
-        <p style="font-size: 15px; color: #888;">
-          Didn’t request this? Please ignore this email. Your account is safe.
+
+        <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">
+          This code will expire in <strong>5 minutes</strong>. If you didn't request this, you can safely ignore this email.
         </p>
       </main>
 
-      <footer style="background-color: #f0f4ff; padding: 20px; text-align: center; font-size: 13px; color: #666;">
+      <footer style="background-color: #f9fafb; text-align: center; padding: 16px; font-size: 12px; color: #9ca3af;">
         &copy; ${new Date().getFullYear()} ${companyName}. All rights reserved.
       </footer>
 

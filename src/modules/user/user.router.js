@@ -21,7 +21,7 @@ router.post(
 
 router.get(
   "/",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.getAllUsers
 );
 

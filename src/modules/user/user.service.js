@@ -12,7 +12,7 @@ const createNewAccountInDB = async (payload) => {
     throw new Error("User already exists");
   }
 
-  if (payload.password.length < 6) {
+  if (payload.password.length < 8) {
     throw new Error("Password must be at least 6 characters long");
   }
 
@@ -46,7 +46,7 @@ const createNewAccountInDB = async (payload) => {
   const JwtToken = {
     userId: result._id,
     email: result.email,
-    role: result.role,
+    userType: result.userType,
   };
 
   const accessToken = createToken(
@@ -66,7 +66,7 @@ const createNewAccountInDB = async (payload) => {
       _id: result._id,
       name: result.name,
       email: result.email,
-      role: result.role,
+      userType: result.userType,
     },
     accessToken,
     refreshToken,
@@ -102,7 +102,9 @@ const verifyUserEmail = async (payload, email) => {
       $unset: { otp: "", otpExpires: "" },
     },
     { new: true }
-  ).select("-password -otp -otpExpires");
+  ).select(
+    "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires"
+  );
   return result;
 };
 
@@ -126,7 +128,7 @@ const resendOtpCode = async ({ email }) => {
       otpExpires,
     },
     { new: true }
-  ).select("-password -otp -otpExpires");
+  ).select("name email userType");
 
   await sendEmail({
     to: existingUser.email,
