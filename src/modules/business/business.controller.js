@@ -1,10 +1,47 @@
 const { default: status } = require("http-status");
 const Business = require("./business.model");
+const { sendImageToCloudinary } = require("../../utils/cloudnary");
 
 // Create new business
 exports.createBusiness = async (req, res) => {
   try {
-    const newBusiness = new Business(req.body);
+     const { email: userEmail } = req.user;
+    if (!userEmail) {
+      return res.status(400).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        code: 500,
+        message: "Image is required",
+      });
+    }
+
+    const imageName = `category/${Date.now()}_${file.originalname}`;
+    const path = file.path;
+    const { secure_url } = await sendImageToCloudinary(imageName, path);
+
+    const newBusiness = new Business({
+        businessInfo: {
+            businessName: req.body.businessName,
+            businessPhoto: secure_url,
+            businessAddress: req.body.businessAddress,
+            businessPhone: req.body.businessPhone,
+            businessEmail: req.body.businessEmail,
+            businessWebsite: req.body.businessWebsite,
+            businessDescription: req.body.businessDescription
+        },
+        instrumentInfo: req.body.instrumentInfo || [],
+        lessonServicePrice: req.body.lessonServicePrice || {},
+        businessHours: req.body.businessHours || [],
+        userEmail // Associate the business with the user's email
+    }
+
+    );
     const savedBusiness = await newBusiness.save();
     res.status(201).json({
         status:true,
@@ -20,7 +57,11 @@ exports.createBusiness = async (req, res) => {
 exports.getAllBusinesses = async (req, res) => {
   try {
     const businesses = await Business.find();
-    res.status(200).json(businesses);
+    res.status(200).json({
+        status: true,
+        message: "Businesses retrieved successfully",
+        data: businesses
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
