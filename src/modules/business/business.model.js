@@ -4,16 +4,16 @@ const { lessonServiceSchema } = require("../lessonService/lessonService.model");
 
 const businessSchema = new mongoose.Schema({
     businessInfo: {
-        businessName: { type: String, required: true },
-        businessPhoto: [{
+        name: { type: String, required: true },
+        image: [{
             type: String,
             required: true
         }],
-        businessAddress: { type: String, required: true },
-        businessPhone: { type: String },
-        businessEmail: { type: String },
-        businessWebsite: { type: String },
-        businessDescription: { type: String, required: true }
+        address: { type: String, required: true },
+        phone: { type: String },
+        email: { type: String },
+        website: { type: String },
+        description: { type: String, required: true }
     },
 
     instrumentInfo: [instrumentSchema],
