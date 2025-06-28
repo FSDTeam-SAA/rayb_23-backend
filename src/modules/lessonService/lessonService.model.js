@@ -22,16 +22,7 @@ const lessonServiceSchema = new mongoose.Schema({
       type: Number
     }
   }],
-   user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
-  },
 
-  userEmail: {
-    type: String,
-    required: true
-  }
 }, {
   timestamps: true
 });
