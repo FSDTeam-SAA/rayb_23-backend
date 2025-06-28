@@ -27,7 +27,6 @@ const lessonServiceSchema = new mongoose.Schema({
 
 , {
   timestamps: true,
-  versionKey: false
 });
 const LessonService = mongoose.model('LessonService', lessonServiceSchema);
 module.exports = LessonService;
