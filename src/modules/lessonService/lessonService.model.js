@@ -21,7 +21,17 @@ const lessonServiceSchema = new mongoose.Schema({
     hourlyPrice: {
       type: Number
     }
-  }]
+  }],
+   user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
+
+  userEmail: {
+    type: String,
+    required: true
+  }
 }, {
   timestamps: true
 });

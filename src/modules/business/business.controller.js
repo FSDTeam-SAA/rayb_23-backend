@@ -3,14 +3,16 @@ const Business = require("./business.model");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const { Instrument } = require("../instrument/instrument.model");
 const { LessonService } = require("../lessonService/lessonService.model");
-
+const User = require("../user/user.model")
 // Create new business
 exports.createBusiness = async (req, res) => {
+
   try {
-    // const { email: userEmail } = req.user;
-    // if (!userEmail) {
-    //   return res.status(400).json({ status: false, message: "User not found" });
-    // }
+    const { email: userEmail, _id:userID } = req.user;
+    const user = await User.findOne({ userID  });
+    if (!user) {
+      return res.status(400).json({ status: false, message: "User not found" });
+    }
 
     const files = req.files;
     if (!files || files.length === 0) {
@@ -50,7 +52,8 @@ exports.createBusiness = async (req, res) => {
       instrumentInfo: instrumentIds,
       lessonServicePrice: savedLessonService._id,
       businessHours: data.businessHours || [],
-    //   userEmail
+      user: userID,
+      userEmail: userEmail
     });
 
     const savedBusiness = await newBusiness.save();
@@ -87,7 +90,8 @@ exports.getBusinessById = async (req, res) => {
     const { id } = req.params;
     const business = await Business.findById(id)
       .populate("instrumentInfo")
-      .populate("lessonServicePrice");
+      .populate("lessonServicePrice")
+      .populate("user", "name email role");
     if (!business) {
       return res.status(404).json({ success: false, message: "Business not found" });
     }
