@@ -8,8 +8,8 @@ const User = require("../user/user.model")
 exports.createBusiness = async (req, res) => {
 
   try {
-    const { email: userEmail, _id:userID } = req.user;
-    const user = await User.findOne({ userID  });
+    const { email: userEmail } = req.user;
+    const user = await User.findOne({ email: userEmail, });
     if (!user) {
       return res.status(400).json({ status: false, message: "User not found" });
     }
@@ -52,8 +52,8 @@ exports.createBusiness = async (req, res) => {
       instrumentInfo: instrumentIds,
       lessonServicePrice: savedLessonService._id,
       businessHours: data.businessHours || [],
-      user: userID,
-      userEmail: userEmail
+      user: user._id,
+     
     });
 
     const savedBusiness = await newBusiness.save();
@@ -76,7 +76,8 @@ exports.getAllBusinesses = async (req, res) => {
   try {
     const businesses = await Business.find()
       .populate("instrumentInfo")
-      .populate("lessonServicePrice");
+      .populate("lessonServicePrice")
+      .populate("user", "name email role");
     res.status(200).json({ success: true, data: businesses });
   } catch (error) {
     res.status(500).json({ error: error.message });
