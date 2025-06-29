@@ -1,5 +1,5 @@
 const express = require("express");
-const { createBusiness, getAllBusinesses, getBusinessById, updateBusiness, getBusinessesByUser } = require("./business.controller");
+const { createBusiness, getAllBusinesses, getBusinessById, updateBusiness, getBusinessesByUser, deleteBusiness } = require("./business.controller");
 const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
 const USER_ROLE = require("../user/user.constant");
@@ -27,6 +27,9 @@ router.get("/:id", auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user)
 
 // update business by user
 router.put("/my-add-business/:id", auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user), upload.array("image", 5), updateBusiness);
+
+//delete business by user
+router.delete("/delete-business/:id", auth(USER_ROLE.admin, USER_ROLE.user ,USER_ROLE.bussiness), deleteBusiness);
 
 
 const businessRouter = router;
