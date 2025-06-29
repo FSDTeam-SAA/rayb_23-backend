@@ -17,6 +17,15 @@ const businessSchema = new mongoose.Schema(
       description: { type: String, required: true },
     },
 
+    instrumentInfo: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Instrument" },
+    ],
+    lessonServicePrice: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "LessonService",
+    },
+    userEmail: { type: String },
+
     businessHours: [
       {
         day: {
@@ -36,17 +45,15 @@ const businessSchema = new mongoose.Schema(
         closeTime: { type: String },
       },
     ],
-    instrumentInfo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Instrument",
-    },
-    lessonServicePrice: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "LessonService",
-    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      required: true,
+    },
+
+    userEmail: {
+      type: String,
+      required: true,
     },
   },
   {
