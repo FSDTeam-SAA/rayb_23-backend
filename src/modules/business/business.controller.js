@@ -78,7 +78,10 @@ exports.getAllBusinesses = async (req, res) => {
       .populate("instrumentInfo")
       .populate("lessonServicePrice")
       .populate("user", "name email role");
-    res.status(200).json({ success: true, data: businesses });
+  return  res.status(200).json({ success: true,
+        message: "Businesses fetched successfully",
+        data: businesses });
+     
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
