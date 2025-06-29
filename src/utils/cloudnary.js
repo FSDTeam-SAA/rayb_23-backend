@@ -1,7 +1,7 @@
-const cloudinary = require("cloudinary").v2;
+const cloudinaryModule = require("cloudinary");
+const cloudinary = cloudinaryModule.v2;
 const config = require("../config");
 const multer = require("multer");
-const fs = require("fs");
 
 cloudinary.config({
   cloud_name: config.cloudinary.cloud_name,
@@ -20,15 +20,6 @@ const sendImageToCloudinary = (imageName, path) => {
         } else {
           resolve(result);
         }
-
-        // delete a file asynchronously
-        fs.unlink(path, (err) => {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log("File is deleted.");
-          }
-        });
       }
     );
   });
@@ -36,10 +27,10 @@ const sendImageToCloudinary = (imageName, path) => {
 
 // Multer storage configuration
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function (_req, _file, cb) {
     cb(null, process.cwd() + "/uploads");
   },
-  filename: function (req, file, cb) {
+  filename: function (_req, file, cb) {
     const uniqueSuffix = Date.now() + file.originalname;
     cb(null, file.fieldname + "-" + uniqueSuffix);
   },

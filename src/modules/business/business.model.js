@@ -33,10 +33,10 @@ const businessSchema = new mongoose.Schema({
         ref: "User",
         required: true
     },
+    
 
 }, {
     timestamps: true,
-    _id:true
 });
 
 const BusinessModel = mongoose.model("Business", businessSchema);
