@@ -39,11 +39,20 @@ const documentVerification = async (payload, email, files, bussinessId) => {
 
   return newClaim;
 };
-  
+
+const getAllClaimBussiness = async () => {
+  const result = await ClaimBussiness.find({})
+    .populate({
+      path: "userId",
+      select: "name email number", 
+    })
+  return result;
+};
 
 const claimBussinessService = {
   verifyPhoneNumber,
   documentVerification,
+  getAllClaimBussiness,
 };
 
 module.exports = claimBussinessService;
