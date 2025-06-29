@@ -78,7 +78,10 @@ exports.getAllBusinesses = async (req, res) => {
       .populate("instrumentInfo")
       .populate("lessonServicePrice")
       .populate("user", "name email role");
-    res.status(200).json({ success: true, data: businesses });
+  return  res.status(200).json({ success: true,
+        message: "Businesses fetched successfully",
+        data: businesses });
+     
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -105,10 +108,24 @@ exports.getBusinessById = async (req, res) => {
 exports.getBusinessesByUser = async (req, res) => {
   try {
     const { email } = req.user;
+   const isExist = await User.findOne({ email: userEmail });
+    if (!isExist) {
+      return res.status(400).json({
+        status: false,
+        message: "User not found.",
+      });
+    }
+    
+
+   
     const businesses = await Business.find({ userEmail: email })
       .populate("instrumentInfo")
-      .populate("lessonServicePrice");
-    res.status(200).json({ success: true, data: businesses });
+      .populate("lessonServicePrice")
+      .populate("user", "name email role");
+    if (!businesses || businesses.length === 0) {
+      return res.status(404).json({ success: false, message: "No businesses found for this user" });
+    }
+    return res.status(200).json({ success: true, data: businesses });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
