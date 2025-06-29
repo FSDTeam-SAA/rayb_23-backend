@@ -52,5 +52,11 @@ router.put(
   userController.updateUserProfile
 );
 
+router.put(
+  "/deactive-account",
+  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  userController.deactiveAccount
+);
+
 const userRouter = router;
 module.exports = userRouter;
