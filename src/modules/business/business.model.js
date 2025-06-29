@@ -51,15 +51,7 @@ const businessSchema = new mongoose.Schema(
       required: true,
     },
 
-    userEmail: {
-      type: String,
-      required: true,
-    },
-  },
-  {
-    timestamps: true,
-  }
-);
+
 
 const BusinessModel = mongoose.model("Business", businessSchema);
 module.exports = BusinessModel;
