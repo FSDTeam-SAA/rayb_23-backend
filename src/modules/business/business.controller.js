@@ -2,8 +2,9 @@ const { default: status } = require("http-status");
 const Business = require("./business.model");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const { Instrument } = require("../instrument/instrument.model");
-const { LessonService } = require("../lessonService/lessonService.model");
+const { LessonService } = require("../../lessonService/lessonService.model");
 const User = require("../user/user.model")
+const fs = require("fs");
 // Create new business
 exports.createBusiness = async (req, res) => {
 
@@ -107,35 +108,63 @@ exports.getBusinessById = async (req, res) => {
 
 exports.getBusinessesByUser = async (req, res) => {
   try {
-    const { email } = req.user;
-   const isExist = await User.findOne({ email: userEmail });
+    const { userId:userID } = req.user;
+    console.log(req.user);
+
+    const isExist = await User.findById({_id:userID});
     if (!isExist) {
       return res.status(400).json({
         status: false,
         message: "User not found.",
       });
     }
-    
 
-   
-    const businesses = await Business.find({ userEmail: email })
+    const businesses = await Business.find({ user: userID })
       .populate("instrumentInfo")
       .populate("lessonServicePrice")
       .populate("user", "name email role");
+
     if (!businesses || businesses.length === 0) {
-      return res.status(404).json({ success: false, message: "No businesses found for this user" });
+      return res.status(404).json({
+        success: false,
+        message: "No businesses found for this user"
+      });
     }
-    return res.status(200).json({ success: true, data: businesses });
+
+    return res.status(200).json({
+      success: true,
+      message: "Businesses fetched successfully",
+      data: businesses
+    });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
+
 //_____________________
 // Update business
 exports.updateBusiness = async (req, res) => {
   try {
+    const { email: userEmail } = req.user;
+    const user = await User.findOne({ email: userEmail });
+
+    if (!user) {
+      return res.status(400).json({ status: false, message: "User not found" });
+    }
+
+    // Ensure business ID is provided
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ status: false, message: "Business ID is required" });
+    }
+
+    // Ensure 'data' field exists
+    if (!req.body.data) {
+      return res.status(400).json({ success: false, message: "Missing 'data' field in form-data" });
+    }
+
     const data = JSON.parse(req.body.data);
 
     // Optionally update image(s)
@@ -151,13 +180,14 @@ exports.updateBusiness = async (req, res) => {
       );
     }
 
-    // Create new instruments if provided
+    // Save new instruments if provided
     let instrumentIds = [];
-    if (data.instrumentInfo) {
+    if (data.instrumentInfo && Array.isArray(data.instrumentInfo)) {
       const savedInstruments = await Instrument.insertMany(data.instrumentInfo);
-      instrumentIds = savedInstruments.map(inst => inst._id);
+      instrumentIds = savedInstruments.map((inst) => inst._id);
     }
 
+    // Save new lesson service if provided
     let savedLessonServiceId = null;
     if (data.lessonServicePrice) {
       const lessonService = new LessonService(data.lessonServicePrice);
@@ -165,23 +195,32 @@ exports.updateBusiness = async (req, res) => {
       savedLessonServiceId = savedLessonService._id;
     }
 
-    const updatedBusiness = await Business.findByIdAndUpdate(
-      id,
-      {
-        businessInfo: {
-          ...data.businessInfo,
-          ...(uploadedImages && { image: uploadedImages })
-        },
-        ...(instrumentIds.length && { instrumentInfo: instrumentIds }),
-        ...(savedLessonServiceId && { lessonServicePrice: savedLessonServiceId }),
-        businessHours: data.businessHours
+    // Prepare update object
+    const updatePayload = {
+      businessInfo: {
+        ...data.businessInfo,
+        ...(uploadedImages && { image: uploadedImages })
       },
-      { new: true }
-    );
+      businessHours: data.businessHours || []
+    };
 
-    res.status(200).json({ success: true, data: updatedBusiness });
+    if (instrumentIds.length) updatePayload.instrumentInfo = instrumentIds;
+    if (savedLessonServiceId) updatePayload.lessonServicePrice = savedLessonServiceId;
+
+    const updatedBusiness = await Business.findByIdAndUpdate(id, updatePayload, { new: true });
+
+    if (!updatedBusiness) {
+      return res.status(404).json({ success: false, message: "Business not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Business updated successfully",
+      data: updatedBusiness
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Update business error:", error);
+    return res.status(500).json({ error: error.message });
   }
 };
 
