@@ -61,11 +61,26 @@ const getMyClaimBussiness = async (email) => {
   return result;
 };
 
+const toggleClaimBussinessStatus = async (bussinessId, payload) => {
+  const { status } = payload;
+
+  const businessClaim = await ClaimBussiness.findById(bussinessId);
+  if (!businessClaim) throw new Error("Business claim not found");
+
+  const result = await ClaimBussiness.findOneAndUpdate(
+    { _id: bussinessId },
+    { $set: { status } },
+    { new: true }
+  ).populate("userId", "name email number");
+  return result;
+};
+
 const claimBussinessService = {
   verifyPhoneNumber,
   documentVerification,
   getAllClaimBussiness,
   getMyClaimBussiness,
+  toggleClaimBussinessStatus,
 };
 
 module.exports = claimBussinessService;
