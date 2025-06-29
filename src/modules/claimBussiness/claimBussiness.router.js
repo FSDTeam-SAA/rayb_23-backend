@@ -1,5 +1,4 @@
 const { Router } = require("express");
-const claimBussinessService = require("./claimBussiness.service");
 const { upload } = require("../../utils/cloudnary");
 const auth = require("../../middleware/auth");
 const USER_ROLE = require("../user/user.constant");
@@ -25,6 +24,12 @@ router.post(
   },
   auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
   claimBussinessController.documentVerification
+);
+
+router.get(
+  "/",
+  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  claimBussinessController.getAllClaimBussiness
 );
 
 const claimBussinessRouter = router;
