@@ -1,3 +1,4 @@
+const e = require("express");
 const config = require("../../config");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const sendEmail = require("../../utils/sendEmail");
@@ -13,7 +14,7 @@ const createNewAccountInDB = async (payload) => {
   }
 
   if (payload.password.length < 8) {
-    throw new Error("Password must be at least 6 characters long");
+    throw new Error("Password must be at least 8 characters long");
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -172,6 +173,29 @@ const updateUserProfile = async (payload, email, file) => {
   return updatedUser;
 };
 
+const deactiveAccount = async (email, payload) => {
+  const result = await User.findOne({ email });
+  if (!result) throw new Error("User not found");
+
+  const currentDate = new Date();
+  const endDate = new Date();
+  endDate.setDate(currentDate.getDate() + 30);
+
+  const updatedUser = await User.findOneAndUpdate(
+    {
+      email,
+    },
+    {
+      ...payload,
+      isDeactived: true,
+      deactivedStartDate: currentDate,
+      deactivedEndDate: endDate,
+    },
+    { new: true }
+  ).select("-password -otp -otpExpires");
+  return updatedUser;
+};
+
 const userService = {
   createNewAccountInDB,
   verifyUserEmail,
@@ -179,6 +203,7 @@ const userService = {
   getAllUsersFromDb,
   getMyProfileFromDb,
   updateUserProfile,
+  deactiveAccount,
 };
 
 module.exports = userService;

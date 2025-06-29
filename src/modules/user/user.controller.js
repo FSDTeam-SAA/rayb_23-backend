@@ -104,6 +104,21 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+const deactiveAccount = async (req, res) => {
+  try {
+    const { email } = req.user;
+    const result = await userService.deactiveAccount(email, req.body);
+
+    return res.status(200).json({
+      success: true,
+      message: "Account deactivated successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 const userController = {
   createNewAccount,
   verifyEmail,
@@ -111,6 +126,7 @@ const userController = {
   getAllUsers,
   getMyProfile,
   updateUserProfile,
+  deactiveAccount,
 };
 
 module.exports = userController;

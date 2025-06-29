@@ -7,11 +7,20 @@ const jwt = require("jsonwebtoken");
 const verificationCodeTemplate = require("../../utils/verificationCodeTemplate");
 const sendEmail = require("../../utils/sendEmail");
 
-
 const loginUser = async (payload) => {
   const user = await User.findOne({ email: payload.email }).select("+password");
   if (!user) {
     throw new Error("User not found");
+  }
+
+  if (
+    user.isDeactived &&
+    user.isActive &&
+    user.deactivedEndDate <= new Date()
+  ) {
+    user.isActive = false;
+    await user.save();
+    throw new Error("Your account has been deactivated");
   }
 
   if (!user.isVerified) {
@@ -228,8 +237,6 @@ const changePassword = async (payload, email) => {
   );
   return result;
 };
-
-
 
 const authService = {
   loginUser,
