@@ -41,11 +41,23 @@ const documentVerification = async (payload, email, files, bussinessId) => {
 };
 
 const getAllClaimBussiness = async () => {
-  const result = await ClaimBussiness.find({})
-    .populate({
-      path: "userId",
-      select: "name email number", 
-    })
+  const result = await ClaimBussiness.find({}).populate({
+    path: "userId",
+    select: "name email number",
+  });
+  return result;
+};
+
+const getMyClaimBussiness = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  if (!user.isActive) throw new Error("User is not active");
+
+  const result = await ClaimBussiness.findOne({ userId: user._id }).populate({
+    path: "userId",
+    select: "name email number",
+  });
   return result;
 };
 
@@ -53,6 +65,7 @@ const claimBussinessService = {
   verifyPhoneNumber,
   documentVerification,
   getAllClaimBussiness,
+  getMyClaimBussiness,
 };
 
 module.exports = claimBussinessService;
