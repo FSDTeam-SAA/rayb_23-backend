@@ -38,5 +38,11 @@ router.get(
   claimBussinessController.getMyClaimBussiness
 );
 
+router.put(
+  "/:bussinessId",
+  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  claimBussinessController.toggleClaimBussinessStatus
+);
+
 const claimBussinessRouter = router;
 module.exports = claimBussinessRouter;
