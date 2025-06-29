@@ -17,7 +17,6 @@ const businessSchema = new mongoose.Schema(
       description: { type: String, required: true },
     },
 
-
     businessHours: [
       {
         day: {
@@ -34,6 +33,26 @@ const businessSchema = new mongoose.Schema(
         },
         isOpen: { type: Boolean, default: false },
         openTime: { type: String },
+        closeTime: { type: String },
+      },
+    ],
+    instrumentInfo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Instrument",
+    },
+    lessonServicePrice: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "LessonService",
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
 const BusinessModel = mongoose.model("Business", businessSchema);
 module.exports = BusinessModel;
