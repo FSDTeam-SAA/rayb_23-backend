@@ -34,7 +34,8 @@ const instrumentSchema = new mongoose.Schema({
     sellInstruments: { type: Boolean, default: false },
     buyInstruments: { type: Boolean, default: false },
     tradeInstruments: { type: Boolean, default: false }
-  }
+  },
+  
 }, {
   timestamps: true
 });

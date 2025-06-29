@@ -21,7 +21,8 @@ const lessonServiceSchema = new mongoose.Schema({
     hourlyPrice: {
       type: Number
     }
-  }]
+  }],
+
 }, {
   timestamps: true
 });
