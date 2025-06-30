@@ -1,8 +1,7 @@
-const { default: status } = require("http-status");
 const Business = require("./business.model");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const { Instrument } = require("../instrument/instrument.model");
-const { LessonService } = require("../../lessonService/lessonService.model");
+const { LessonService } = require("../lessonService/lessonService.model");
 const User = require("../user/user.model")
 const fs = require("fs");
 // Create new business
