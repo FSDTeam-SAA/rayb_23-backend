@@ -10,12 +10,16 @@ const claimBussinessSchema = new Schema({
     ref: "User",
   },
   documents: {
-    type: String,
+    type: [String],
   },
   status: {
     type: String,
     enum: ["Pending", "Approved", "Rejected"],
     default: "Pending",
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
   },
 });
 
