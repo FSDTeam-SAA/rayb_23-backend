@@ -1,4 +1,4 @@
-const mongoose =require("mongoose");
+const mongoose = require("mongoose");
 
 const savedBusinessSchema = new mongoose.Schema({
     savedBusiness: {
@@ -6,7 +6,6 @@ const savedBusinessSchema = new mongoose.Schema({
         ref: "Business",
         required: true
     },
-
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -15,5 +14,6 @@ const savedBusinessSchema = new mongoose.Schema({
 }, {
     timestamps: true,
 });
+
 const SavedBusinessModel = mongoose.model("SavedBusiness", savedBusinessSchema);
 module.exports = SavedBusinessModel;

@@ -1,33 +1,50 @@
-const SavedBusinessModel = require ("./SavedBusiness.model");
+const SavedBusinessModel = require("./SavedBusiness.model");
 const User = require("../user/user.model");
 
-// create saved business
+// Create Saved Business
 exports.createSavedBusiness = async (req, res) => {
     try {
-        const { businessId } = req.body;
-        const userId = req.user._id;
+        const { savedBusiness } = req.body;
+        console.log(req.body);
+        const userId = req.user.userId;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized user" });
+        }
 
-        // Check if the business is already saved by the user
-        const existingSavedBusiness = await SavedBusinessModel.findOne({
-            savedBusiness: businessId,
+        if (!savedBusiness) {
+            return res.status(400).json({ message: "Business ID is required" });
+        }
+
+        const userExists = await User.findById(userId);
+        if (!userExists) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const alreadySaved = await SavedBusinessModel.findOne({
+            savedBusiness: savedBusiness,
             user: userId
         });
 
-        if (existingSavedBusiness) {
+        if (alreadySaved) {
             return res.status(400).json({ message: "Business already saved" });
         }
 
-        // Create a new saved business entry
-        const newSavedBusiness = new SavedBusinessModel({
-            savedBusiness: businessId,
+        const newSaved = new SavedBusinessModel({
+            savedBusiness: savedBusiness,
             user: userId
         });
 
-        await newSavedBusiness.save();
+        const savedData = await newSaved.save();
 
-        res.status(201).json({ message: "Business saved successfully", data: newSavedBusiness });
+        return res.status(201).json({
+            message: "Business saved successfully",
+            data: savedData
+        });
+
     } catch (error) {
-        console.error("Error saving business:", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.error("Error in createSavedBusiness:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
+
+
