@@ -28,6 +28,11 @@ const businessSchema = new mongoose.Schema({
         openTime: { type: String },
         closeTime: { type: String }
     }],
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'pending'],
+        default: 'inactive'
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
