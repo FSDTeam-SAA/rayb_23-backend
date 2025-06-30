@@ -103,3 +103,28 @@ exports.getSavedBusinessById = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
+
+// delete saved business by id
+exports.deleteSavedBusiness = async (req, res) => { 
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ message: "Business ID is required" });
+        }
+
+        const deletedBusiness = await SavedBusinessModel.findByIdAndDelete(id);
+        if (!deletedBusiness) {
+            return res.status(404).json({ message: "Saved business not found" });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Saved business deleted successfully",
+            data: deletedBusiness
+        });
+
+    } catch (error) {
+        console.error("Error in deleteSavedBusinessById:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
