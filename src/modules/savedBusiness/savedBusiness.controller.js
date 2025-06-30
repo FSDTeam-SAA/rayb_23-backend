@@ -76,3 +76,30 @@ exports.getSavedBusinessesByUser = async (req, res) => {
     }
 };
 
+//get saved business by id
+exports.getSavedBusinessById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ message: "Business ID is required" });
+        }
+
+        const savedBusiness = await SavedBusinessModel.findById(id)
+            .populate("savedBusiness", "businessInfo")
+            .populate("user", "name email");
+
+        if (!savedBusiness) {
+            return res.status(404).json({ message: "Saved business not found" });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Saved business fetched successfully",
+            data: savedBusiness
+        });
+
+    } catch (error) {
+        console.error("Error in getSavedBusinessById:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
