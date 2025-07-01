@@ -69,12 +69,35 @@ exports.createBusiness = async (req, res) => {
   }
 };
 
+//_____________________
+
+// Get all businesses for admin
+exports.getAllBusinessesAdmin = async (req, res) => {
+  try {
+   const { userId:userID } = req.user;
+     const isAdmin = await User.findById({_id:userID});
+    if (!isAdmin || isAdmin.role !== 'admin') {
+      return res.status(403).json({ success: false, message: "Access denied. Admins only." });
+    } 
+    const businesses = await Business.find()
+      .populate("instrumentInfo")
+      .populate("lessonServicePrice")
+      .populate("user", "name email role");
+    return res.status(200).json({
+      success: true,
+      message: "Businesses fetched successfully",
+      data: businesses
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
 
 
 // Get all businesses
 exports.getAllBusinesses = async (req, res) => {
   try {
-    const businesses = await Business.find()
+    const businesses = await Business.find({status: "active"})
       .populate("instrumentInfo")
       .populate("lessonServicePrice")
       .populate("user", "name email role");
@@ -108,7 +131,7 @@ exports.getBusinessById = async (req, res) => {
 exports.getBusinessesByUser = async (req, res) => {
   try {
     const { userId:userID } = req.user;
-    console.log(req.user);
+    
 
     const isExist = await User.findById({_id:userID});
     if (!isExist) {

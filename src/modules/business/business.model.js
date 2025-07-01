@@ -30,7 +30,7 @@ const businessSchema = new mongoose.Schema({
     }],
     status: {
         type: String,
-        enum: ['active', 'inactive', 'pending'],
+        enum: ['active', 'inactive'],
         default: 'inactive'
     },
     user: {
