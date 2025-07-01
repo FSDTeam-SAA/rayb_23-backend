@@ -1,9 +1,8 @@
-const { default: status } = require("http-status");
 const Business = require("./business.model");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const { Instrument } = require("../instrument/instrument.model");
-const { LessonService } = require("../../lessonService/lessonService.model");
-const User = require("../user/user.model");
+const { LessonService } = require("../lessonService/lessonService.model");
+const User = require("../user/user.model")
 const fs = require("fs");
 // Create new business
 exports.createBusiness = async (req, res) => {
@@ -75,7 +74,7 @@ exports.createBusiness = async (req, res) => {
 // Get all businesses
 exports.getAllBusinesses = async (req, res) => {
   try {
-    const businesses = await Business.find()
+    const businesses = await Business.find({status: "active"})
       .populate("instrumentInfo")
       .populate("lessonServicePrice")
       .populate("user", "name email role");
@@ -111,8 +110,10 @@ exports.getBusinessById = async (req, res) => {
 
 exports.getBusinessesByUser = async (req, res) => {
   try {
-    const { userId: userID } = req.user;
-    console.log(req.user);
+
+
+    const { userId:userID } = req.user;
+    
 
     const isExist = await User.findById({ _id: userID });
     if (!isExist) {

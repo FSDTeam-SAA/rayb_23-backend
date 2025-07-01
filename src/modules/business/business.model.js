@@ -42,9 +42,14 @@ const businessSchema = new mongoose.Schema(
         },
         isOpen: { type: Boolean, default: false },
         openTime: { type: String },
-        closeTime: { type: String },
-      },
-    ],
+
+        closeTime: { type: String }
+    }],
+    status: {
+        type: String,
+        enum: ['active', 'inactive'],
+        default: 'inactive'
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
