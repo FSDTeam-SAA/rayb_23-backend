@@ -1,30 +1,71 @@
+const User = require("../user/user.model");
+const InstrumentFamilyModel = require("./instrumentFamily.model");
 const instrumentFamilyModel = require("./instrumentFamily.model");
 
 // Create a new instrument family
 exports.createInstrumentFamily = async (req, res) => {
-    try {
-        const { userId } = req.user;
-        if (!userId) {
-            return res.status(401).json({ message: "Unauthorized user" });
-        }
-        const { instrumentFamily } = req.body;
+  try {
+    const { userId: UserId } = req.user;
+    const { instrumentFamily } = req.body;
 
-        if (!instrumentFamily || !Array.isArray(instrumentFamily) || instrumentFamily.length === 0) {
-            return res.status(400).json({ message: "Instrument family is required and must be an array" });
-        }
-
-        const newInstrumentFamily = new instrumentFamilyModel({ instrumentFamily });
-        const savedInstrumentFamily = await newInstrumentFamily.save();
-
-        return res.status(201).json({
-            message: "Instrument family created successfully",
-            data: savedInstrumentFamily
-        });
-    } catch (error) {
-        console.error("Error in createInstrumentFamily:", error);
-        res.status(500).json({ message: "Internal server error", error: error.message });
+    if (!instrumentFamily || !Array.isArray(instrumentFamily)) {
+      return res.status(400).json({
+        success: false,
+        message: "instrumentFamily must be a non-empty array"
+      });
     }
+
+    const user = await User.findById(UserId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const status = user.role === "admin" ? "active" : "inactive";
+
+    // Check if a document already exists
+    const existingDoc = await InstrumentFamilyModel.findOne();
+
+    if (existingDoc) {
+      // Push new items (avoiding duplicates)
+      const updated = await InstrumentFamilyModel.findByIdAndUpdate(
+        existingDoc._id,
+        {
+          $addToSet: {
+            instrumentFamily: { $each: instrumentFamily }
+          }
+        },
+        { new: true }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Instrument families added to existing document",
+        data: updated
+      });
+
+    } else {
+      // Create new document
+      const newDoc = new InstrumentFamilyModel({
+        instrumentFamily,
+        status
+      });
+
+      const saved = await newDoc.save();
+
+      return res.status(201).json({
+        success: true,
+        message: "New instrument family document created",
+        data: saved
+      });
+    }
+
+  } catch (error) {
+    console.error("Error in createInstrumentFamily:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
 };
+
+
 
 // Get all instrument families
 exports.getAllInstrumentFamilies = async (req, res) => {
