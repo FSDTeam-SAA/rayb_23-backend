@@ -23,8 +23,8 @@ const userModel = new Schema(
     },
     phone: {
       type: String,
-      required: [true, "Phone is required"],
-      unique: [true, "Phone number must be unique"],
+      // required: [true, "Phone is required"],
+      // unique: [true, "Phone number must be unique"],
     },
     isVerified: {
       type: Boolean,
@@ -37,8 +37,8 @@ const userModel = new Schema(
     resetPasswordOtpExpires: { type: Date, default: null },
     userType: {
       type: String,
-      enum: ["user", "bussinessMan"],
-      default: "user", //! check this ageain
+      // enum: ["user", "bussinessMan"],
+      // default: "user", //! check this ageain
     },
     isActive: {
       type: Boolean,
