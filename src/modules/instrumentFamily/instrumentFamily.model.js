@@ -1,7 +1,10 @@
 const mongoose = require ('mongoose');
 
 const instrumentFamilySchema = new mongoose.Schema({
-  instrumentFamily: [String], 
+  instrumentFamily: {
+    type: String,
+    required: true
+  }, 
   status: {
     type: String,
     enum: ['active', 'inactive'],
