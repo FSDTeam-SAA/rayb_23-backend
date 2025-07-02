@@ -81,6 +81,52 @@ exports.getAllInstrumentFamilies = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 };
+
+//update
+exports.updateInstrumentFamily = async (req, res) => {
+  try {
+    const { userId: UserId } = req.user;
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status || !['active', 'inactive'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Status must be either 'active' or 'inactive'"
+      });
+    }
+
+    const user = await User.findById(UserId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const updated = await InstrumentFamilyModel.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: "Instrument family not found"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Instrument family status updated successfully",
+      data: updated
+    });
+
+  } catch (error) {
+    console.error("Error in updateInstrumentFamily:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
+
+
 // delete an instrument family by ID
 exports.deleteInstrumentFamily = async (req, res) => {
     try {
