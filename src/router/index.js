@@ -7,6 +7,7 @@ const savedBusinessRouter = require("../modules/savedBusiness/savedBusiness.rout
 const { path } = require("../app");
 const claimBussinessRouter = require("../modules/claimBussiness/claimBussiness.router");
 const instrumentFamilyRouter = require("../modules/instrumentFamily/instrumentFamily.router");
+const messageRouter = require("../modules/message/message.router");
 
 const router = Router();
 
@@ -27,19 +28,20 @@ const moduleRouter = [
     path: "/business",
     router: businessRouter,
   },
-  { path: "/saved-business",
-    router: savedBusinessRouter,   
-  },
+  { path: "/saved-business", router: savedBusinessRouter },
   {
-    path:"/claim-bussiness",
+    path: "/claim-bussiness",
     router: claimBussinessRouter,
   },
 
   {
     path: "/instrument-family",
-    router:instrumentFamilyRouter,
-  }
-
+    router: instrumentFamilyRouter,
+  },
+  {
+    path: "/message",
+    router: messageRouter,
+  },
 ];
 
 moduleRouter.forEach((route) => {
