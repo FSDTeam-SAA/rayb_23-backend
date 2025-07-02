@@ -12,7 +12,7 @@ exports.createInstrumentFamily = async (req, res) => {
     if (!instrumentFamily || !Array.isArray(instrumentFamily) || instrumentFamily.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "instrumentFamily must be a non-empty array of string"
+        message: "instrumentFamily must be a non-empty array of strings"
       });
     }
 
