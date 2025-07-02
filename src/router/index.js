@@ -6,6 +6,7 @@ const businessRouter = require("../modules/business/business.router");
 const savedBusinessRouter = require("../modules/savedBusiness/savedBusiness.router");
 const { path } = require("../app");
 const claimBussinessRouter = require("../modules/claimBussiness/claimBussiness.router");
+const instrumentFamilyRouter = require("../modules/instrumentFamily/instrumentFamily.router");
 
 const router = Router();
 
@@ -32,6 +33,11 @@ const moduleRouter = [
   {
     path:"/claim-bussiness",
     router: claimBussinessRouter,
+  },
+
+  {
+    path: "/instrument-family",
+    router:instrumentFamilyRouter,
   }
 
 ];
