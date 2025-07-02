@@ -3,7 +3,11 @@ const userRouter = require("../modules/user/user.router");
 const authRouter = require("../modules/auth/auth.router");
 const sendMessageRouter = require("../modules/contract/contract.router");
 const businessRouter = require("../modules/business/business.router");
+const savedBusinessRouter = require("../modules/savedBusiness/savedBusiness.router");
+const { path } = require("../app");
 const claimBussinessRouter = require("../modules/claimBussiness/claimBussiness.router");
+const instrumentFamilyRouter = require("../modules/instrumentFamily/instrumentFamily.router");
+
 const router = Router();
 
 const moduleRouter = [
@@ -23,10 +27,19 @@ const moduleRouter = [
     path: "/business",
     router: businessRouter,
   },
+  { path: "/saved-business",
+    router: savedBusinessRouter,   
+  },
   {
-    path: "/claim-bussiness",
+    path:"/claim-bussiness",
     router: claimBussinessRouter,
   },
+
+  {
+    path: "/instrument-family",
+    router:instrumentFamilyRouter,
+  }
+
 ];
 
 moduleRouter.forEach((route) => {
