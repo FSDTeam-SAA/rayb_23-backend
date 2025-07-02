@@ -132,7 +132,7 @@ exports.getBusinessesByUser = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "No businesses found for this user",
-      });
+      }); 
     }
 
     return res.status(200).json({
