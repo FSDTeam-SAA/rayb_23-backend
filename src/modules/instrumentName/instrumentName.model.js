@@ -1,6 +1,6 @@
 const mongoose = require ('mongoose');
 
-const instrumentFamilySchema = new mongoose.Schema({
+const instrumentNameSchema = new mongoose.Schema({
   instrumentFamily:{
     type:String,
     require :true
@@ -13,5 +13,5 @@ const instrumentFamilySchema = new mongoose.Schema({
     timestamps: true
     });
 
-const InstrumentFamilyModel = mongoose.model('InstrumentFamily', instrumentFamilySchema);
-module.exports = InstrumentFamilyModel;
+const InstrumentNameModel = mongoose.model('InstrumentFamily', instrumentNameSchema);
+module.exports = InstrumentNameModel;

@@ -1,13 +1,21 @@
 const User = require("../user/user.model");
-const InstrumentFamilyModel = require("./instrumentFamily.model");
+const InstrumentNameModel = require("./instrumentName.model");
 
 
 
 // Create a new instrument family
-exports.createInstrumentFamily = async (req, res) => {
+exports.createInstrumentName = async (req, res) => {
   try {
     const { userId: UserId } = req.user;
-    const { instrumentFamily } = req.body;
+    const { instrumentName } = req.body;
+
+    if (!instrumentFamily || !Array.isArray(instrumentName) || instrumentName.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "instrumentFamily must be a non-empty array of strings"
+      });
+    }
+
     const user = await User.findById(UserId);
     console.log(user);
     if (!user) {
@@ -20,9 +28,9 @@ exports.createInstrumentFamily = async (req, res) => {
     const createdFamilies = [];
 
     for (const name of instrumentFamily) {
-      const exists = await InstrumentFamilyModel.findOne({ instrumentFamily: name });
+      const exists = await InstrumentNameModel.findOne({ instrumentFamily: name });
       if (!exists) {
-        const newFamily = new InstrumentFamilyModel({
+        const newFamily = new InstrumentNameModel({
           instrumentFamily: name,
           status
         });
@@ -59,9 +67,9 @@ exports.createInstrumentFamily = async (req, res) => {
 
 
 // Get all instrument families
-exports.getAllInstrumentFamilies = async (req, res) => {
+exports.getAllInstrumentName = async (req, res) => {
     try {
-        const instrumentFamilies = await InstrumentFamilyModel.find();
+        const instrumentFamilies = await InstrumentNameModel.find();
         res.status(200).json({
             status: true,
             message: 'Instrument families fetched successfully',
@@ -75,7 +83,7 @@ exports.getAllInstrumentFamilies = async (req, res) => {
 };
 
 //update
-exports.updateInstrumentFamily = async (req, res) => {
+exports.updateInstrumentName = async (req, res) => {
   try {
     const { userId: UserId } = req.user;
     const { id } = req.params;
@@ -93,7 +101,7 @@ exports.updateInstrumentFamily = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    const updated = await InstrumentFamilyModel.findByIdAndUpdate(
+    const updated = await InstrumentNameModel.findByIdAndUpdate(
       id,
       { status },
       { new: true }
@@ -120,11 +128,11 @@ exports.updateInstrumentFamily = async (req, res) => {
 
 
 // delete an instrument family by ID
-exports.deleteInstrumentFamily = async (req, res) => {
+exports.deleteInstrumentName = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const deletedInstrumentFamily = await InstrumentFamilyModel.findByIdAndDelete(id);
+        const deletedInstrumentFamily = await InstrumentNameModel.findByIdAndDelete(id);
         if (!deletedInstrumentFamily) {
             return res.status(404).json({ message: "Instrument family not found" });
         }
