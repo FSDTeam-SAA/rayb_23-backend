@@ -8,6 +8,7 @@ const { path } = require("../app");
 const claimBussinessRouter = require("../modules/claimBussiness/claimBussiness.router");
 const instrumentFamilyRouter = require("../modules/instrumentFamily/instrumentFamily.router");
 const messageRouter = require("../modules/message/message.router");
+const chatRouter = require("../modules/chat/chat.router");
 
 const router = Router();
 
@@ -41,6 +42,10 @@ const moduleRouter = [
   {
     path: "/message",
     router: messageRouter,
+  },
+  {
+    path: "/chat",
+    router: chatRouter,
   },
 ];
 
