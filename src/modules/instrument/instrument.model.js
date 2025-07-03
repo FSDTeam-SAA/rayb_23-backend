@@ -10,6 +10,10 @@ const instrumentSchema = new mongoose.Schema({
     type: String,
     required: true
   }],
+  serviceName:{
+    type: String,
+    required: true
+  },
   servicesPrice: [{
     instrument: String,
     type: {

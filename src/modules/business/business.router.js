@@ -15,7 +15,13 @@ router.post(
 
   createBusiness
 );
-// Get all businesses
+
+//get all business
+
+// router.get("/get-all", )
+
+
+// Get all approve businesses
 router.get("/all", getAllBusinesses);
 // router.get("/", getAllBusinesses);
 
