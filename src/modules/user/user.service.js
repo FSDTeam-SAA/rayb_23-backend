@@ -196,6 +196,20 @@ const deactiveAccount = async (email, payload) => {
   return updatedUser;
 };
 
+const deletedUserAccount = async (userId) => {
+  const user = await User.findById(userId).select("-password -otp -otpExpires");
+  if (!user) throw new Error("User not found");
+
+  const result = await User.findByIdAndUpdate(
+    userId,
+    {
+      isActive: false,
+    },
+    { new: true }
+  ).select("-password -otp -otpExpires");
+  return result;
+};
+
 const userService = {
   createNewAccountInDB,
   verifyUserEmail,
@@ -204,6 +218,7 @@ const userService = {
   getMyProfileFromDb,
   updateUserProfile,
   deactiveAccount,
+  deletedUserAccount,
 };
 
 module.exports = userService;
