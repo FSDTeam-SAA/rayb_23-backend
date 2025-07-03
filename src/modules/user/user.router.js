@@ -58,5 +58,11 @@ router.put(
   userController.deactiveAccount
 );
 
+router.put(
+  "/delete-account",
+  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  userController.deletedUserAccount
+);
+
 const userRouter = router;
 module.exports = userRouter;

@@ -119,6 +119,21 @@ const deactiveAccount = async (req, res) => {
   }
 };
 
+const deletedUserAccount = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const result = await userService.deletedUserAccount(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Account deleted successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 const userController = {
   createNewAccount,
   verifyEmail,
@@ -127,6 +142,7 @@ const userController = {
   getMyProfile,
   updateUserProfile,
   deactiveAccount,
+  deletedUserAccount,
 };
 
 module.exports = userController;
