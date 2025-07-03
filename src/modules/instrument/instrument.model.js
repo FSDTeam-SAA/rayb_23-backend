@@ -1,8 +1,19 @@
 const mongoose = require("mongoose");
 
 const instrumentSchema = new mongoose.Schema({
-  instrumentFamily: { type: mongoose.Schema.Types.ObjectId, ref: "InstrumentFamily" },
-  instrumentsName: [{ type: mongoose.Schema.Types.ObjectId, ref: "InstrumentName" }],
+  instrumentFamily: {
+    type: String,
+    enum: ['Strings', 'Woodwinds', 'Brass', 'Percussions'],
+    required: true
+  },
+  instrumentsName: [{
+    type: String,
+    required: true
+  }],
+  serviceName:{
+    type: String,
+    required: true
+  },
   servicesPrice: [{
     instrument: String,
     type: {

@@ -71,7 +71,19 @@ exports.createBusiness = async (req, res) => {
   }
 };
 
-// Get all businesses
+
+//get all business 
+
+// exports.getBusinessById=()=>{
+//   try{
+
+//   }
+//   catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// }
+
+// Get all approve businesses
 exports.getAllBusinesses = async (req, res) => {
   try {
     const businesses = await Business.find({status: "active"})
@@ -108,6 +120,7 @@ exports.getBusinessById = async (req, res) => {
   }
 };
 
+//get user
 exports.getBusinessesByUser = async (req, res) => {
   try {
 
