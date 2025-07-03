@@ -8,14 +8,6 @@ exports.createInstrumentFamily = async (req, res) => {
   try {
     const { userId: UserId } = req.user;
     const { instrumentFamily } = req.body;
-
-    if (!instrumentFamily || !Array.isArray(instrumentFamily) || instrumentFamily.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "instrumentFamily must be a non-empty array of strings"
-      });
-    }
-
     const user = await User.findById(UserId);
     console.log(user);
     if (!user) {
