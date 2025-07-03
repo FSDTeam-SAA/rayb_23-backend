@@ -26,5 +26,23 @@ router.post(
   messageController.sendMessage
 );
 
+router.get(
+  "/",
+  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  messageController.getMessage
+);
+
+router.get(
+  "/resiver-message",
+  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  messageController.getResiverMessage
+);
+
+router.get(
+  "/sender-message",
+  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  messageController.getSenderMessages
+);
+
 const messageRouter = router;
 module.exports = messageRouter;
