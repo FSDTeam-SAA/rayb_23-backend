@@ -27,13 +27,38 @@ const sendMessage = async (payload, email, file) => {
   return newMessage;
 };
 
-const getMessages = async (payload) => {
-  const messages = await message.find(payload);
+const getMessages = async () => {
+  const messages = await message.find({});
+  return messages;
+};
+
+const getResiverMessage = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  const messages = await message.find({ receiverId: user._id }).populate({
+    path: "senderId",
+    select: "name email",
+  });
+  return messages;
+};
+
+const getSenderMessage = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  const messages = await message.find({ senderId: user._id }).populate({
+    path: "receiverId",
+    select: "name email",
+  });
   return messages;
 };
 
 const messageService = {
   sendMessage,
+  getMessages,
+  getResiverMessage,
+  getSenderMessage,
 };
 
 module.exports = messageService;
