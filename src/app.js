@@ -33,7 +33,7 @@ io.on("connection", (socket) => {
   console.log("a user connected");
 
   socket.on("joinChat", (chatId) => {
-    socket.join(chatId);
+    socket.join(chatId.toString());
     console.log("user connected with chatId", chatId);
   });
 

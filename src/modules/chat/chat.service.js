@@ -10,14 +10,13 @@ const createChat = async (email, payload) => {
   const bussiness = await BusinessModel.findById(payload.bussinessId);
   if (!bussiness) throw new Error("Business not found");
 
-  const messages = await message.findById(payload.lastMessage);
-  if (!messages) throw new Error("Message not found");
+  // const messages = await message.findById(payload.lastMessage);
+  // if (!messages) throw new Error("Message not found");
 
   const result = await Chat.create({
     userId: user._id,
     bussinessId: bussiness._id,
-    lastMessage: messages._id,
-  });
+  }); 
 
   const populatedResult = await Chat.findById(result._id)
     .populate({
@@ -28,13 +27,39 @@ const createChat = async (email, payload) => {
       path: "bussinessId",
       select: "businessInfo",
     })
-    .populate("lastMessage");
 
   return populatedResult;
 };
 
+const getChat = async () => {
+  const result = await Chat.find({})
+    .populate({
+      path: "userId",
+      select: "name email",
+    })
+    .populate({
+      path: "bussinessId",
+      select: "businessInfo",
+    })
+    .populate("lastMessage");
+  return result;
+};
+
+const getMyChat = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  const result = await Chat.find({ userId: user._id }).populate({
+    path: "userId",
+    select: "name email",
+  });
+  return result;
+};
+
 const chatService = {
   createChat,
+  getChat,
+  getMyChat,
 };
 
 module.exports = chatService;

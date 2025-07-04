@@ -11,5 +11,17 @@ router.post(
   chatController.createChat
 );
 
+router.get(
+  "/",
+  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  chatController.getChat
+);
+
+router.get(
+  "/my-chat",
+  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  chatController.getMyChat
+);
+
 const chatRouter = router;
 module.exports = chatRouter;
