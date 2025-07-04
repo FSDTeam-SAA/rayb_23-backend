@@ -1,4 +1,6 @@
+const { io } = require("../../app");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
+const Chat = require("../chat/chat.model");
 const User = require("../user/user.model");
 const message = require("./message.model");
 
@@ -23,7 +25,12 @@ const sendMessage = async (payload, email, file) => {
     senderId: senderUser._id,
     receiverId: resiverUser._id,
     date: new Date(),
+    chat: payload.chat,
   });
+
+  await Chat.findByIdAndUpdate(payload.chat, { lastMessage: newMessage._id });
+  io.to(payload.chat.toString()).emit("message", newMessage);
+
   return newMessage;
 };
 
