@@ -74,22 +74,134 @@ exports.createBusiness = async (req, res) => {
 
 // get all business 
 
-exports.getBusiness = async () => {
+exports.getFilteredBusinesses = async (req, res) => {
   try {
-    const businesses = await Business.find({ status: "active" })
-      .populate("instrumentInfo")
-      .populate("lessonServicePrice")
-      .populate("user", "name email role");
-    return res.status(200).json({
-      success: true,
-      message: "Businesses fetched successfully",
-      data: businesses,
+    const {
+      search = "",
+      instrumentFamily,
+      instrumentName,
+      serviceName,
+      minPrice,
+      maxPrice,
+      sellInstruments,
+      buyInstruments,
+      tradeInstruments,
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const perPage = parseInt(limit);
+
+    const pipeline = [];
+
+    // Match by name and status
+    pipeline.push({
+      $match: {
+        status: "active",
+        "businessInfo.name": { $regex: search, $options: "i" }
+      }
     });
+
+    // Join instrumentInfo from Instrument collection
+    pipeline.push({
+      $lookup: {
+        from: "instruments",
+        localField: "instrumentInfo",
+        foreignField: "_id",
+        as: "instrumentInfo"
+      }
+    });
+
+    // Filtering logic on instrumentInfo
+    const instrumentMatch = {};
+
+    if (instrumentFamily) {
+      instrumentMatch.instrumentFamily = instrumentFamily;
+    }
+
+    if (instrumentName) {
+      instrumentMatch.instrumentsName = instrumentName;
+    }
+
+    if (serviceName) {
+      instrumentMatch.serviceName = serviceName;
+    }
+
+    if (minPrice || maxPrice) {
+      instrumentMatch["servicesPrice.rangePrice.min"] = {};
+      if (minPrice) {
+        instrumentMatch["servicesPrice.rangePrice.min"].$gte = Number(minPrice);
+      }
+      if (maxPrice) {
+        instrumentMatch["servicesPrice.rangePrice.min"].$lte = Number(maxPrice);
+      }
+    }
+
+    if (
+      sellInstruments === "true" ||
+      buyInstruments === "true" ||
+      tradeInstruments === "true"
+    ) {
+      instrumentMatch["$or"] = [];
+
+      if (sellInstruments === "true") {
+        instrumentMatch["$or"].push({ "buySellTrade.sellInstruments": true });
+      }
+      if (buyInstruments === "true") {
+        instrumentMatch["$or"].push({ "buySellTrade.buyInstruments": true });
+      }
+      if (tradeInstruments === "true") {
+        instrumentMatch["$or"].push({ "buySellTrade.tradeInstruments": true });
+      }
+    }
+
+    if (Object.keys(instrumentMatch).length > 0) {
+      pipeline.push({
+        $match: {
+          instrumentInfo: {
+            $elemMatch: instrumentMatch
+          }
+        }
+      });
+    }
+
+    // Count total before pagination
+    const totalPipeline = [...pipeline, { $count: "total" }];
+    const totalResult = await Business.aggregate(totalPipeline);
+    const total = totalResult[0]?.total || 0;
+    const totalPages = Math.ceil(total / perPage);
+
+    // Add pagination stage
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: perPage });
+
+    // Optional final projection
+    pipeline.push({
+      $project: {
+        businessInfo: 1,
+        instrumentInfo: 1,
+        lessonServicePrice: 1,
+        businessHours: 1,
+        status: 1
+      }
+    });
+
+    const businesses = await Business.aggregate(pipeline);
+
+   return res.status(200).json({
+      status: true,
+      message:"Business fetched successfully",
+      currentPage: parseInt(page),
+      totalPages,
+      totalItems: total,
+      data: businesses
+    });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
   }
-  catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-}
+};
+
 
 // Get all approve businesses
 exports.getAllBusinesses = async (req, res) => {
