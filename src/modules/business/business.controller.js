@@ -72,21 +72,29 @@ exports.createBusiness = async (req, res) => {
 };
 
 
-//get all business 
+// get all business 
 
-// exports.getBusinessById=()=>{
-//   try{
-
-//   }
-//   catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// }
+exports.getBusiness = async () => {
+  try {
+    const businesses = await Business.find({ status: "active" })
+      .populate("instrumentInfo")
+      .populate("lessonServicePrice")
+      .populate("user", "name email role");
+    return res.status(200).json({
+      success: true,
+      message: "Businesses fetched successfully",
+      data: businesses,
+    });
+  }
+  catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
 
 // Get all approve businesses
 exports.getAllBusinesses = async (req, res) => {
   try {
-    const businesses = await Business.find({status: "active"})
+    const businesses = await Business.find({ status: "active" })
       .populate("instrumentInfo")
       .populate("lessonServicePrice")
       .populate("user", "name email role");
@@ -125,8 +133,8 @@ exports.getBusinessesByUser = async (req, res) => {
   try {
 
 
-    const { userId:userID } = req.user;
-    
+    const { userId: userID } = req.user;
+
 
     const isExist = await User.findById({ _id: userID });
     if (!isExist) {
@@ -145,7 +153,7 @@ exports.getBusinessesByUser = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "No businesses found for this user",
-      }); 
+      });
     }
 
     return res.status(200).json({

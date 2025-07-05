@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const instrumentSchema = new mongoose.Schema({
   instrumentFamily: {
     type: String,
-    enum: ['Strings', 'Woodwinds', 'Brass', 'Percussions'],
+    enum: ['Strings', 'Woodwinds', 'Brass', 'Percussions', 'Keyboard'],
     required: true
   },
   instrumentsName: [{
