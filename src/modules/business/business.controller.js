@@ -74,7 +74,7 @@ exports.createBusiness = async (req, res) => {
 
 // get all business 
 
-exports.getFilteredBusinesses = async (req, res) => {
+exports.getAllBusinesses = async (req, res) => {
   try {
     const {
       search = "",
@@ -90,135 +90,102 @@ exports.getFilteredBusinesses = async (req, res) => {
       limit = 10
     } = req.query;
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const perPage = parseInt(limit);
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
 
-    const pipeline = [];
+    // Build query filter
+    const filter = {
+      status: "active",
+      "businessInfo.name": { $regex: search, $options: "i" }
+    };
 
-    // Match by name and status
-    pipeline.push({
-      $match: {
-        status: "active",
-        "businessInfo.name": { $regex: search, $options: "i" }
-      }
-    });
+    // Step 1: Find businesses with base filters
+    let businessesQuery = Business.find(filter)
+      .populate("instrumentInfo")
+      .populate("lessonServicePrice")
+      .populate("user", "name email role");
 
-    // Join instrumentInfo from Instrument collection
-    pipeline.push({
-      $lookup: {
-        from: "instruments",
-        localField: "instrumentInfo",
-        foreignField: "_id",
-        as: "instrumentInfo"
-      }
-    });
+    // Step 2: Apply pagination
+    businessesQuery = businessesQuery.skip(skip).limit(limitNum);
 
-    // Filtering logic on instrumentInfo
-    const instrumentMatch = {};
+    let businesses = await businessesQuery.exec();
 
-    if (instrumentFamily) {
-      instrumentMatch.instrumentFamily = instrumentFamily;
-    }
+    // Step 3: Apply in-memory filter on populated instrumentInfo
+    businesses = businesses.filter(business => {
+      const instrumentList = business.instrumentInfo || [];
 
-    if (instrumentName) {
-      instrumentMatch.instrumentsName = instrumentName;
-    }
+      return instrumentList.some(inst => {
+        const matchFamily = instrumentFamily ? inst.instrumentFamily === instrumentFamily : true;
+        const matchName = instrumentName ? inst.instrumentsName.includes(instrumentName) : true;
+        const matchService = serviceName ? inst.serviceName === serviceName : true;
 
-    if (serviceName) {
-      instrumentMatch.serviceName = serviceName;
-    }
-
-    if (minPrice || maxPrice) {
-      instrumentMatch["servicesPrice.rangePrice.min"] = {};
-      if (minPrice) {
-        instrumentMatch["servicesPrice.rangePrice.min"].$gte = Number(minPrice);
-      }
-      if (maxPrice) {
-        instrumentMatch["servicesPrice.rangePrice.min"].$lte = Number(maxPrice);
-      }
-    }
-
-    if (
-      sellInstruments === "true" ||
-      buyInstruments === "true" ||
-      tradeInstruments === "true"
-    ) {
-      instrumentMatch["$or"] = [];
-
-      if (sellInstruments === "true") {
-        instrumentMatch["$or"].push({ "buySellTrade.sellInstruments": true });
-      }
-      if (buyInstruments === "true") {
-        instrumentMatch["$or"].push({ "buySellTrade.buyInstruments": true });
-      }
-      if (tradeInstruments === "true") {
-        instrumentMatch["$or"].push({ "buySellTrade.tradeInstruments": true });
-      }
-    }
-
-    if (Object.keys(instrumentMatch).length > 0) {
-      pipeline.push({
-        $match: {
-          instrumentInfo: {
-            $elemMatch: instrumentMatch
+        const priceMatch = inst.servicesPrice?.some(price => {
+          if (price.priceType === "Range" && price.rangePrice) {
+            const minMatch = minPrice ? price.rangePrice.min >= Number(minPrice) : true;
+            const maxMatch = maxPrice ? price.rangePrice.max <= Number(maxPrice) : true;
+            return minMatch && maxMatch;
           }
-        }
+          return true;
+        }) ?? true;
+
+        const matchSell = sellInstruments === "true" ? inst.buySellTrade?.sellInstruments : true;
+        const matchBuy = buyInstruments === "true" ? inst.buySellTrade?.buyInstruments : true;
+        const matchTrade = tradeInstruments === "true" ? inst.buySellTrade?.tradeInstruments : true;
+
+        return matchFamily && matchName && matchService && priceMatch && matchSell && matchBuy && matchTrade;
       });
-    }
-
-    // Count total before pagination
-    const totalPipeline = [...pipeline, { $count: "total" }];
-    const totalResult = await Business.aggregate(totalPipeline);
-    const total = totalResult[0]?.total || 0;
-    const totalPages = Math.ceil(total / perPage);
-
-    // Add pagination stage
-    pipeline.push({ $skip: skip });
-    pipeline.push({ $limit: perPage });
-
-    // Optional final projection
-    pipeline.push({
-      $project: {
-        businessInfo: 1,
-        instrumentInfo: 1,
-        lessonServicePrice: 1,
-        businessHours: 1,
-        status: 1
-      }
     });
 
-    const businesses = await Business.aggregate(pipeline);
+    const total = await Business.countDocuments(filter);
+    const totalPages = Math.ceil(total / limitNum);
 
    return res.status(200).json({
-      status: true,
-      message:"Business fetched successfully",
-      currentPage: parseInt(page),
+      success: true,
+      message: "Businesses fetched successfully",
+      currentPage: pageNum,
       totalPages,
       totalItems: total,
       data: businesses
     });
   } catch (error) {
-    res.status(500).json({ status: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 
+
 // Get all approve businesses
-exports.getAllBusinesses = async (req, res) => {
+exports.getAllBusinessesAdmin = async (req, res) => {
   try {
-    const businesses = await Business.find({ status: "active" })
+    const page = parseInt(req.query.page) || 1; // default page = 1
+    const limit = parseInt(req.query.limit) || 10; // default limit = 10
+    const skip = (page - 1) * limit;
+
+    const total = await Business.countDocuments();
+
+    const businesses = await Business.find()
+      .skip(skip)
+      .limit(limit)
       .populate("instrumentInfo")
       .populate("lessonServicePrice")
       .populate("user", "name email role");
+
+    const totalPages = Math.ceil(total / limit);
+
     return res.status(200).json({
       success: true,
       message: "Businesses fetched successfully",
+      currentPage: page,
+      totalPages,
+      totalItems: total,
       data: businesses,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 //_____________________
 // Get business by ID
@@ -289,7 +256,6 @@ exports.updateBusiness = async (req, res) => {
       return res.status(400).json({ status: false, message: "User not found" });
     }
 
-    // Ensure business ID is provided
     const { id } = req.params;
     if (!id) {
       return res
@@ -297,16 +263,16 @@ exports.updateBusiness = async (req, res) => {
         .json({ status: false, message: "Business ID is required" });
     }
 
-    // Ensure 'data' field exists
     if (!req.body.data) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing 'data' field in form-data" });
+      return res.status(400).json({
+        success: false,
+        message: "Missing 'data' field in form-data",
+      });
     }
 
     const data = JSON.parse(req.body.data);
 
-    // Optionally update image(s)
+    // ✅ Optional image upload
     let uploadedImages;
     if (req.files && req.files.length > 0) {
       uploadedImages = await Promise.all(
@@ -322,14 +288,14 @@ exports.updateBusiness = async (req, res) => {
       );
     }
 
-    // Save new instruments if provided
+    // ✅ Save new instrumentInfo if provided
     let instrumentIds = [];
     if (data.instrumentInfo && Array.isArray(data.instrumentInfo)) {
       const savedInstruments = await Instrument.insertMany(data.instrumentInfo);
       instrumentIds = savedInstruments.map((inst) => inst._id);
     }
 
-    // Save new lesson service if provided
+    // ✅ Save new lessonServicePrice if provided
     let savedLessonServiceId = null;
     if (data.lessonServicePrice) {
       const lessonService = new LessonService(data.lessonServicePrice);
@@ -337,7 +303,7 @@ exports.updateBusiness = async (req, res) => {
       savedLessonServiceId = savedLessonService._id;
     }
 
-    // Prepare update object
+    // ✅ Prepare update payload
     const updatePayload = {
       businessInfo: {
         ...data.businessInfo,
@@ -346,15 +312,14 @@ exports.updateBusiness = async (req, res) => {
       businessHours: data.businessHours || [],
     };
 
+    if ("status" in data) updatePayload.status = data.status;
     if (instrumentIds.length) updatePayload.instrumentInfo = instrumentIds;
     if (savedLessonServiceId)
       updatePayload.lessonServicePrice = savedLessonServiceId;
 
-    const updatedBusiness = await Business.findByIdAndUpdate(
-      id,
-      updatePayload,
-      { new: true }
-    );
+    const updatedBusiness = await Business.findByIdAndUpdate(id, updatePayload, {
+      new: true,
+    });
 
     if (!updatedBusiness) {
       return res

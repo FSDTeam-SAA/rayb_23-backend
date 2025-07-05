@@ -18,11 +18,11 @@ router.post(
 
 //get all business
 
-// router.get("/get-all", )
+router.get("/", getAllBusinesses )
 
 
 // Get all approve businesses
-router.get("/all", getAllBusinesses);
+router.get("/all", getAllBusinessesAdmin);
 // router.get("/", getAllBusinesses);
 
 //get by user
