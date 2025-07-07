@@ -231,5 +231,31 @@ exports.updateReview = async (req, res) => {
 
 //delete
 
+exports.deleteReview = async (req, res) => {
+    try {
+        const { email: userEmail } = req.user;
+        const user = await User.findOne({ email: userEmail });
+
+        if (!user) {
+            return res
+                .status(400)
+                .json({ status: false, message: "User not found" });
+        }
+
+        const { id } = req.params;
+        if (!id) {
+            return res
+                .status(400)
+                .json({ status: false, message: "Review ID is required" });
+        }
+        await Business.findByIdAndDelete(id);
+        res
+            .status(200)
+            .json({ success: true, message: "Business deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
 
 
