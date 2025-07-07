@@ -71,7 +71,7 @@ exports.createReview = async (req, res) => {
 
 //get all review by admin.
 
-exports.getReviewsBy = async (req, res) => {
+exports.getReviewsByAdmin = async (req, res) => {
     try {
         const reviews = await Review.find()
             .populate("business")
