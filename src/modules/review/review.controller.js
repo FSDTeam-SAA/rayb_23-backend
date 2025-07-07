@@ -73,6 +73,17 @@ exports.createReview = async (req, res) => {
 
 exports.getReviewsByAdmin = async (req, res) => {
     try {
+        const { email: userEmail } = req.user;
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(400).json({ status: false, message: "User not found" });
+        };
+        if (user.role !== "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Admins only.",
+            });
+        }
         const reviews = await Review.find()
             .populate("business")
             .populate("user")
