@@ -104,6 +104,14 @@ exports.getAllBusinesses = async (req, res) => {
     let businessesQuery = Business.find(filter)
       .populate("instrumentInfo")
       .populate("lessonServicePrice")
+       .populate({
+        path: "review",
+        match: { status: "approved" }, 
+        populate: {
+          path: "user",
+          select: "name email",
+        },
+      })
       .populate("user", "name email role");
 
     // Step 2: Apply pagination
@@ -169,6 +177,13 @@ exports.getAllBusinessesAdmin = async (req, res) => {
       .limit(limit)
       .populate("instrumentInfo")
       .populate("lessonServicePrice")
+       .populate({
+        path: "review",
+        populate: {
+          path: "user",
+          select: "name email",
+        },
+      })
       .populate("user", "name email role");
 
     const totalPages = Math.ceil(total / limit);
