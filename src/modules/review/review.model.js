@@ -22,6 +22,19 @@ const reviewSchema = new mongoose.Schema(
       ref: "Business",
       required: true,
     },
+    report:{
+        isReport:{
+            type:Boolean,
+            enum: [true, false],
+            default:false
+        },
+        reportMessage: {
+            type:String
+        }
+    },
+    replay:{
+        type:String,
+    }
   },
   {
     timestamps: true,

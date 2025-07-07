@@ -84,19 +84,82 @@ exports.getReviewsByAdmin = async (req, res) => {
                 message: "Access denied. Admins only.",
             });
         }
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+        const totalReviews = await Review.countDocuments();
+
+
         const reviews = await Review.find()
             .populate("business")
             .populate("user")
+            .skip(skip)
+            .limit(limit);
+
         return res.status(200).json({
             status: true,
             message: "Review fetched successfully",
+            currentPage: page,
+            totalPages: Math.ceil(totalReviews / limit),
+            totalItems: totalReviews,
+            data: reviews
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            status: false,
+            message: "Server error",
+            error: err.message,
+        });
+    }
+};
+exports.getReviews = async (req, res) => {
+    try {
+
+        const { email: userEmail } = req.user;
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(400).json({ status: false, message: "User not found" });
+        };
+
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+        const totalReviews = await Review.countDocuments();
+
+        const reviews = await Review.find()
+            .populate("business")
+            .populate("user")
+            .skip(skip)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+        return res.status(200).json({
+            status: true,
+            message: "Review fetched successfully",
+            currentPage: page,
+            totalPages: Math.ceil(totalReviews / limit),
+            totalItems: totalReviews,
             data: reviews
         });
     } catch (err) {
         res.status(500).json({
             status: false,
             message: "Server error",
-            error: error.message,
+            error: err.message,
         });
     }
 };
+
+exports.getMyReview = async (req, res) => {
+    try {
+
+    }
+    catch (err) {
+        return res.status(500).json({
+            status: false,
+            message: "Server error",
+            error: err.message,
+        });
+    }
+}
+
