@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
-const reviewSchema = new Schema(
+const reviewSchema = new mongoose.Schema(
   {
     rating: { type: Number, min: 1, max: 5, required: true },
     feedback: { type: String, required: true },
-    photos: [String], // image URLs
+    image: [String], // image URLs
 
     status: {
       type: String,

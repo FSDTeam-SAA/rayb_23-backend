@@ -9,6 +9,7 @@ const claimBussinessRouter = require("../modules/claimBussiness/claimBussiness.r
 const instrumentFamilyRouter = require("../modules/instrumentFamily/instrumentFamily.router");
 const messageRouter = require("../modules/message/message.router");
 const chatRouter = require("../modules/chat/chat.router");
+const reviewRouter = require("../modules/review/review.router");
 
 const router = Router();
 
@@ -38,6 +39,10 @@ const moduleRouter = [
   {
     path: "/instrument-family",
     router: instrumentFamilyRouter,
+  },
+  {
+    path:"/review",
+    router:reviewRouter,
   },
   {
     path: "/message",
