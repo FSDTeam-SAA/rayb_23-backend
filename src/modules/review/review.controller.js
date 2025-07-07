@@ -2,7 +2,7 @@ const Review = require("./review.model");
 const Business = require("../business/business.model");
 const User = require("../user/user.model");
 const { sendImageToCloudinary } = require("../../utils/cloudnary"); // assume you're using this
-
+const fs = require("fs");
 //Create review
 
 exports.createReview = async (req, res) => {
@@ -113,7 +113,8 @@ exports.getReviewsByAdmin = async (req, res) => {
         });
     }
 };
-exports.getReviews = async (req, res) => {
+//
+exports.getMyReviews = async (req, res) => {
     try {
 
         const { email: userEmail } = req.user;
@@ -127,7 +128,7 @@ exports.getReviews = async (req, res) => {
         const skip = (page - 1) * limit;
         const totalReviews = await Review.countDocuments();
 
-        const reviews = await Review.find()
+        const reviews = await Review.find({ email: userEmail })
             .populate("business")
             .populate("user")
             .skip(skip)
@@ -150,16 +151,85 @@ exports.getReviews = async (req, res) => {
     }
 };
 
-exports.getMyReview = async (req, res) => {
-    try {
 
-    }
-    catch (err) {
+
+exports.updateReview = async (req, res) => {
+    try {
+        const { email: userEmail } = req.user;
+        const user = await User.findOne({ email: userEmail });
+
+        if (!user) {
+            return res
+                .status(400)
+                .json({ status: false, message: "User not found" });
+        }
+
+        const { id } = req.params;
+        if (!id) {
+            return res
+                .status(400)
+                .json({ status: false, message: "Review ID is required" });
+        }
+
+        if (!req.body.data) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing 'data' field in form-data",
+            });
+        }
+
+        const data = JSON.parse(req.body.data);
+        const { rating, feedback, status } = data;
+
+        let uploadedImages = [];
+
+        if (req.files && req.files.length > 0) {
+            uploadedImages = await Promise.all(
+                req.files.map(async (file) => {
+                    const imageName = `Review/${Date.now()}_${file.originalname}`;
+                    const { secure_url } = await sendImageToCloudinary(
+                        imageName,
+                        file.path
+                    );
+                    fs.unlinkSync(file.path); // delete temp file
+                    return secure_url;
+                })
+            );
+        }
+
+        // Prepare update object
+        const updatePayload = {};
+        if (rating !== undefined) updatePayload.rating = rating;
+        if (feedback !== undefined) updatePayload.feedback = feedback;
+        if (status !== undefined) updatePayload.status = status;
+        if (uploadedImages.length > 0) updatePayload.photos = uploadedImages;
+
+        const updatedReview = await Review.findByIdAndUpdate(id, updatePayload, {
+            new: true,
+        });
+
+        if (!updatedReview) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Review not found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Review updated successfully",
+            data: updatedReview,
+        });
+    } catch (error) {
+        console.error("Update review error:", error);
         return res.status(500).json({
-            status: false,
+            success: false,
             message: "Server error",
-            error: err.message,
+            error: error.message,
         });
     }
-}
+};
+
+//delete
+
+
 
