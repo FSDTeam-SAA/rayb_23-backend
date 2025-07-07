@@ -1,22 +1,33 @@
 const mongoose = require("mongoose");
 
-const ReviewSchema = new Schema({
-    rating: {
-        type: Number,
-        required: true,
-        min: 1,
-        max: 5
+const reviewSchema = new Schema(
+  {
+    rating: { type: Number, min: 1, max: 5, required: true },
+    feedback: { type: String, required: true },
+    photos: [String], // image URLs
+
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
     },
-    feedback: {
-        type: String,
-        required: true
+
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
-    photos: [String],
-},
-    {
-        timestamps: true,
-    }
+
+    business: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Business",
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
 );
 
-const ReviewModel = mongoose.model("Review", ReviewSchema);
+const ReviewModel = mongoose.model("Review", reviewSchema);
+
 module.exports = ReviewModel;
