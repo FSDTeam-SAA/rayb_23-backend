@@ -46,7 +46,6 @@ const businessSchema = new mongoose.Schema(
         },
         isOpen: { type: Boolean, default: false },
         openTime: { type: String },
-
         closeTime: { type: String }
       }],
     status: {

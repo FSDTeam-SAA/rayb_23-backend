@@ -3,8 +3,8 @@ const message = require("../message/message.model");
 const User = require("../user/user.model");
 const Chat = require("./chat.model");
 
-const createChat = async (email, payload) => {
-  const user = await User.findOne({ email });
+const createChat = async (payload) => {
+  const user = await User.findById(payload.userId);
   if (!user) throw new Error("User not found");
 
   const bussiness = await BusinessModel.findById(payload.bussinessId);
@@ -16,7 +16,7 @@ const createChat = async (email, payload) => {
   const result = await Chat.create({
     userId: user._id,
     bussinessId: bussiness._id,
-  }); 
+  });
 
   const populatedResult = await Chat.findById(result._id)
     .populate({
@@ -26,7 +26,7 @@ const createChat = async (email, payload) => {
     .populate({
       path: "bussinessId",
       select: "businessInfo",
-    })
+    });
 
   return populatedResult;
 };
@@ -45,8 +45,8 @@ const getChat = async () => {
   return result;
 };
 
-const getMyChat = async (email) => {
-  const user = await User.findOne({ email });
+const getMyChat = async (payload) => {
+  const user = await User.findById(payload.userId);
   if (!user) throw new Error("User not found");
 
   const result = await Chat.find({ userId: user._id }).populate({

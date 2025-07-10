@@ -22,7 +22,7 @@ router.post(
     }
     next();
   },
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   messageController.sendMessage
 );
 
@@ -34,13 +34,13 @@ router.get(
 
 router.get(
   "/resiver-message",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   messageController.getResiverMessage
 );
 
 router.get(
   "/sender-message",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   messageController.getSenderMessages
 );
 
