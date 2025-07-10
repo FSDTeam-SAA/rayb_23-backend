@@ -4,32 +4,67 @@ const Chat = require("../chat/chat.model");
 const User = require("../user/user.model");
 const message = require("./message.model");
 
-const sendMessage = async (payload, email, file) => {
-  const senderUser = await User.findOne({ email });
-  if (!senderUser) throw new Error("sender not found");
+// const sendMessage = async (payload, file) => {
+//   const { senderId, receiverId } = payload;
+//   const senderUser = await User.findById(senderId);
+//   if (!senderUser) throw new Error("Sender not found");
+//   //TODO: i thing there some logic will add there for user.
 
-  //TODO: i thing there some logic will add there for user.
+//   const resiverUser = await User.findById(receiverId);
+//   if (!resiverUser) throw new Error("Receiver not found");
 
-  const resiverUser = await User.findById(payload.receiverId);
-  if (!resiverUser) throw new Error("Receiver not found");
+//   if (file) {
+//     const imageName = `${Date.now()}-${file.originalname}`;
+//     const path = file?.path;
+//     const { secure_url } = await sendImageToCloudinary(imageName, path);
+//     payload.image = secure_url;
+//   }
+
+//   const newMessage = await message.create({
+//     ...payload,
+//     senderId,
+//     receiverId,
+//     date: new Date(),
+//     chat: payload.chat,
+//   });
+//   console.log(payload.chat);
+
+//   io.to(payload.chat.toString()).emit("message", newMessage);
+//   await Chat.findByIdAndUpdate(payload.chat, { lastMessage: newMessage._id });
+
+//   return newMessage;
+// };
+
+const sendMessage = async (payload, file, io) => {
+  const { senderId, receiverId } = payload;
+
+  const senderUser = await User.findById(senderId);
+  if (!senderUser) throw new Error("Sender not found");
+
+  const receiverUser = await User.findById(receiverId);
+  if (!receiverUser) throw new Error("Receiver not found");
 
   if (file) {
     const imageName = `${Date.now()}-${file.originalname}`;
-    const path = file?.path;
+    const path = file.path;
     const { secure_url } = await sendImageToCloudinary(imageName, path);
     payload.image = secure_url;
   }
 
   const newMessage = await message.create({
     ...payload,
-    senderId: senderUser._id,
-    receiverId: resiverUser._id,
+    senderId,
+    receiverId,
     date: new Date(),
     chat: payload.chat,
   });
 
-  await Chat.findByIdAndUpdate(payload.chat, { lastMessage: newMessage._id });
+  console.log(payload.chat);
+
+  // ✅ now io is passed properly and is defined here
   io.to(payload.chat.toString()).emit("message", newMessage);
+
+  await Chat.findByIdAndUpdate(payload.chat, { lastMessage: newMessage._id });
 
   return newMessage;
 };
@@ -39,8 +74,8 @@ const getMessages = async () => {
   return messages;
 };
 
-const getResiverMessage = async (email) => {
-  const user = await User.findOne({ email });
+const getResiverMessage = async (payload) => {
+  const user = await User.findById(payload.userId);
   if (!user) throw new Error("User not found");
 
   const messages = await message.find({ receiverId: user._id }).populate({
@@ -50,8 +85,8 @@ const getResiverMessage = async (email) => {
   return messages;
 };
 
-const getSenderMessage = async (email) => {
-  const user = await User.findOne({ email });
+const getSenderMessage = async (payload) => {
+  const user = await User.findById(payload.userId);
   if (!user) throw new Error("User not found");
 
   const messages = await message.find({ senderId: user._id }).populate({

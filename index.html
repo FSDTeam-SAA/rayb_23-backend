@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Socket.IO 1:1 Chat Tester</title>
+<style>
+  body { font-family: monospace; padding: 1rem; }
+  #events {
+    white-space: pre-wrap;
+    border: 1px solid #ccc;
+    padding: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+  }
+  input, button, textarea {
+    margin: 0.5rem 0;
+    display: block;
+    width: 100%;
+    max-width: 500px;
+  }
+  label { font-weight: bold; margin-top: 1rem; display: block; }
+</style>
+</head>
+<body>
+<h2>Socket.IO 1:1 Chat Tester</h2>
+
+<label>
+  Chat ID:
+  <input id="chatId" placeholder="Enter chatId" />
+</label>
+<button id="connectBtn">Connect</button>
+<div id="status">Disconnected</div>
+
+<h3>Send Message</h3>
+<label>
+  Message:
+  <textarea id="messageContent" rows="3" placeholder="Enter your message"></textarea>
+</label>
+<label>
+  Image (optional):
+  <input id="imageFile" type="file" accept="image/*" />
+</label>
+<button id="sendMessageBtn" disabled>Send Message</button>
+
+<h3>Events:</h3>
+<div id="events"></div>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+let socket;
+const eventsDiv = document.getElementById("events");
+const statusDiv = document.getElementById("status");
+const connectBtn = document.getElementById("connectBtn");
+const chatIdInput = document.getElementById("chatId");
+
+const sendMessageBtn = document.getElementById("sendMessageBtn");
+const messageContentInput = document.getElementById("messageContent");
+const imageFileInput = document.getElementById("imageFile");
+
+function logEvent(text) {
+  const time = new Date().toLocaleTimeString();
+  eventsDiv.textContent += `[${time}] ${text}\n`;
+  eventsDiv.scrollTop = eventsDiv.scrollHeight;
+}
+
+connectBtn.onclick = () => {
+  if (socket && socket.connected) {
+    socket.disconnect();
+    statusDiv.textContent = "Disconnected";
+    connectBtn.textContent = "Connect";
+    sendMessageBtn.disabled = true;
+    logEvent("Disconnected manually");
+    return;
+  }
+
+  const chatId = chatIdInput.value.trim();
+  if (!chatId) {
+    alert("Please enter a chat ID");
+    return;
+  }
+
+  socket = io("http://localhost:8001"); // ✅ Use your correct port
+
+  socket.on("connect", () => {
+    statusDiv.textContent = "Connected";
+    connectBtn.textContent = "Disconnect";
+    sendMessageBtn.disabled = false;
+    logEvent(`Connected with socket ID: ${socket.id}`);
+
+    socket.emit("joinChat", chatId);
+    logEvent(`Joined chat: ${chatId}`);
+  });
+
+  socket.on("newMessage", (msg) => {
+    logEvent(`New Message: ${JSON.stringify(msg)}`);
+  });
+
+  socket.on("disconnect", () => {
+    statusDiv.textContent = "Disconnected";
+    connectBtn.textContent = "Connect";
+    sendMessageBtn.disabled = true;
+    logEvent("Disconnected from server");
+  });
+};
+
+sendMessageBtn.onclick = async () => {
+  if (!socket || !socket.connected) {
+    alert("Not connected to socket");
+    return;
+  }
+
+  const chatId = chatIdInput.value.trim();
+  const content = messageContentInput.value.trim();
+  const imageFile = imageFileInput.files[0] || null;
+
+  if (!content && !imageFile) {
+    alert("Please enter a message or select an image");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("message", content);
+  formData.append("chat", chatId);
+  if (imageFile) formData.append("image", imageFile);
+
+  try {
+    const response = await fetch(`http://localhost:8001/api/v1/message`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const responseText = await response.text();
+
+    try {
+      const responseData = JSON.parse(responseText);
+
+      if (!response.ok) {
+        alert("Failed: " + (responseData.message || response.statusText));
+        return;
+      }
+
+      logEvent(`REST Response: ${JSON.stringify(responseData)}`);
+
+      socket.emit("sendMessage", responseData.data);
+
+      messageContentInput.value = "";
+      imageFileInput.value = "";
+    } catch (jsonErr) {
+      console.error("Invalid JSON:", responseText);
+      alert("Server did not return valid JSON.");
+    }
+
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+};
+</script>
+</body>
+</html>

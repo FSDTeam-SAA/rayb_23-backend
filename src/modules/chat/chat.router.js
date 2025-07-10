@@ -7,19 +7,19 @@ const router = Router();
 
 router.post(
   "/create",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   chatController.createChat
 );
 
 router.get(
   "/",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   chatController.getChat
 );
 
 router.get(
   "/my-chat",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   chatController.getMyChat
 );
 
