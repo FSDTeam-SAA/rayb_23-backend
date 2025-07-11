@@ -13,14 +13,23 @@ const loginUser = async (payload) => {
     throw new Error("User not found");
   }
 
-  if (
-    user.isDeactived &&
-    user.isActive &&
-    user.deactivedEndDate <= new Date()
-  ) {
-    user.isActive = false;
-    await user.save();
-    throw new Error("Your account has been deactivated");
+  if (!user.isActive) {
+    throw new Error("Account permanently deactivated");
+  }
+
+  if (user.isDeactived) {
+    const now = new Date();
+    if (now > user.deactivedEndDate) {
+      user.isActive = false;
+      user.isDeactived = true;
+      await user.save();
+      throw new Error("Account permanently deactivated");
+    } else {
+      user.isDeactived = false;
+      user.deactivedStartDate = null;
+      user.deactivedEndDate = null;
+      await user.save();
+    }
   }
 
   if (!user.isVerified) {

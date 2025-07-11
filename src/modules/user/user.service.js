@@ -174,26 +174,26 @@ const updateUserProfile = async (payload, email, file) => {
 };
 
 const deactiveAccount = async (email, payload) => {
-  const result = await User.findOne({ email });
-  if (!result) throw new Error("User not found");
+  const isExistingUser = await User.findOne({ email });
+  if (!isExistingUser) throw new Error("User not found");
 
-  const currentDate = new Date();
-  const endDate = new Date();
-  endDate.setDate(currentDate.getDate() + 30);
+  const now = new Date();
+  const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  // const endDate = new Date(now.getTime() + 2 * 60 * 1000); //?for testing 2 minutes....
 
-  const updatedUser = await User.findOneAndUpdate(
+  const user = await User.findByIdAndUpdate(
+    isExistingUser._id,
     {
-      email,
-    },
-    {
-      ...payload,
-      isDeactived: true,
-      deactivedStartDate: currentDate,
-      deactivedEndDate: endDate,
+      $set: {
+        isDeactived: true,
+        deactivedStartDate: now,
+        deactivedEndDate: endDate,
+        deactivedReason: payload.deactivedReason || null,
+      },
     },
     { new: true }
-  ).select("-password -otp -otpExpires");
-  return updatedUser;
+  );
+  return user;
 };
 
 const deletedUserAccount = async (userId) => {

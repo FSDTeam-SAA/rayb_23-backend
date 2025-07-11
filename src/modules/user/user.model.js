@@ -1,8 +1,5 @@
 const { Schema, model } = require("mongoose");
-const config = require("../../config");
 const bcrypt = require("bcrypt");
-
-//TODO:  need phone verification
 
 const userModel = new Schema(
   {
@@ -23,8 +20,6 @@ const userModel = new Schema(
     },
     phone: {
       type: String,
-      // required: [true, "Phone is required"],
-      // unique: [true, "Phone number must be unique"],
     },
     isVerified: {
       type: Boolean,
@@ -37,8 +32,7 @@ const userModel = new Schema(
     resetPasswordOtpExpires: { type: Date, default: null },
     userType: {
       type: String,
-      // enum: ["user", "bussinessMan"],
-      // default: "user", //! check this ageain
+      enum: ["user", "bussinessMan"],
     },
     isActive: {
       type: Boolean,
@@ -60,6 +54,10 @@ const userModel = new Schema(
       // it's change able because after dective in 30 days user also login. when user deactive his account then i will update that isDeactived to true. When user login again in 30 days then i will update that isDeactived to false and set deactivedStartDate and deactivedEndDate to null. After 30 days then i will update isActive to false. [isActive is permanent field].
       type: Boolean,
       default: false,
+    },
+    address: {
+      type: String,
+      default: null,
     },
   },
   { timestamps: true, versionKey: false }
