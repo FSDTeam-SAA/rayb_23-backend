@@ -4,36 +4,6 @@ const Chat = require("../chat/chat.model");
 const User = require("../user/user.model");
 const message = require("./message.model");
 
-// const sendMessage = async (payload, file) => {
-//   const { senderId, receiverId } = payload;
-//   const senderUser = await User.findById(senderId);
-//   if (!senderUser) throw new Error("Sender not found");
-//   //TODO: i thing there some logic will add there for user.
-
-//   const resiverUser = await User.findById(receiverId);
-//   if (!resiverUser) throw new Error("Receiver not found");
-
-//   if (file) {
-//     const imageName = `${Date.now()}-${file.originalname}`;
-//     const path = file?.path;
-//     const { secure_url } = await sendImageToCloudinary(imageName, path);
-//     payload.image = secure_url;
-//   }
-
-//   const newMessage = await message.create({
-//     ...payload,
-//     senderId,
-//     receiverId,
-//     date: new Date(),
-//     chat: payload.chat,
-//   });
-//   console.log(payload.chat);
-
-//   io.to(payload.chat.toString()).emit("message", newMessage);
-//   await Chat.findByIdAndUpdate(payload.chat, { lastMessage: newMessage._id });
-
-//   return newMessage;
-// };
 
 const sendMessage = async (payload, file, io) => {
   const { senderId, receiverId } = payload;
@@ -59,11 +29,8 @@ const sendMessage = async (payload, file, io) => {
     chat: payload.chat,
   });
 
-  console.log(payload.chat);
 
-  // ✅ now io is passed properly and is defined here
   io.to(payload.chat.toString()).emit("message", newMessage);
-
   await Chat.findByIdAndUpdate(payload.chat, { lastMessage: newMessage._id });
 
   return newMessage;
