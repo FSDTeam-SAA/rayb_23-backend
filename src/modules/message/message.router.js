@@ -1,7 +1,5 @@
 const { Router } = require("express");
 const messageController = require("./message.controller");
-const auth = require("../../middleware/auth");
-const USER_ROLE = require("../user/user.constant");
 const { upload } = require("../../utils/cloudnary");
 
 const router = Router();
@@ -12,7 +10,7 @@ router.post(
   (req, res, next) => {
     if (req.body?.data) {
       try {
-        req.body = JSON.parse(req.body.data);
+        req.parsedData = JSON.parse(req.body.data);
       } catch (err) {
         return res.status(400).json({
           success: false,
@@ -22,7 +20,6 @@ router.post(
     }
     next();
   },
-  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   messageController.sendMessage
 );
 
