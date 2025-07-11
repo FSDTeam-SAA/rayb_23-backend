@@ -44,5 +44,17 @@ router.put(
   claimBussinessController.toggleClaimBussinessStatus
 );
 
+router.post(
+  "/send-otp/:bussinessId",
+  // auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  claimBussinessController.sendOtp
+);
+
+router.post(
+  "/verify-email/:bussinessId",
+  // auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  claimBussinessController.bussinessEmailVerify
+);
+
 const claimBussinessRouter = router;
 module.exports = claimBussinessRouter;
