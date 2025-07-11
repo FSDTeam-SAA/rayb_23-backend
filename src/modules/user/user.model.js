@@ -51,7 +51,6 @@ const userModel = new Schema(
       default: null,
     },
     isDeactived: {
-      // it's change able because after dective in 30 days user also login. when user deactive his account then i will update that isDeactived to true. When user login again in 30 days then i will update that isDeactived to false and set deactivedStartDate and deactivedEndDate to null. After 30 days then i will update isActive to false. [isActive is permanent field].
       type: Boolean,
       default: false,
     },
