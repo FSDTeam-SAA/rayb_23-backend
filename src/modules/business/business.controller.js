@@ -104,9 +104,9 @@ exports.getAllBusinesses = async (req, res) => {
     let businessesQuery = Business.find(filter)
       .populate("instrumentInfo")
       .populate("lessonServicePrice")
-       .populate({
+      .populate({
         path: "review",
-        match: { status: "approved" }, 
+        match: { status: "approved" },
         populate: {
           path: "user",
           select: "name email",
@@ -148,7 +148,7 @@ exports.getAllBusinesses = async (req, res) => {
     const total = await Business.countDocuments(filter);
     const totalPages = Math.ceil(total / limitNum);
 
-   return res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Businesses fetched successfully",
       currentPage: pageNum,
@@ -172,12 +172,17 @@ exports.getAllBusinessesAdmin = async (req, res) => {
 
     const total = await Business.countDocuments();
 
-    const businesses = await Business.find()
+    const filter = {
+      status: "active",
+      "businessInfo.name": { $regex: search, $options: "i" }
+    };
+
+    const businesses = await Business.find(filter)
       .skip(skip)
       .limit(limit)
       .populate("instrumentInfo")
       .populate("lessonServicePrice")
-       .populate({
+      .populate({
         path: "review",
         populate: {
           path: "user",
