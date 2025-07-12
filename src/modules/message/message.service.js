@@ -5,14 +5,20 @@ const User = require("../user/user.model");
 const message = require("./message.model");
 
 const sendMessage = async (payload, file, io) => {
-  const { senderId, receiverId } = payload;
+  const { senderId, receiverId, chat } = payload;
 
-  // const senderUser = await User.findById(senderId);
-  // if (!senderUser) throw new Error("Sender not found");
+  // console.log("senderId:", senderId);
+  // console.log("receiverId:", receiverId);
 
+  // Validate sender
+  const senderUser = await User.findById(senderId);
+  if (!senderUser) throw new Error("Sender not found");
+
+  // Validate receiver
   const receiverUser = await User.findById(receiverId);
   if (!receiverUser) throw new Error("Receiver not found");
 
+  // Upload image if provided
   if (file) {
     const imageName = `${Date.now()}-${file.originalname}`;
     const path = file.path;
@@ -20,16 +26,20 @@ const sendMessage = async (payload, file, io) => {
     payload.image = secure_url;
   }
 
+  // Create message
   const newMessage = await message.create({
     ...payload,
     senderId,
     receiverId,
     date: new Date(),
-    chat: payload.chat,
+    chat,
   });
 
-  io.to(payload.chat.toString()).emit("message", newMessage);
-  await Chat.findByIdAndUpdate(payload.chat, { lastMessage: newMessage._id });
+  // Notify all clients in this chat room
+  io.to(chat.toString()).emit("message", newMessage);
+
+  // Update lastMessage in chat
+  await Chat.findByIdAndUpdate(chat, { lastMessage: newMessage._id });
 
   return newMessage;
 };
