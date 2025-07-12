@@ -40,8 +40,8 @@ const getMessage = async (req, res) => {
 const getResiverMessage = async (req, res) => {
   try {
     // const { email } = req.user;
-
-    const result = await messageService.getResiverMessage(email, req.body);
+    const { resiverId } = req.params;
+    const result = await messageService.getResiverMessage( resiverId);
 
     return res.status(200).json({
       success: true,
@@ -58,8 +58,8 @@ const getResiverMessage = async (req, res) => {
 
 const getSenderMessages = async (req, res) => {
   try {
-    // const { email } = req.user;
-    const result = await messageService.getSenderMessage(email, req.body);
+    const { senderId } = req.params;
+    const result = await messageService.getSenderMessage(senderId);
 
     return res.status(200).json({
       success: true,

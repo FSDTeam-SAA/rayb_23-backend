@@ -5,10 +5,19 @@ const User = require("../user/user.model");
 const message = require("./message.model");
 
 const sendMessage = async (payload, file, io) => {
-  const { senderId, receiverId } = payload;
+  const { senderId, chat } = payload;
 
   const senderUser = await User.findById(senderId);
   if (!senderUser) throw new Error("Sender not found");
+
+  const chatData = await Chat.findById(chat);
+  if (!chatData) throw new Error("Chat not found");
+
+  const receiverId = chatData.userId.equals(senderId)
+    ? chatData.bussinessId
+    : chatData.userId;
+
+  console.log(receiverId);
 
   const receiverUser = await User.findById(receiverId);
   if (!receiverUser) throw new Error("Receiver not found");
@@ -23,9 +32,9 @@ const sendMessage = async (payload, file, io) => {
   const newMessage = await message.create({
     ...payload,
     senderId,
-    receiverId,
+    receiverId: receiverUser._id,
     date: new Date(),
-    chat: payload.chat,
+    chat: chatData._id,
   });
 
   io.to(payload.chat.toString()).emit("message", newMessage);
@@ -47,8 +56,8 @@ const getMessages = async (chatId) => {
   });
 };
 
-const getResiverMessage = async (payload) => {
-  const user = await User.findById(payload.userId);
+const getResiverMessage = async (resiverId) => {
+  const user = await User.findById(resiverId);
   if (!user) throw new Error("User not found");
 
   const messages = await message.find({ receiverId: user._id }).populate({
@@ -58,8 +67,8 @@ const getResiverMessage = async (payload) => {
   return messages;
 };
 
-const getSenderMessage = async (payload) => {
-  const user = await User.findById(payload.userId);
+const getSenderMessage = async (senderId) => {
+  const user = await User.findById(senderId);
   if (!user) throw new Error("User not found");
 
   const messages = await message.find({ senderId: user._id }).populate({
