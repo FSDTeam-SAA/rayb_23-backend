@@ -21,7 +21,7 @@ const createChat = async (payload) => {
   const populatedResult = await Chat.findById(result._id)
     .populate({
       path: "userId",
-      select: "name email",
+      select: "name email imageLink",
     })
     .populate({
       path: "bussinessId",
@@ -35,7 +35,7 @@ const getChat = async () => {
   const result = await Chat.find({})
     .populate({
       path: "userId",
-      select: "name email",
+      select: "name email imageLink",
     })
     .populate({
       path: "bussinessId",
@@ -54,7 +54,7 @@ const getMyChat = async (userId) => {
   const result = await Chat.find({ userId: user._id })
     .populate({
       path: "userId",
-      select: "name email",
+      select: "name email imageLink",
     })
     .populate({
       path: "lastMessage",
