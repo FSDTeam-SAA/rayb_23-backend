@@ -38,6 +38,10 @@ io.on("connection", (socket) => {
     socket.join(chatId.toString());
     console.log("user joined chatId", chatId);
   });
+  socket.on("joinNotification", (userId) => {
+    socket.join(userId.toString());
+    console.log("user joined userId", userId);
+  });
 
   socket.on("disconnect", () => {
     console.log("user disconnected");

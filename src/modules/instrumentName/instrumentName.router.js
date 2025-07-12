@@ -6,3 +6,6 @@ router.post("/create", createInstrumentName);
 router.get("/get-all", getAllInstrumentName);
 router.put("/update-instrumentName", updateInstrumentName);
 router.delete("/delete", deleteInstrumentName);
+
+const instrumentNameRouter = router;
+module.exports = instrumentNameRouter;

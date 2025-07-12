@@ -10,6 +10,8 @@ const instrumentFamilyRouter = require("../modules/instrumentFamily/instrumentFa
 const messageRouter = require("../modules/message/message.router");
 const chatRouter = require("../modules/chat/chat.router");
 const reviewRouter = require("../modules/review/review.router");
+const pictureRouter = require("../modules/picture/picture.router");
+const instrumentNameRouter = require("../modules/instrumentName/instrumentName.router");
 
 const router = Router();
 
@@ -41,8 +43,12 @@ const moduleRouter = [
     router: instrumentFamilyRouter,
   },
   {
-    path:"/review",
-    router:reviewRouter,
+    path: "instrumentName",
+    router: instrumentNameRouter,
+  },
+  {
+    path: "/review",
+    router: reviewRouter,
   },
   {
     path: "/message",
@@ -52,6 +58,10 @@ const moduleRouter = [
     path: "/chat",
     router: chatRouter,
   },
+  {
+    path: "/picture",
+    router: pictureRouter,
+  }
 ];
 
 moduleRouter.forEach((route) => {
