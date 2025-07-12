@@ -5,19 +5,10 @@ const User = require("../user/user.model");
 const message = require("./message.model");
 
 const sendMessage = async (payload, file, io) => {
-  const { senderId, chat } = payload;
+  const { senderId, receiverId } = payload;
 
   const senderUser = await User.findById(senderId);
   if (!senderUser) throw new Error("Sender not found");
-
-  const chatData = await Chat.findById(chat);
-  if (!chatData) throw new Error("Chat not found");
-
-  const receiverId = chatData.userId.equals(senderId)
-    ? chatData.bussinessId
-    : chatData.userId;
-
-  console.log(receiverId);
 
   const receiverUser = await User.findById(receiverId);
   if (!receiverUser) throw new Error("Receiver not found");
@@ -32,9 +23,9 @@ const sendMessage = async (payload, file, io) => {
   const newMessage = await message.create({
     ...payload,
     senderId,
-    receiverId: receiverUser._id,
+    receiverId,
     date: new Date(),
-    chat: chatData._id,
+    chat: payload.chat,
   });
 
   io.to(payload.chat.toString()).emit("message", newMessage);
