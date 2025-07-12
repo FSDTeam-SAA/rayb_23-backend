@@ -28,6 +28,10 @@ const businessSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Review",
     },],
+    reviewImage:[{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Picture",
+    }],
     userEmail: { type: String },
 
     businessHours: [
