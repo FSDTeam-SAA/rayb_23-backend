@@ -52,7 +52,7 @@ router.post(
 
 router.post(
   "/verify-email/:bussinessId",
-  // auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
   claimBussinessController.bussinessEmailVerify
 );
 

@@ -24,10 +24,12 @@ const businessSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "LessonService",
     },
-    review: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Review",
-    },],
+    review: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Review",
+      },
+    ],
     userEmail: { type: String },
 
     businessHours: [
@@ -46,18 +48,21 @@ const businessSchema = new mongoose.Schema(
         },
         isOpen: { type: Boolean, default: false },
         openTime: { type: String },
-        closeTime: { type: String }
-      }],
+        closeTime: { type: String },
+      },
+    ],
     status: {
       type: String,
-      enum: ['active', 'inactive'],
-      default: 'inactive'
+      enum: ["active", "inactive"],
+      default: "inactive",
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+    otp: { type: String, default: null },
+    otpExpires: { type: Date, default: null },
   },
   {
     timestamps: true,
