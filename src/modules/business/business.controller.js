@@ -1,13 +1,17 @@
 const Business = require("./business.model");
+const NotifyModel = require("./business.model");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const { Instrument } = require("../instrument/instrument.model");
 const { LessonService } = require("../lessonService/lessonService.model");
 const User = require("../user/user.model")
 const fs = require("fs");
+const createNotification = require("../../utils/createNotification");
+const { default: status } = require("http-status");
 // Create new business
 exports.createBusiness = async (req, res) => {
   try {
-    const { email: userEmail } = req.user;
+    const { email: userEmail, userId: userID } = req.user;
+
     const user = await User.findOne({ email: userEmail });
     if (!user) {
       return res.status(400).json({ status: false, message: "User not found" });
@@ -60,12 +64,16 @@ exports.createBusiness = async (req, res) => {
     });
 
     const savedBusiness = await newBusiness.save();
+    const message = `${req.user.name} has added a new Business name : ${data.businessInfo.name}`
+    createNotification(userID, message, "Business");
+    if (savedBusiness) {
+      return res.status(201).json({
+        status: true,
+        message: "Business created successfully",
+        data: savedBusiness,
+      });
+    }
 
-    res.status(201).json({
-      status: true,
-      message: "Business created successfully",
-      data: savedBusiness,
-    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -269,7 +277,7 @@ exports.getBusinessesByUser = async (req, res) => {
 // Update business
 exports.updateBusiness = async (req, res) => {
   try {
-    const { email: userEmail } = req.user;
+    const { email: userEmail, userId } = req.user;
     const user = await User.findOne({ email: userEmail });
 
     if (!user) {
@@ -340,7 +348,8 @@ exports.updateBusiness = async (req, res) => {
     const updatedBusiness = await Business.findByIdAndUpdate(id, updatePayload, {
       new: true,
     });
-
+    const message = `${data.businessInfo.name}: business has been updated`
+    createNotification(userId, message, "Business");
     if (!updatedBusiness) {
       return res
         .status(404)
@@ -362,8 +371,12 @@ exports.updateBusiness = async (req, res) => {
 // Delete business
 exports.deleteBusiness = async (req, res) => {
   try {
+    const { userId } = req.user;
     const { id } = req.params;
     const business = await Business.findById(id);
+    const message = `${req.user.name} has deleted his business.`
+    createNotification(userId, message, "Business");
+
     if (!business) {
       return res
         .status(404)
@@ -375,9 +388,7 @@ exports.deleteBusiness = async (req, res) => {
     await LessonService.findByIdAndDelete(business.lessonServicePrice);
 
     await Business.findByIdAndDelete(id);
-    res
-      .status(200)
-      .json({ success: true, message: "Business deleted successfully" });
+    return res.status(200).json({ success: true, message: "Business deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
