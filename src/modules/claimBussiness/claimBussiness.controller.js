@@ -103,10 +103,10 @@ const sendOtp = async (req, res) => {
 
 const bussinessEmailVerify = async (req, res) => {
   try {
-    // const { email } = req.user;
+    const { email } = req.user;
     const { bussinessId } = req.params;
     const result = await claimBussinessService.bussinessEmailVerify(
-      // email,
+      email,
       bussinessId,
       req.body
     );

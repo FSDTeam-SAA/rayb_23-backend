@@ -106,28 +106,29 @@ sendBtn.onclick = () => {
     return;
   }
 
-  const payload = {
-    chat: chatId,
-    message: text,
-    senderId: "test-sender",
-    receiverId: "test-receiver",
-  };
+  const formData = new FormData();
+  formData.append("chat", chatId);
+  formData.append("message", text);
+  formData.append("senderId", "68650d3ac935d4a2875ac9c3");
+  formData.append("receiverId", "68651ac748153c766779a1e5");
 
   if (file) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      payload.image = reader.result; // base64
-      socket.emit("sendMessage", payload);
-      log(`📤 Sent (with image): ${JSON.stringify(payload)}`);
+    formData.append("image", file);
+  }
+
+  fetch("http://localhost:8001/api/v1/message/send-message", {
+    method: "POST",
+    body: formData,
+  })
+    .then(res => res.json())
+    .then(data => {
+      log(`📤 Sent to API: ${JSON.stringify(data)}`);
       messageText.value = "";
       imageInput.value = "";
-    };
-    reader.readAsDataURL(file);
-  } else {
-    socket.emit("sendMessage", payload);
-    log(`📤 Sent: ${JSON.stringify(payload)}`);
-    messageText.value = "";
-  }
+    })
+    .catch(err => {
+      log(`❌ Error: ${err}`);
+    });
 };
 </script>
 

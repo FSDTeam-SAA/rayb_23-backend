@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const sendEmail = require("../../utils/sendEmail");
 const verificationCodeTemplate = require("../../utils/verificationCodeTemplate");
@@ -76,11 +77,8 @@ const toggleClaimBussinessStatus = async (bussinessId, payload) => {
   return result;
 };
 
-//! there are some isue this email is not user.email it's bussinessEmail. So you have to change it..........
 const sendOtp = async (payload, bussinessId) => {
   const { email } = payload;
-  const user = await User.findOne({ email });
-  if (!user) throw new Error("User not found");
 
   const bussiness = await BusinessModel.findById(bussinessId);
   if (!bussiness) throw new Error("Business not found");
@@ -89,10 +87,8 @@ const sendOtp = async (payload, bussinessId) => {
   const hashedOtp = await bcrypt.hash(otp, 10);
   const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
-  //TODO: there are some logic will be build who verify email then we store those userId in ClaimBussiness.userId........ [if don't have any userId then we do it]
-
-  await ClaimBussiness.findOneAndUpdate(
-    { bussinessId: bussiness._id },
+  await BusinessModel.findOneAndUpdate(
+    { _id: bussinessId },
     { $set: { otp: hashedOtp, otpExpires } },
     { new: true }
   );
@@ -104,54 +100,35 @@ const sendOtp = async (payload, bussinessId) => {
   });
 };
 
-//! there are some isue this email is not user.email it's bussinessEmail. So you have to change it..........
-const bussinessEmailVerify = async (bussinessId, payload) => {
-  const { otp, email } = payload;
+const bussinessEmailVerify = async (userEmail, bussinessId, payload) => {
+  const { otp } = payload;
 
-  const user = await User.findOne({ email });
+  const bussiness = await BusinessModel.findById(bussinessId);
+  if (!bussiness) throw new Error("Business not found");
+
+  const user = await User.findOne({ email: userEmail });
   if (!user) throw new Error("User not found");
   if (!user.isActive) throw new Error("User is not active");
 
-  const existingClaim = await ClaimBussiness.findOne({
-    bussinessId: bussinessId,
-    userId: user._id,
-  });
-
-  if (existingClaim && existingClaim.isMailVerified) {
-    throw new Error("Business already verified");
+  if (!bussiness.otp || !bussiness.otpExpires) {
+    throw new Error("OTP not requested or already expired");
   }
 
-  if (existingClaim) {
-    if (!existingClaim.otp || !existingClaim.otpExpires) {
-      throw new Error("OTP not requested or expired");
-    }
-    if (existingClaim.otpExpires < new Date()) {
-      throw new Error("OTP has expired");
-    }
-
-    const isOtpMatched = await bcrypt.compare(
-      otp.toString(),
-      existingClaim.otp
-    );
-    if (!isOtpMatched) throw new Error("Invalid OTP");
-
-    const updatedClaim = await ClaimBussiness.findOneAndUpdate(
-      { _id: existingClaim._id },
-      {
-        $set: {
-          isMailVerified: true,
-          otp: null,
-          otpExpires: null,
-        },
-      },
-      { new: true }
-    ).populate("userId", "name email number");
-
-    return updatedClaim;
+  if (bussiness.otpExpires < new Date()) {
+    throw new Error("OTP has expired");
   }
+
+  const isOtpMatched = await bcrypt.compare(otp.toString(), bussiness.otp);
+  if (!isOtpMatched) throw new Error("Invalid OTP");
+
+  bussiness.otp = null;
+  bussiness.otpExpires = null;
+  await bussiness.save();
+
+  console.log("✅ OTP verified & cleared for business:", bussiness._id);
 
   const newClaim = await ClaimBussiness.create({
-    bussinessId,
+    bussinessId: bussiness._id,
     userId: user._id,
     status: "Pending",
     isVerified: false,

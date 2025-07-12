@@ -26,8 +26,6 @@ const claimBussinessSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  otp: { type: String, default: null },
-  otpExpires: { type: Date, default: null },
 });
 
 const ClaimBussiness = model("ClaimBussiness", claimBussinessSchema);
