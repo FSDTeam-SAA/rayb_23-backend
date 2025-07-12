@@ -25,19 +25,16 @@ router.post(
 
 router.get(
   "/:chatId",
-  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   messageController.getMessage
 );
 
 router.get(
-  "/resiver-message",
-  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  "/resiver-message/:resiverId",
   messageController.getResiverMessage
 );
 
 router.get(
-  "/sender-message",
-  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  "/sender-message/:senderId",
   messageController.getSenderMessages
 );
 
