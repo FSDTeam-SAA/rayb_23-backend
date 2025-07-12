@@ -1,10 +1,13 @@
 const PictureModel = require("./picture.model");
 const User = require("../user/user.model");
 const BusinessModel = require("../business/business.model");
+const createNotification = require("../../utils/createNotification");
+const { sendImageToCloudinary } = require("../../utils/cloudnary");
 
 exports.uploadPicture = async (req, res) => {
     try {
-        const { email: userEmail } = req.user;
+        const io = req.app.get("io");
+        const { email: userEmail, userId: userID } = req.user;
         const user = await User.findOne({ email: userEmail });
         if (!user) {
             return res.status(400).json({ status: false, message: "User not found" });
@@ -18,8 +21,9 @@ exports.uploadPicture = async (req, res) => {
                 message: "At least one image is required",
             });
         }
-        const { business } = data;
-        if (!business) {
+        const data = JSON.parse(req.body.data);
+        console.log(data);
+        if (!data.business) {
             return res
                 .status(400)
                 .json({ success: false, message: "Business ID is required" });
@@ -36,14 +40,27 @@ exports.uploadPicture = async (req, res) => {
                 return secure_url;
             })
         );
-        const picture = await PictureModel.create({
+        const newPictures = new PictureModel({
             image: uploadedImages,
-            business: business,
-            user: user._id,
+            business: data.business,
+            user: userID,
+        })
+        const picture = await newPictures.save();
+
+        await BusinessModel.findByIdAndUpdate(data.business, {
+            $push: { reviewImage: picture._id },
         });
 
-        await BusinessModel.findByIdAndUpdate(business, {
-            $push: { reviewImage: picture._id },
+        const message = `${user.name} has added a new picture`;
+        const saveNotification = await createNotification(userID, message, "Picture");
+
+        // Send to user
+        io.to(userID.toString()).emit("new-notification", { saveNotification });
+
+        // Send to admin(s)
+        const admins = await User.find({ isVerified: true, userType: "admin" }).select("_id");
+        admins.forEach(admin => {
+            io.to(admin._id.toString()).emit("new-notification", { saveNotification });
         });
 
         return res.status(201).json({
