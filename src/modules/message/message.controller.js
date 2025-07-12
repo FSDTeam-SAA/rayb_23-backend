@@ -3,7 +3,9 @@ const messageService = require("./message.service");
 const sendMessage = async (req, res) => {
   try {
     const io = req.app.get("io");
-    const result = await messageService.sendMessage(req.body, req.file, io);
+    // Use parsedData if JSON was sent as `data` field
+    const payload = req.parsedData || req.body;
+    const result = await messageService.sendMessage(payload, req.file, io);
 
     return res.status(200).json({
       success: true,
@@ -41,7 +43,7 @@ const getResiverMessage = async (req, res) => {
   try {
     // const { email } = req.user;
     const { resiverId } = req.params;
-    const result = await messageService.getResiverMessage( resiverId);
+    const result = await messageService.getResiverMessage(resiverId);
 
     return res.status(200).json({
       success: true,
