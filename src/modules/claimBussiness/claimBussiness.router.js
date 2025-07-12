@@ -6,7 +6,7 @@ const claimBussinessController = require("./claimBussiness.controller");
 
 const router = Router();
 
-router.post(
+router.put(
   "/:bussinessId",
   upload.array("document", 5),
   (req, res, next) => {

@@ -8,20 +8,20 @@ const ClaimBussiness = require("./claimBussiness.model");
 const bcrypt = require("bcrypt");
 
 const documentVerification = async (payload, email, files, bussinessId) => {
+  // ✅ find user
   const user = await User.findOne({ email });
   if (!user) throw new Error("User not found");
   if (!user.isActive) throw new Error("User is not active");
 
+  // ✅ find business
   const business = await BusinessModel.findById(bussinessId);
   if (!business) throw new Error("Business not found");
 
-  const existingClaim = await ClaimBussiness.findOne({ bussinessId });
-  if (existingClaim) throw new Error("Claim business already exists");
-
-  let uploadedImages = [];
+  // ✅ upload files
+  let uploadedDocuments = [];
 
   if (files && Array.isArray(files) && files.length > 0) {
-    uploadedImages = await Promise.all(
+    uploadedDocuments = await Promise.all(
       files.map(async (file) => {
         const imageName = `business/${Date.now()}_${file.originalname}`;
         const result = await sendImageToCloudinary(imageName, file.path);
@@ -30,18 +30,31 @@ const documentVerification = async (payload, email, files, bussinessId) => {
     );
   }
 
-  const newClaim = await ClaimBussiness.create({
+  console.log("📄 Uploaded documents:", uploadedDocuments);
+
+  // ✅ update or create ClaimBussiness
+  const filter = {
+    bussinessId: new mongoose.Types.ObjectId(business._id),
+    userId: new mongoose.Types.ObjectId(user._id),
+  };
+
+  const update = {
     ...payload,
-    documents: uploadedImages,
-    bussinessId,
-    userId: user._id,
-    status: "Pending",
-    isVerified: false,
-  });
+    documents: uploadedDocuments, // replace old documents with new
+  };
 
-  return newClaim;
+  const options = { new: true, upsert: true };
+
+  const result = await ClaimBussiness.findOneAndUpdate(
+    filter,
+    { $set: update },
+    options
+  ).populate("userId", "name email number");
+
+  console.log("✅ ClaimBussiness updated:", result._id);
+
+  return result;
 };
-
 const getAllClaimBussiness = async () => {
   const result = await ClaimBussiness.find({}).populate({
     path: "userId",
@@ -124,8 +137,6 @@ const bussinessEmailVerify = async (userEmail, bussinessId, payload) => {
   bussiness.otp = null;
   bussiness.otpExpires = null;
   await bussiness.save();
-
-  console.log("✅ OTP verified & cleared for business:", bussiness._id);
 
   const newClaim = await ClaimBussiness.create({
     bussinessId: bussiness._id,
