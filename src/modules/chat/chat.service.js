@@ -49,10 +49,14 @@ const getMyChat = async (userId) => {
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
 
-  const result = await Chat.find({ userId: user._id }).populate({
-    path: "userId",
-    select: "name email",
-  });
+  const result = await Chat.find({ userId: user._id })
+    .populate({
+      path: "userId",
+      select: "name email",
+    })
+    .populate({
+      path: "lastMessage",
+    });
   return result;
 };
 
