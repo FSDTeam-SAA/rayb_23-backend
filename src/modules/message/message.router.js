@@ -24,7 +24,7 @@ router.post(
 );
 
 router.get(
-  "/",
+  "/:chatId",
   // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   messageController.getMessage
 );

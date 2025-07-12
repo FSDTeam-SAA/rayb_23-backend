@@ -21,7 +21,8 @@ const sendMessage = async (req, res) => {
 
 const getMessage = async (req, res) => {
   try {
-    const result = await messageService.getMessages();
+    const { chatId } = req.params;
+    const result = await messageService.getMessages(chatId);
 
     return res.status(200).json({
       success: true,

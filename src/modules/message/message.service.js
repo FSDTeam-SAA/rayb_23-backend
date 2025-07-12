@@ -4,7 +4,6 @@ const Chat = require("../chat/chat.model");
 const User = require("../user/user.model");
 const message = require("./message.model");
 
-
 const sendMessage = async (payload, file, io) => {
   const { senderId, receiverId } = payload;
 
@@ -29,16 +28,23 @@ const sendMessage = async (payload, file, io) => {
     chat: payload.chat,
   });
 
-
   io.to(payload.chat.toString()).emit("message", newMessage);
   await Chat.findByIdAndUpdate(payload.chat, { lastMessage: newMessage._id });
 
   return newMessage;
 };
 
-const getMessages = async () => {
-  const messages = await message.find({});
-  return messages;
+const getMessages = async (chatId) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) throw new Error("Chat not found");
+
+  const messages = await message.find({ chat: chatId }).populate({
+    path: "senderId",
+    select: "name email",
+  });
+  return messages.sort((a, b) => {
+    return a.date - b.date;
+  });
 };
 
 const getResiverMessage = async (payload) => {
