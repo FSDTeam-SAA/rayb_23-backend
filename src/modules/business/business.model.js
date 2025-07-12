@@ -24,12 +24,14 @@ const businessSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "LessonService",
     },
-    review: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Review",
-      },
-    ],
+    review: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Review",
+    },],
+    reviewImage:[{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Picture",
+    }],
     userEmail: { type: String },
 
     businessHours: [

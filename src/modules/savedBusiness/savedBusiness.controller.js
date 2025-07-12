@@ -37,6 +37,9 @@ exports.createSavedBusiness = async (req, res) => {
 
         const savedData = await newSaved.save();
 
+        const message = `${req.user.name} has saved a business`
+        createNotification(userId, message, "Saved Business");
+
         return res.status(201).json({
             message: "Business saved successfully",
             data: savedData
@@ -105,7 +108,7 @@ exports.getSavedBusinessById = async (req, res) => {
 }
 
 // delete saved business by id
-exports.deleteSavedBusiness = async (req, res) => { 
+exports.deleteSavedBusiness = async (req, res) => {
     try {
         const { id } = req.params;
         if (!id) {
