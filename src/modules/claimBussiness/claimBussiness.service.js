@@ -76,6 +76,7 @@ const toggleClaimBussinessStatus = async (bussinessId, payload) => {
   return result;
 };
 
+//! there are some isue this email is not user.email it's bussinessEmail. So you have to change it..........
 const sendOtp = async (payload, bussinessId) => {
   const { email } = payload;
   const user = await User.findOne({ email });
@@ -103,6 +104,7 @@ const sendOtp = async (payload, bussinessId) => {
   });
 };
 
+//! there are some isue this email is not user.email it's bussinessEmail. So you have to change it..........
 const bussinessEmailVerify = async (bussinessId, payload) => {
   const { otp, email } = payload;
 
