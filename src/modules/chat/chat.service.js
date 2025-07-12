@@ -61,7 +61,7 @@ const getMyChat = async (userId) => {
     })
     .populate({
       path: "bussinessId",
-      select: "user",
+      select: " businessInfo user",
     });
   return result;
 };

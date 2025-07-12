@@ -7,8 +7,8 @@ const message = require("./message.model");
 const sendMessage = async (payload, file, io) => {
   const { senderId, receiverId } = payload;
 
-  const senderUser = await User.findById(senderId);
-  if (!senderUser) throw new Error("Sender not found");
+  // const senderUser = await User.findById(senderId);
+  // if (!senderUser) throw new Error("Sender not found");
 
   const receiverUser = await User.findById(receiverId);
   if (!receiverUser) throw new Error("Receiver not found");
