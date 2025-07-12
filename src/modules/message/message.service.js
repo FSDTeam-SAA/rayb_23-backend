@@ -50,7 +50,7 @@ const getMessages = async (chatId) => {
 
   const messages = await message.find({ chat: chatId }).populate({
     path: "senderId",
-    select: "name email",
+    select: "name email imageLink",
   });
   return messages.sort((a, b) => {
     return a.date - b.date;
@@ -63,7 +63,7 @@ const getResiverMessage = async (resiverId) => {
 
   const messages = await message.find({ receiverId: user._id }).populate({
     path: "senderId",
-    select: "name email",
+    select: "name email imageLink",
   });
   return messages;
 };
@@ -74,7 +74,7 @@ const getSenderMessage = async (senderId) => {
 
   const messages = await message.find({ senderId: user._id }).populate({
     path: "receiverId",
-    select: "name email",
+    select: "name email imageLink",
   });
   return messages;
 };
