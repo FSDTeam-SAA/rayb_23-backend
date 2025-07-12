@@ -36,7 +36,8 @@ const getChat = async (req, res) => {
 
 const getMyChat = async (req, res) => {
   try {
-    const result = await chatService.getMyChat(req.body);
+    const { userId } = req.params;
+    const result = await chatService.getMyChat( userId);
 
     return res.status(200).json({
       success: true,

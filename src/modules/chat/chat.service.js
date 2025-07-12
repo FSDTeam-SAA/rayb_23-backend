@@ -45,8 +45,8 @@ const getChat = async () => {
   return result;
 };
 
-const getMyChat = async (payload) => {
-  const user = await User.findById(payload.userId);
+const getMyChat = async (userId) => {
+  const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
 
   const result = await Chat.find({ userId: user._id }).populate({

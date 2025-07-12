@@ -18,7 +18,7 @@ router.get(
 );
 
 router.get(
-  "/my-chat",
+  "/my-chat/:userId",
   // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
   chatController.getMyChat
 );
