@@ -46,6 +46,7 @@ const getChat = async () => {
   return result;
 };
 
+//! fuckery is here..............
 const getMyChat = async (userId) => {
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
@@ -60,7 +61,7 @@ const getMyChat = async (userId) => {
     })
     .populate({
       path: "bussinessId",
-      select: "businessInfo",
+      select: "user",
     });
   return result;
 };
