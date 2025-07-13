@@ -9,4 +9,14 @@ const createNotification = async ( userId, message,type) => {
     return newNotification;
 }
 
-module.exports = createNotification;
+
+const createNotificationAdmin = async (userId, message,type)=>{
+    const newNotification = new NotifyModel({
+        user:userId,
+        text: message,
+        type:type,
+    })
+    await newNotification.save();
+    return newNotification;
+}
+module.exports = {createNotification, createNotificationAdmin};
