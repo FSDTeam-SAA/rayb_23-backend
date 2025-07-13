@@ -375,10 +375,10 @@ exports.updateBusiness = async (req, res) => {
 
 
     const savedBusiness = await newBusiness.save();
-    const message1 = `${user.name} has created a new business: ${savedBusiness.businessInfo.name}`;
-    const message2 = `You have created a new business: ${savedBusiness.businessInfo.name}`;
-    const saveNotification = await createNotification(userId, message2, "Business created");
-    const saveNotificationAdmin = await createNotificationAdmin(userId, message1, "Business created");
+    const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
+    const message2 = `You have updated a business: ${savedBusiness.businessInfo.name}`;
+    const saveNotification = await createNotification(userId, message2, "Business Update");
+    const saveNotificationAdmin = await createNotificationAdmin(userId, message1, "Business Update");
 
     await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
 
@@ -400,7 +400,13 @@ exports.updateBusiness = async (req, res) => {
 // Delete business
 exports.deleteBusiness = async (req, res) => {
   try {
+  
+    const io = req.app.get("io");
     const { userId } = req.user;
+    const user = await User.findById(userId);
+    if (!user) {  
+      return res.status(400).json({ status: false, message: "User not found" });
+    }
     const { id } = req.params;
     const business = await Business.findById(id);
     const message = `${req.user.name} has deleted his business.`
@@ -417,6 +423,13 @@ exports.deleteBusiness = async (req, res) => {
     await LessonService.findByIdAndDelete(business.lessonServicePrice);
 
     await Business.findByIdAndDelete(id);
+    const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
+    const message2 = `You have updated a business: ${savedBusiness.businessInfo.name}`;
+    const saveNotification = await createNotification(userId, message2, "Business Update");
+    const saveNotificationAdmin = await createNotificationAdmin(userId, message1, "Business Update");
+
+    await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+
     return res.status(200).json({ success: true, message: "Business deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
