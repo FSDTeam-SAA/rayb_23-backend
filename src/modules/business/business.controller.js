@@ -67,11 +67,11 @@ exports.createBusiness = async (req, res) => {
 
     const savedBusiness = await newBusiness.save();
     const message1 = `${user.name} has created a new business: ${savedBusiness.businessInfo.name}`;
-        const message2 = `You have created a new business: ${savedBusiness.businessInfo.name}`;
-        const saveNotification = await createNotification(userID, message2, "Business created");
-        const saveNotificationAdmin = await createNotificationAdmin(userID, message1, "Business created");
+    const message2 = `You have created a new business: ${savedBusiness.businessInfo.name}`;
+    const saveNotification = await createNotification(userID, message2, "Business created");
+    const saveNotificationAdmin = await createNotificationAdmin(userID, message1, "Business created");
 
-        await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+    await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
     if (savedBusiness) {
       return res.status(201).json({
         status: true,
@@ -90,6 +90,16 @@ exports.createBusiness = async (req, res) => {
 
 exports.getAllBusinesses = async (req, res) => {
   try {
+
+    const { userId: userID } = req.user;
+    const isAdmin = await User.findById(userID)
+    if (isAdmin.userType !== "admin") {
+      return res.status(403).json({
+        status: false,
+        message: "Access denied. Admins only."
+      });
+    }
+
     const {
       search = "",
       instrumentFamily,
@@ -283,6 +293,7 @@ exports.getBusinessesByUser = async (req, res) => {
 // Update business
 exports.updateBusiness = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const { email: userEmail, userId } = req.user;
     const user = await User.findOne({ email: userEmail });
 
@@ -361,6 +372,18 @@ exports.updateBusiness = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Business not found" });
     }
+
+
+    const savedBusiness = await newBusiness.save();
+    const message1 = `${user.name} has created a new business: ${savedBusiness.businessInfo.name}`;
+    const message2 = `You have created a new business: ${savedBusiness.businessInfo.name}`;
+    const saveNotification = await createNotification(userId, message2, "Business created");
+    const saveNotificationAdmin = await createNotificationAdmin(userId, message1, "Business created");
+
+    await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+
+
+
 
     return res.status(200).json({
       success: true,
