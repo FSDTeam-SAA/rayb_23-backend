@@ -4,10 +4,13 @@ const User = require("../user/user.model");
 const { sendImageToCloudinary } = require("../../utils/cloudnary"); // assume you're using this
 const fs = require("fs");
 const ReviewModel = require("./review.model");
+const { createNotificationAdmin, createNotification } = require("../../utils/createNotification");
+const sendNotiFication = require("../../utils/sendNotification");
 //Create review
 
 exports.createReview = async (req, res) => {
     try {
+        const io = req.app.get("io");
         const { email: userEmail, userId: userID } = req.user;
         const user = await User.findOne({ email: userEmail });
         if (!user) {
@@ -60,8 +63,12 @@ exports.createReview = async (req, res) => {
         });
 
 
-        const message = `${req.user.name} has added a review`
-        createNotification(userID, message, "Review");
+        const message1 = `${user.name} has added a new review in ${review.business.name}`;
+        const message2 = `You have added a new review in ${review.business.name}`;
+        const saveNotification = await createNotification(userID, message2, "Review created");
+        const saveNotificationAdmin = await createNotificationAdmin(userID, message1, "Review created");
+
+        await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
 
 
         return res.status(201).json({

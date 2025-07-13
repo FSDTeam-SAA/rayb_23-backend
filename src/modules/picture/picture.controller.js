@@ -1,8 +1,9 @@
 const PictureModel = require("./picture.model");
 const User = require("../user/user.model");
 const BusinessModel = require("../business/business.model");
-const createNotification = require("../../utils/createNotification");
+const { createNotification, createNotificationAdmin } = require("../../utils/createNotification");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
+const sendNotiFication = require("../../utils/sendNotification");
 
 exports.uploadPicture = async (req, res) => {
     try {
@@ -51,17 +52,14 @@ exports.uploadPicture = async (req, res) => {
             $push: { reviewImage: picture._id },
         });
 
-        const message = `${user.name} has added a new picture`;
-        const saveNotification = await createNotification(userID, message, "Picture");
+        const message1 = `${user.name} has added a new picture as review`;
+        const message2 = `You have added a new picture as review`;
+        const saveNotification = await createNotification(userID, message2, "Review Picture");
+        const saveNotificationAdmin = await createNotificationAdmin(userID, message1, "Review Picture");
 
-        // Send to user
-        io.to(userID.toString()).emit("new-notification", { saveNotification });
+        await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
 
-        // Send to admin(s)
-        const admins = await User.find({ isVerified: true, userType: "admin" }).select("_id");
-        admins.forEach(admin => {
-            io.to(admin._id.toString()).emit("new-notification", { saveNotification });
-        });
+        res.app.get("io").emit("new-picture", picture);
 
         return res.status(201).json({
             status: true,
