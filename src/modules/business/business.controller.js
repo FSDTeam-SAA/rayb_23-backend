@@ -5,11 +5,13 @@ const { Instrument } = require("../instrument/instrument.model");
 const { LessonService } = require("../lessonService/lessonService.model");
 const User = require("../user/user.model")
 const fs = require("fs");
-const createNotification = require("../../utils/createNotification");
+const { createNotification, createNotificationAdmin } = require("../../utils/createNotification");
 const { default: status } = require("http-status");
+const sendNotiFication = require("../../utils/sendNotification");
 // Create new business
 exports.createBusiness = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const { email: userEmail, userId: userID } = req.user;
 
     const user = await User.findOne({ email: userEmail });
@@ -64,8 +66,12 @@ exports.createBusiness = async (req, res) => {
     });
 
     const savedBusiness = await newBusiness.save();
-    const message = `${req.user.name} has added a new Business name : ${data.businessInfo.name}`
-    createNotification(userID, message, "Business");
+    const message1 = `${user.name} has created a new business: ${savedBusiness.businessInfo.name}`;
+        const message2 = `You have created a new business: ${savedBusiness.businessInfo.name}`;
+        const saveNotification = await createNotification(userID, message2, "Business created");
+        const saveNotificationAdmin = await createNotificationAdmin(userID, message1, "Business created");
+
+        await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
     if (savedBusiness) {
       return res.status(201).json({
         status: true,
