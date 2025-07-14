@@ -6,10 +6,10 @@ const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
 
 router.post("/upload-image", auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),upload.array("image", 5), uploadPicture)
-router.get("/get-all-pictures", auth(USER_ROLE.admin), getAllPicturesAdmin);
-router.get("/get-all-pictures-by-business/:id", auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user), getPictureByBusinessId);
+router.get("/get-all-pictures", auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.bussinessMan), getAllPicturesAdmin);
 router.get("/get-all-pictures-by-user", auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user), getAllPicturesByUser);
-router.get("/get-picture-by-id/:id", auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user), getPictureById);
+router.get("/get-all-pictures-by-business/:id", auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user), getPictureByBusinessId);
+router.get("/get-picture/:id", auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user), getPictureById);
 router.put("/update-picture/:id", auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user), upload.array("image", 5), updatePictureById);
 router.delete("/delete-picture/:id", auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user), deletedPicture);
 
