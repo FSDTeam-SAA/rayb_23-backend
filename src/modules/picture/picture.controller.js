@@ -78,18 +78,17 @@ exports.uploadPicture = async (req, res) => {
 }
 
 // Get all pictures 
-exports.getAllPicturesAdmin=async (req, res)=>{
-    try{
+exports.getAllPicturesAdmin = async (req, res) => {
+    try {
         const { userId } = req.user;
-        
-        const user= await User.findById(userId);
-        if(user.userType !== "admin"){
+        const user = await User.findById(userId);
+        if (user.userType !== "admin") {
             return res.status(403).json({
                 status: false,
                 message: "You are not authorized to access this resource"
             });
         }
-const pictures = await PictureModel.find()
+        const pictures = await PictureModel.find()
             .populate("user", "name email")
             .populate("business", "businessInfo")
         if (!pictures || pictures.length === 0) {
@@ -105,7 +104,7 @@ const pictures = await PictureModel.find()
         });
 
     }
-    catch(error){
+    catch (error) {
         res.status(500).json({
             status: false,
             message: "Internal server error",
@@ -116,9 +115,9 @@ const pictures = await PictureModel.find()
 
 // get all Pictures by user
 
-exports.getAllPicturesByUser = async (req, res)=>{
-    try{
-const { userId } = req.user;
+exports.getAllPicturesByUser = async (req, res) => {
+    try {
+        const { userId } = req.user;
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({
@@ -140,7 +139,7 @@ const { userId } = req.user;
             data: pictures
         });
     }
-    catch(error){
+    catch (error) {
         res.status(500).json({
             status: false,
             message: "Internal server error",
