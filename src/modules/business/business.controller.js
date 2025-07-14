@@ -91,15 +91,6 @@ exports.createBusiness = async (req, res) => {
 exports.getAllBusinesses = async (req, res) => {
   try {
 
-    const { userId: userID } = req.user;
-    const isAdmin = await User.findById(userID)
-    if (isAdmin.userType !== "admin") {
-      return res.status(403).json({
-        status: false,
-        message: "Access denied. Admins only."
-      });
-    }
-
     const {
       search = "",
       instrumentFamily,
@@ -190,6 +181,18 @@ exports.getAllBusinesses = async (req, res) => {
 // Get all approve businesses
 exports.getAllBusinessesAdmin = async (req, res) => {
   try {
+
+     const { userId: userID } = req.user;
+    console.log(req.user);
+    const isAdmin = await User.findById(userID)
+    if (isAdmin.userType !== "admin") {
+      return res.status(403).json({
+        status: false,
+        message: "Access denied. Admins only."
+      });
+    }
+    const { search = "" } = req.query;
+
     const page = parseInt(req.query.page) || 1; // default page = 1
     const limit = parseInt(req.query.limit) || 10; // default limit = 10
     const skip = (page - 1) * limit;
@@ -197,7 +200,6 @@ exports.getAllBusinessesAdmin = async (req, res) => {
     const total = await Business.countDocuments();
 
     const filter = {
-      status: "active",
       "businessInfo.name": { $regex: search, $options: "i" }
     };
 
