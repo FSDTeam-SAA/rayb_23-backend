@@ -1,8 +1,11 @@
 const config = require("../../config");
+const { createNotification, createNotificationAdmin } = require("../../utils/createNotification");
+const sendNotiFication = require("../../utils/sendNotification");
 const authService = require("./auth.service");
 
 const loginUser = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const result = await authService.loginUser(req.body);
     const { refreshToken, accessToken, user } = result;
 
@@ -12,7 +15,12 @@ const loginUser = async (req, res) => {
       sameSite: config.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+ const message1 = `${user.name} has logged in`;
+    const message2 = `You have logged in successfully`;
+    const saveNotification = await createNotification(user.userId, message2, "Login");
+    const saveNotificationAdmin = await createNotificationAdmin(user.userId, message1, "Login");
 
+    await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
     return res.status(200).json({
       success: true,
       message: "User logged in successfully",
@@ -39,7 +47,6 @@ const refreshToken = async (req, res) => {
       });
 
     const data = await authService.LoginRefreshToken(refreshToken);
-
     res.status(200).json({
       success: true,
       code: 200,

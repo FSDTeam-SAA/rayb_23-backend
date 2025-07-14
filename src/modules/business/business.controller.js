@@ -373,8 +373,7 @@ exports.updateBusiness = async (req, res) => {
         .json({ success: false, message: "Business not found" });
     }
 
-
-    const savedBusiness = await newBusiness.save();
+    const savedBusiness = await new Business(updatedBusiness).save();
     const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
     const message2 = `You have updated a business: ${savedBusiness.businessInfo.name}`;
     const saveNotification = await createNotification(userId, message2, "Business Update");

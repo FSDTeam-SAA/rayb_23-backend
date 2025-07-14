@@ -57,7 +57,6 @@ exports.createInstrumentFamily = async (req, res) => {
 
 
 
-
 // Get all instrument families
 exports.getAllInstrumentFamilies = async (req, res) => {
     try {
