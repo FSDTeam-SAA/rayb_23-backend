@@ -6,6 +6,10 @@ const savedBusinessSchema = new mongoose.Schema({
         ref: "Business",
         required: true
     },
+    // review: [{
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "Review",
+    // },],
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
