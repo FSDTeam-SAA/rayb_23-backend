@@ -97,8 +97,8 @@ const { search = "" } = req.query;
       hasPreviousPage: page > 1
     };
     if (instrumentAndServices.length === 0) {
-      return res.status(status.NOT_FOUND).json({
-        success: false,
+      return res.status(status.OK).json({
+        success: true,
         message: "No instrument and services found",
         data: []
       });
@@ -119,3 +119,153 @@ const { search = "" } = req.query;
     });
   }
 }
+
+exports.getAllInstrumentAndServicesByFamily = async (req, res) => {
+  try {
+    const { instrumentFamilyId } = req.params;
+
+    if (!instrumentFamilyId) {
+      return res.status(status.BAD_REQUEST).json({ success: false, message: "Instrument family ID is required" });
+    }
+
+    const instrumentAndServices = await InstrumentAndService.find({ instrumentFamily: instrumentFamilyId })
+      .populate("instrumentFamily", "instrumentFamily")
+      .populate("instrumentName", "instrumentName")
+      .select("-__v");
+
+    if (instrumentAndServices.length === 0) {
+      return res.status(status.NOT_FOUND).json({
+        success: false,
+        message: "No instrument and services found for this family",
+        data: []
+      });
+    }
+
+    return res.status(status.OK).json({
+      success: true,
+      message: "Instrument and services fetched successfully",
+      data: instrumentAndServices
+    });
+
+  } catch (error) {
+    console.error("Error in getAllInstrumentAndServicesByFamily:", error);
+    return res.status(status.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+} 
+
+exports.updateInstrumentAndService = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const { id } = req.params; // _id of InstrumentAndService to update
+    const { instrumentFamily, instrumentName = [], serviceName = [] } = req.body;
+
+    // Step 1: Validate user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(status.NOT_FOUND).json({ success: false, message: "User not found" });
+    }
+
+    if (user.userType !== "admin") {
+      return res.status(status.FORBIDDEN).json({ success: false, message: "Forbidden" });
+    }
+
+    // Step 2: Validate instrumentFamily
+    const instrumentFamilyExists = await InstrumentFamilyModel.findById(instrumentFamily);
+    if (!instrumentFamilyExists) {
+      return res.status(status.NOT_FOUND).json({ success: false, message: "Instrument family not found" });
+    }
+
+    // Step 3: Get existing document
+    const existing = await InstrumentAndService.findById(id);
+    if (!existing) {
+      return res.status(status.NOT_FOUND).json({ success: false, message: "Instrument and service not found" });
+    }
+
+    // Step 4: Remove old instrument names
+    if (existing.instrumentName && existing.instrumentName.length > 0) {
+      await InstrumentNameModel.deleteMany({ _id: { $in: existing.instrumentName } });
+    }
+
+    // Step 5: Create new instrument names if not exist
+    const instrumentNameIds = [];
+    for (let name of instrumentName) {
+      let instrument = await InstrumentNameModel.findOne({ instrumentName: name });
+      if (!instrument) {
+        instrument = new InstrumentNameModel({
+          instrumentName: name,
+          status: "active",
+        });
+        await instrument.save();
+      }
+      instrumentNameIds.push(instrument._id);
+    }
+
+    // Step 6: Update the document
+    existing.instrumentFamily = instrumentFamilyExists._id;
+    existing.instrumentName = instrumentNameIds;
+    existing.serviceName = serviceName;
+
+    const updated = await existing.save();
+
+    return res.status(status.OK).json({
+      success: true,
+      message: "Instrument and service updated successfully",
+      data: updated,
+    });
+
+  } catch (error) {
+    console.error("Error in updateInstrumentAndService:", error);
+    return res.status(status.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+exports.deleteInstrumentAndService = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const { id } = req.params; // this is the _id of InstrumentAndService
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(status.NOT_FOUND).json({ success: false, message: "User not found" });
+    }
+
+    if (user.userType !== "admin") {
+      return res.status(status.FORBIDDEN).json({ success: false, message: "Forbidden" });
+    }
+
+    // Step 1: Find the document
+    const instrumentService = await InstrumentAndService.findById(id);
+    if (!instrumentService) {
+      return res.status(status.NOT_FOUND).json({ success: false, message: "Instrument and service not found" });
+    }
+
+    // Step 2: Delete associated InstrumentName(s)
+    if (instrumentService.instrumentName && instrumentService.instrumentName.length > 0) {
+      await InstrumentNameModel.deleteMany({ _id: { $in: instrumentService.instrumentName } });
+    }
+
+    // Step 3: Delete the main document
+    await InstrumentAndService.findByIdAndDelete(id);
+
+    return res.status(status.OK).json({
+      success: true,
+      message: "Instrument and service deleted successfully",
+    });
+
+  } catch (error) {
+    console.error("Error in deleteInstrumentAndService:", error);
+    return res.status(status.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};

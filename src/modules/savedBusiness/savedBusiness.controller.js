@@ -6,7 +6,7 @@ const User = require("../user/user.model");
 exports.createSavedBusiness = async (req, res) => {
     try {
         const { savedBusiness } = req.body;
-        console.log(req.body);
+        
         const userId = req.user.userId;
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized user" });
@@ -37,9 +37,6 @@ exports.createSavedBusiness = async (req, res) => {
 
         const savedData = await newSaved.save();
 
-        const message = `${req.user.name} has saved a business`
-        createNotification(userId, message, "Saved Business");
-
         return res.status(201).json({
             message: "Business saved successfully",
             data: savedData
@@ -53,31 +50,44 @@ exports.createSavedBusiness = async (req, res) => {
 
 // get saved businesses by user
 exports.getSavedBusinessesByUser = async (req, res) => {
-    try {
-        const userId = req.user.userId;
-        if (!userId) {
-            return res.status(401).json({ message: "Unauthorized user" });
-        }
-
-        const savedBusinesses = await SavedBusinessModel.find({ user: userId })
-            .populate("savedBusiness", "businessInfo")
-            .populate("user", "name email");
-
-        if (savedBusinesses.length === 0) {
-            return res.status(404).json({ message: "No saved businesses found" });
-        }
-
-        return res.status(200).json({
-            status: true,
-            message: "Saved businesses fetched successfully",
-            data: savedBusinesses
-        });
-
-    } catch (error) {
-        console.error("Error in getSavedBusinessesByUser:", error);
-        res.status(500).json({ message: "Internal server error", error: error.message });
+  try {
+    const userId = req.user.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized user" });
     }
+
+    const savedBusinesses = await SavedBusinessModel.find({ user: userId })
+      .populate({
+        path: "savedBusiness",
+        populate: [
+          { path: "instrumentInfo" },
+          { path: "lessonServicePrice" },
+          {
+            path: "review",
+            match: { status: "approved" },
+            populate: { path: "user", select: "name email" }
+          },
+          { path: "user", select: "name email" }
+        ]
+      })
+      .populate("user", "name email")
+
+    if (savedBusinesses.length === 0) {
+      return res.status(200).json({ message: "No saved businesses found" });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Saved businesses fetched successfully",
+      data: savedBusinesses
+    });
+
+  } catch (error) {
+    console.error("Error in getSavedBusinessesByUser:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
 };
+
 
 //get saved business by id
 exports.getSavedBusinessById = async (req, res) => {
@@ -88,7 +98,19 @@ exports.getSavedBusinessById = async (req, res) => {
         }
 
         const savedBusiness = await SavedBusinessModel.findById(id)
-            .populate("savedBusiness", "businessInfo")
+            .populate({
+        path: "savedBusiness",
+        populate: [
+          { path: "instrumentInfo" },
+          { path: "lessonServicePrice" },
+          {
+            path: "review",
+            match: { status: "approved" },
+            populate: { path: "user", select: "name email" }
+          },
+          { path: "user", select: "name email" }
+        ]
+      })
             .populate("user", "name email");
 
         if (!savedBusiness) {
