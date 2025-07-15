@@ -14,7 +14,7 @@ const router = express.Router();
 router.post(
   "/create",
   upload.array("image", 5), // 🔹 Accept up to 5 images with field name "image"
-  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   createReview
 );
 
@@ -22,13 +22,13 @@ router.get("/", getReviewsByAdmin);
 
 router.get(
   "/my-review",
-  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   getMyReviews
 );
 
 router.put(
   "/edit/:id",
-  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   updateReview
 );
 

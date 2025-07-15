@@ -11,7 +11,7 @@ router.post(
   "/create",
   upload.array("image", 5), // 🔹 Accept up to 5 images with field name "image"
 
-  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
 
   createBusiness
 );
@@ -28,20 +28,20 @@ router.get("/all", auth(USER_ROLE.admin), getAllBusinessesAdmin);
 //get by user
 router.get(
   "/my-add-business",
-  auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.bussinessMan, USER_ROLE.ad),
+  auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.businessMan, USER_ROLE.ad),
   getBusinessesByUser
 );
 // Get business by ID
 router.get(
   "/:id",
-  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   getBusinessById
 );
 
 // update business by user
 router.put(
   "/my-add-business/:id",
-  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   upload.array("image", 5),
   updateBusiness
 );

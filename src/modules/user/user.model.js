@@ -32,7 +32,7 @@ const userModel = new Schema(
     resetPasswordOtpExpires: { type: Date, default: null },
     userType: {
       type: String,
-      enum: ["user", "bussinessMan", "admin"],
+      enum: ["user", "businessMan", "admin"],
     },
     isActive: {
       type: Boolean,

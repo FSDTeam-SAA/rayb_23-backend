@@ -1,5 +1,5 @@
 const USER_ROLE = {
-  bussinessMan: "bussinessMan",
+  businessMan: "businessMan",
   admin: "admin",
   user: "user",
 };

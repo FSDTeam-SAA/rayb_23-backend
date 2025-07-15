@@ -22,37 +22,37 @@ router.put(
     }
     next();
   },
-  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   claimBussinessController.documentVerification
 );
 
 router.get(
   "/",
-  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   claimBussinessController.getAllClaimBussiness
 );
 
 router.get(
   "/my-bussiness",
-  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   claimBussinessController.getMyClaimBussiness
 );
 
 router.put(
   "/:bussinessId",
-  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   claimBussinessController.toggleClaimBussinessStatus
 );
 
 router.post(
   "/send-otp/:bussinessId",
-  // auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   claimBussinessController.sendOtp
 );
 
 router.post(
   "/verify-email/:bussinessId",
-  auth(USER_ROLE.admin, USER_ROLE.bussinessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   claimBussinessController.bussinessEmailVerify
 );
 

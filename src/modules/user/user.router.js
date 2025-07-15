@@ -9,31 +9,31 @@ const router = Router();
 router.post("/register", userController.createNewAccount);
 router.post(
   "/verify-email",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.verifyEmail
 );
 
 router.post(
   "/resend-otp",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.resendOtpCode
 );
 
 router.get(
   "/",
-  // auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  // auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.getAllUsers
 );
 
 router.get(
   "/profile",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.getMyProfile
 );
 
 router.put(
   "/update-profile",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
   upload.single("image"),
   (req, res, next) => {
     if (req.body?.data) {
@@ -54,13 +54,13 @@ router.put(
 
 router.put(
   "/deactive-account",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.deactiveAccount
 );
 
 router.put(
   "/delete-account",
-  auth(USER_ROLE.bussinessMan, USER_ROLE.user, USER_ROLE.admin),
+  auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.deletedUserAccount
 );
 
