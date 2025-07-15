@@ -1,5 +1,8 @@
 const config = require("../../config");
-const { createNotification, createNotificationAdmin } = require("../../utils/createNotification");
+const {
+  createNotification,
+  createNotificationAdmin,
+} = require("../../utils/createNotification");
 const sendNotiFication = require("../../utils/sendNotification");
 const authService = require("./auth.service");
 
@@ -15,10 +18,12 @@ const loginUser = async (req, res) => {
       sameSite: config.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
 //  const message1 = `${user.name} has logged in`;
 //     const message2 = `You have logged in successfully`;
 //     const saveNotification = await createNotification(user._id, message2, "Login");
 //     const saveNotificationAdmin = await createNotificationAdmin(user._id, message1, "Login");
+
 
 //     await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
     return res.status(200).json({
@@ -124,7 +129,6 @@ const changePassword = async (req, res) => {
     return res.status(400).json({ success: false, message: error.message });
   }
 };
-
 
 const authController = {
   loginUser,
