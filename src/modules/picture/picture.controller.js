@@ -78,18 +78,17 @@ exports.uploadPicture = async (req, res) => {
 }
 
 // Get all pictures 
-exports.getAllPicturesAdmin=async (req, res)=>{
-    try{
+exports.getAllPicturesAdmin = async (req, res) => {
+    try {
         const { userId } = req.user;
-        
-        const user= await User.findById(userId);
-        if(user.userType !== "admin"){
+        const user = await User.findById(userId);
+        if (user.userType !== "admin") {
             return res.status(403).json({
                 status: false,
                 message: "You are not authorized to access this resource"
             });
         }
-const pictures = await PictureModel.find()
+        const pictures = await PictureModel.find()
             .populate("user", "name email")
             .populate("business", "businessInfo")
         if (!pictures || pictures.length === 0) {
@@ -105,7 +104,7 @@ const pictures = await PictureModel.find()
         });
 
     }
-    catch(error){
+    catch (error) {
         res.status(500).json({
             status: false,
             message: "Internal server error",
@@ -116,9 +115,9 @@ const pictures = await PictureModel.find()
 
 // get all Pictures by user
 
-exports.getAllPicturesByUser = async (req, res)=>{
-    try{
-const { userId } = req.user;
+exports.getAllPicturesByUser = async (req, res) => {
+    try {
+        const { userId } = req.user;
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({
@@ -140,7 +139,7 @@ const { userId } = req.user;
             data: pictures
         });
     }
-    catch(error){
+    catch (error) {
         res.status(500).json({
             status: false,
             message: "Internal server error",
@@ -148,6 +147,42 @@ const { userId } = req.user;
         });
     }
 };
+
+
+//git picture by business id
+exports.getPictureByBusinessId = async (req, res) => {
+    try {
+        const { userId } = req.user;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                status: false,
+                message: "User not found"
+            });
+        }
+        const { businessId } = req.params;
+        const pictures = await PictureModel.find({ business: businessId })
+            .populate("user", "name email");
+        if (!pictures || pictures.length === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "No pictures found for this business"
+            });
+        }
+        return res.status(200).json({
+            status: true,
+            message: "Pictures fetched successfully",
+            data: pictures
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};
+
 
 // Get picture by ID
 exports.getPictureById = async (req, res) => {
@@ -213,6 +248,40 @@ exports.updatePictureById = async (req, res) => {
             status: true,
             message: "Picture updated successfully",
             data: updatedPicture
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            status: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+}
+
+// Delete picture by ID
+exports.deletedPicture = async (req, res) => {
+    try {
+        const { userId } = req.user;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                status: false,
+                message: "User not found"
+            });
+        }
+        const { id } = req.params;
+        const deletedPicture = await PictureModel.findByIdAndDelete(id);
+        if (!deletedPicture) {
+            return res.status(404).json({
+                status: false,
+                message: "Picture not found"
+            });
+        }
+        return res.status(200).json({
+            status: true,
+            message: "Picture deleted successfully",
+            data: deletedPicture
         });
     }
     catch (error) {

@@ -22,8 +22,8 @@ router.get("/", getAllBusinesses )
 
 
 // Get all approve businesses
-router.get("/all", getAllBusinessesAdmin);
-// router.get("/", getAllBusinesses);
+router.get("/all", auth(USER_ROLE.admin), getAllBusinessesAdmin);
+
 
 //get by user
 router.get(

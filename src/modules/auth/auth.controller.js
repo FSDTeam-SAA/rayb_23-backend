@@ -18,21 +18,14 @@ const loginUser = async (req, res) => {
       sameSite: config.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    const message1 = `${user.name} has logged in`;
-    const message2 = `You have logged in successfully`;
 
-    const saveNotification = await createNotification(
-      user.userId,
-      message2,
-      "Login"
-    );
-    const saveNotificationAdmin = await createNotificationAdmin(
-      user.userId,
-      message1,
-      "Login"
-    );
+//  const message1 = `${user.name} has logged in`;
+//     const message2 = `You have logged in successfully`;
+//     const saveNotification = await createNotification(user._id, message2, "Login");
+//     const saveNotificationAdmin = await createNotificationAdmin(user._id, message1, "Login");
 
-    await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+
+//     await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
     return res.status(200).json({
       success: true,
       message: "User logged in successfully",
