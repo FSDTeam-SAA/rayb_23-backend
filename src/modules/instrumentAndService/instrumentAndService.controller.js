@@ -97,8 +97,8 @@ const { search = "" } = req.query;
       hasPreviousPage: page > 1
     };
     if (instrumentAndServices.length === 0) {
-      return res.status(status.NOT_FOUND).json({
-        success: false,
+      return res.status(status.OK).json({
+        success: true,
         message: "No instrument and services found",
         data: []
       });
