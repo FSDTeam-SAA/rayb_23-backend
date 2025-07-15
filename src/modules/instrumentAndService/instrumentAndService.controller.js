@@ -63,3 +63,59 @@ exports.createInstrumentAndService = async (req, res) => {
     });
   }
 };
+
+exports.getAllInstrumentAndServices = async (req, res) => {
+  try {
+const { search = "" } = req.query;
+
+    const page = parseInt(req.query.page) || 1; // default page = 1
+    const limit = parseInt(req.query.limit) || 10; // default limit = 10
+    const skip = (page - 1) * limit;
+
+    const instrumentAndServices = await InstrumentAndService.find()
+      .populate("instrumentFamily", "instrumentFamily")
+      .populate("instrumentName", "instrumentName")
+      .select("-__v")
+      .skip(skip)
+      .limit(limit)
+        .sort({ createdAt: -1 })
+        .lean();
+    if (search) {
+        instrumentAndServices = instrumentAndServices.filter(item =>
+            item.instrumentFamily.instrumentFamily.toLowerCase().includes(search.toLowerCase()) ||
+            item.instrumentName.some(name => name.instrumentName.toLowerCase().includes(search.toLowerCase())) ||
+            item.serviceName.some(service => service.toLowerCase().includes(search.toLowerCase()))
+        );
+        }
+    const total = await InstrumentAndService.countDocuments();
+    const totalPages = Math.ceil(total / limit);
+    const pagination = {
+      totalItems: total,
+      totalPages,
+      currentPage: page,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1
+    };
+    if (instrumentAndServices.length === 0) {
+      return res.status(status.NOT_FOUND).json({
+        success: false,
+        message: "No instrument and services found",
+        data: []
+      });
+    }
+    return res.status(status.OK).json({
+      success: true,
+      message: "Instrument and services fetched successfully",
+      data: instrumentAndServices,
+      pagination
+    });
+
+  } catch (error) {
+    console.error("Error in getAllInstrumentAndServices:", error);
+    return res.status(status.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+}
