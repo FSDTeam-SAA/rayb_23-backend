@@ -133,6 +133,12 @@ exports.getAllBusinesses = async (req, res) => {
     businessesQuery = businessesQuery.skip(skip).limit(limitNum);
 
     let businesses = await businessesQuery.exec();
+    if (businesses.length === 0) {
+      return res.status(201).json({
+        success: true,
+        message: "No businesses found"
+      });
+    }
 
     // Step 3: Apply in-memory filter on populated instrumentInfo
     businesses = businesses.filter(business => {
@@ -182,7 +188,7 @@ exports.getAllBusinesses = async (req, res) => {
 exports.getAllBusinessesAdmin = async (req, res) => {
   try {
 
-     const { userId: userID } = req.user;
+    const { userId: userID } = req.user;
     console.log(req.user);
     const isAdmin = await User.findById(userID)
     if (isAdmin.userType !== "admin") {
@@ -217,6 +223,12 @@ exports.getAllBusinessesAdmin = async (req, res) => {
       })
       .populate("user", "name email role");
 
+    if (businesses.length === 0) {
+      return res.status(201).json({
+        success: true,
+        message: "No businesses found"
+      });
+    }
     const totalPages = Math.ceil(total / limit);
 
     return res.status(200).json({
@@ -401,11 +413,11 @@ exports.updateBusiness = async (req, res) => {
 // Delete business
 exports.deleteBusiness = async (req, res) => {
   try {
-  
+
     const io = req.app.get("io");
     const { userId } = req.user;
     const user = await User.findById(userId);
-    if (!user) {  
+    if (!user) {
       return res.status(400).json({ status: false, message: "User not found" });
     }
     const { id } = req.params;

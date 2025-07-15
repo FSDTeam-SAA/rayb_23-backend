@@ -6,6 +6,7 @@ const savedBusinessSchema = new mongoose.Schema({
         ref: "Business",
         required: true
     },
+   
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
