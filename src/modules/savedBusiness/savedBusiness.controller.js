@@ -69,10 +69,11 @@ exports.getSavedBusinessesByUser = async (req, res) => {
           },
           { path: "user", select: "name email" }
         ]
-      });
+      })
+      .populate("user", "name email")
 
     if (savedBusinesses.length === 0) {
-      return res.status(404).json({ message: "No saved businesses found" });
+      return res.status(200).json({ message: "No saved businesses found" });
     }
 
     return res.status(200).json({
@@ -97,7 +98,19 @@ exports.getSavedBusinessById = async (req, res) => {
         }
 
         const savedBusiness = await SavedBusinessModel.findById(id)
-            .populate("savedBusiness", "businessInfo")
+            .populate({
+        path: "savedBusiness",
+        populate: [
+          { path: "instrumentInfo" },
+          { path: "lessonServicePrice" },
+          {
+            path: "review",
+            match: { status: "approved" },
+            populate: { path: "user", select: "name email" }
+          },
+          { path: "user", select: "name email" }
+        ]
+      })
             .populate("user", "name email");
 
         if (!savedBusiness) {
