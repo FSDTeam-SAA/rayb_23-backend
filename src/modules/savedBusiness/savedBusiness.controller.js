@@ -37,9 +37,6 @@ exports.createSavedBusiness = async (req, res) => {
 
         const savedData = await newSaved.save();
 
-        const message = `${req.user.name} has saved a business`
-        createNotification(userId, message, "Saved Business");
-
         return res.status(201).json({
             message: "Business saved successfully",
             data: savedData
