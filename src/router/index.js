@@ -11,7 +11,8 @@ const messageRouter = require("../modules/message/message.router");
 const chatRouter = require("../modules/chat/chat.router");
 const reviewRouter = require("../modules/review/review.router");
 const pictureRouter = require("../modules/picture/picture.router");
-const instrumentNameRouter = require("../modules/instrumentName/instrumentName.router");
+const instrumentAndServiceRouter = require("../modules/instrumentAndService/instrumentAndService.routrer");
+// const instrumentNameRouter = require("../modules/instrumentName/instrumentName.router");
 
 const router = Router();
 
@@ -42,10 +43,10 @@ const moduleRouter = [
     path: "/instrument-family",
     router: instrumentFamilyRouter,
   },
-  {
-    path: "instrumentName",
-    router: instrumentNameRouter,
-  },
+  // {
+  //   path: "instrumentName",
+  //   router: instrumentNameRouter,
+  // },
   {
     path: "/review",
     router: reviewRouter,
@@ -61,6 +62,10 @@ const moduleRouter = [
   {
     path: "/picture",
     router: pictureRouter,
+  },
+  {
+    path: "/instrumentAndService",
+    router:instrumentAndServiceRouter
   }
 ];
 
