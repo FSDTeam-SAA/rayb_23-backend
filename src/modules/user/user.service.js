@@ -1,4 +1,4 @@
-const e = require("express");
+
 const config = require("../../config");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const sendEmail = require("../../utils/sendEmail");
@@ -9,7 +9,7 @@ const bcrypt = require("bcrypt");
 
 const createNewAccountInDB = async (payload) => {
   const existingUser = await User.findOne({ email: payload.email });
-  if (existingUser) {
+  if (!existingUser) {
     throw new Error("User already exists");
   }
 
