@@ -3,7 +3,6 @@ const messageService = require("./message.service");
 const sendMessage = async (req, res) => {
   try {
     const io = req.app.get("io");
-
     const payload = req.parsedData || req.body;
     const result = await messageService.sendMessage(payload, req.file, io);
 
