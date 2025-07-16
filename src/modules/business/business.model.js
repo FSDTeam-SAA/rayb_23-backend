@@ -24,14 +24,18 @@ const businessSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "LessonService",
     },
-    review: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Review",
-    },],
-    reviewImage:[{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Picture",
-    }],
+    review: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Review",
+      },
+    ],
+    reviewImage: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Picture",
+      },
+    ],
     userEmail: { type: String },
 
     businessHours: [
@@ -65,6 +69,10 @@ const businessSchema = new mongoose.Schema(
     },
     otp: { type: String, default: null },
     otpExpires: { type: Date, default: null },
+    isMailVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

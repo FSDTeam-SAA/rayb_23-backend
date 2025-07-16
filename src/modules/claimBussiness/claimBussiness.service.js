@@ -136,14 +136,14 @@ const bussinessEmailVerify = async (userEmail, bussinessId, payload) => {
 
   bussiness.otp = null;
   bussiness.otpExpires = null;
-  await bussiness.save();
+  (bussiness.isMailVerified = true), await bussiness.save();
 
   const newClaim = await ClaimBussiness.create({
     bussinessId: bussiness._id,
     userId: user._id,
     status: "Pending",
     isVerified: false,
-    isMailVerified: true,
+
     otp: null,
     otpExpires: null,
   });
