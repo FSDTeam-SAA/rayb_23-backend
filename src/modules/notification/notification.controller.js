@@ -3,121 +3,117 @@ const User = require("../user/user.model");
 const { param } = require("../business/business.router");
 const { default: status } = require("http-status");
 
-
 exports.getAllNotification = async (req, res) => {
-    try {
-        const { userId: userID } = req.user;
+  try {
+    const { userId: userID } = req.user;
 
-        const isExist = await User.findById({ _id: userID });
-        if (!isExist) {
-            return res.status(400).json({
-                status: false,
-                message: "User not found.",
-            });
-        }
-
-        const notify = await NotifyModel.find({ userId: userID })
-        if (!notify) {
-            return res.status(404).json({
-                status: false,
-                message: "Notification not found",
-            })
-        }
-
-        return res.status(200).json({
-            status: true,
-            message: "notification fetched successfully.",
-            notify
-        })
-
+    const isExist = await User.findById({ _id: userID });
+    if (!isExist) {
+      return res.status(400).json({
+        status: false,
+        message: "User not found.",
+      });
     }
-    catch (error) {
-        res.status(500).json({
-            status: false,
-            message: "server error",
-            error: error.message
-        })
+
+    const notify = await NotifyModel.find({ userId: userID });
+    if (!notify) {
+      return res.status(404).json({
+        status: false,
+        message: "Notification not found",
+      });
     }
+
+    return res.status(200).json({
+      status: true,
+      message: "notification fetched successfully.",
+      notify,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "server error",
+      error: error.message,
+    });
+  }
 };
 
-
 exports.getSingleNotification = async (req, res) => {
-    try {
-        const { id } = req.param;
-        const notify = await NotifyModel.findById(id);
-        if (!notify) {
-            return res
-                .status(404)
-                .json({ success: false, message: "notification not found" });
-        }
-        res.status(200).json({
-            success: true,
-            message: "notification fetched successfully",
-            notify
-        });
+  try {
+    const { id } = req.param;
+    const notify = await NotifyModel.findById(id);
+    if (!notify) {
+      return res
+        .status(404)
+        .json({ success: false, message: "notification not found" });
     }
-    catch (error) {
-        res.status(500).json({
-            status: false,
-            message: "server error",
-            error: error.message
-        })
-    }
-}
+    res.status(200).json({
+      success: true,
+      message: "notification fetched successfully",
+      notify,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "server error",
+      error: error.message,
+    });
+  }
+};
 
 exports.deleteNotification = async (req, res) => {
-    try {
-        const { id } = req.param;
-        const notify = await NotifyModel.findByIdAndDelete(id);
-        if (!notify) {
-            return res.status(404).json({
-                status: false,
-                message: "Notification not found ."
-            })
-        }
+  try {
+    const { id } = req.param;
+    const notify = await NotifyModel.findByIdAndDelete(id);
+    if (!notify) {
+      return res.status(404).json({
+        status: false,
+        message: "Notification not found .",
+      });
+    }
 
-        return res.status(200).json({
-            status: true,
-            message: "Notification deleted successfully."
-        })
-    }
-    catch (error) {
-        res.status(500).json({
-            status: false,
-            message: "server error",
-            error: error.message
-        })
-    }
-}
+    return res.status(200).json({
+      status: true,
+      message: "Notification deleted successfully.",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "server error",
+      error: error.message,
+    });
+  }
+};
 
 exports.read = async (req, res) => {
-    try {
-        const { userId: userID } = req.user;
-        const { id } = req.param;
-        const isExist = await User.findById({ _id: userID });
-        if (!isExist) {
-            return res.status(400).json({
-                status: false,
-                message: "User not found.",
-            });
-        }
-
-
-        const updatedNotify = await NotifyModel.findByIdAndUpdate(id, { read: true }, {
-            new: true
-        });
-
-        res.status(200).json({
-            status:true,
-            message: "Notification have  seen .",
-            updatedNotify
-        })
+  try {
+    const { userId: userID } = req.user;
+    const { id } = req.param;
+    const isExist = await User.findById({ _id: userID });
+    if (!isExist) {
+      return res.status(400).json({
+        status: false,
+        message: "User not found.",
+      });
     }
-    catch (error) {
-        res.status(500).json({
-            status: false,
-            message: "server error",
-            error: error.message
-        })
-    }
-}
+
+    const updatedNotify = await NotifyModel.findByIdAndUpdate(
+      id,
+      { read: true },
+      {
+        new: true,
+      }
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "Notification have  seen .",
+      updatedNotify,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "server error",
+      error: error.message,
+    });
+  }
+};

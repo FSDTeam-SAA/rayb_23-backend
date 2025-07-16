@@ -1,4 +1,3 @@
-
 const config = require("../../config");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const sendEmail = require("../../utils/sendEmail");

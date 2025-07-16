@@ -9,7 +9,6 @@ const {
   createNotification,
 } = require("../../utils/createNotification");
 const sendNotiFication = require("../../utils/sendNotification");
-//Create review
 
 exports.createReview = async (req, res) => {
   try {
@@ -95,8 +94,6 @@ exports.createReview = async (req, res) => {
   }
 };
 
-//get all review by admin.
-
 exports.getReviewsByAdmin = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -146,7 +143,7 @@ exports.getMyReviews = async (req, res) => {
       })
       .populate({
         path: "user",
-        select: "name email",
+        select: "name email imageLink",
       });
 
     return res.json({
@@ -194,8 +191,6 @@ exports.updateReview = async (req, res) => {
     return res.status(500).json({ status: false, error: error.message });
   }
 };
-
-//delete
 
 exports.deleteReview = async (req, res) => {
   try {
