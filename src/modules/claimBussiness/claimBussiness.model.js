@@ -22,10 +22,10 @@ const claimBussinessSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  isMailVerified: {
-    type: Boolean,
-    default: false,
-  },
+  // isMailVerified: {
+  //   type: Boolean,
+  //   default: false,
+  // },
 });
 
 const ClaimBussiness = model("ClaimBussiness", claimBussinessSchema);
