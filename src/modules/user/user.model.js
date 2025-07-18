@@ -58,6 +58,11 @@ const userModel = new Schema(
       type: String,
       default: null,
     },
+    toFactorAuth: {
+      // if two factor auth is enabled everytime we are login then verify with otp and it can off
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true, versionKey: false }
 );
