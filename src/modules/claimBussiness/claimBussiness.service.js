@@ -8,16 +8,14 @@ const ClaimBussiness = require("./claimBussiness.model");
 const bcrypt = require("bcrypt");
 
 const documentVerification = async (payload, email, files, bussinessId) => {
-  // ✅ find user
   const user = await User.findOne({ email });
   if (!user) throw new Error("User not found");
   if (!user.isActive) throw new Error("User is not active");
 
-  // ✅ find business
+
   const business = await BusinessModel.findById(bussinessId);
   if (!business) throw new Error("Business not found");
 
-  // ✅ upload files
   let uploadedDocuments = [];
 
   if (files && Array.isArray(files) && files.length > 0) {
@@ -32,7 +30,6 @@ const documentVerification = async (payload, email, files, bussinessId) => {
 
   console.log("📄 Uploaded documents:", uploadedDocuments);
 
-  // ✅ update or create ClaimBussiness
   const filter = {
     bussinessId: new mongoose.Types.ObjectId(business._id),
     userId: new mongoose.Types.ObjectId(user._id),
@@ -40,7 +37,7 @@ const documentVerification = async (payload, email, files, bussinessId) => {
 
   const update = {
     ...payload,
-    documents: uploadedDocuments, // replace old documents with new
+    documents: uploadedDocuments,
   };
 
   const options = { new: true, upsert: true };
@@ -50,8 +47,6 @@ const documentVerification = async (payload, email, files, bussinessId) => {
     { $set: update },
     options
   ).populate("userId", "name email number");
-
-  console.log("✅ ClaimBussiness updated:", result._id);
 
   return result;
 };
