@@ -12,6 +12,11 @@ exports.createSavedBusiness = async (req, res) => {
       throw new Error("User not found");
     }
 
+    // const userId = req.user.userId;
+    // if (!userId) {
+    //   return res.status(401).json({ message: "Unauthorized user" });
+    // }
+
     if (!savedBusiness) {
       return res.status(400).json({ message: "Business ID is required" });
     }
@@ -56,6 +61,10 @@ exports.getSavedBusinessesByUser = async (req, res) => {
     if (!user) {
       throw new Error("User not found");
     }
+
+    // if (!userId) {
+    //   return res.status(401).json({ message: "Unauthorized user" });
+    // }
 
     const savedBusinesses = await SavedBusinessModel.find({ user: userId })
       .populate({
