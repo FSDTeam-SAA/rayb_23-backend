@@ -13,6 +13,8 @@ const loginUser = async (payload) => {
     throw new Error("User not found");
   }
 
+  //? here we add some logic to check toFactorAuth status true then we add some logic.......
+
   if (!user.isActive) {
     throw new Error("Account permanently deactivated");
   }
