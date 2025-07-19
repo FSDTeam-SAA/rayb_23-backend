@@ -63,34 +63,26 @@ exports.getAllBusinesses = async (req, res) => {
       offer, // corresponds to category in services
       priceMin,
       priceMax,
-      priceSort, // "lowToHigh", "highToLow", or undefined
-      openNow, // "true" or "false"
-      sortByCreatedAt, // "asc" or "desc"
-      page = 1, // default page 1
-      limit = 10, // default limit 10
+      priceSort, // "lowToHigh", "highToLow"
+      openNow, // "true"
+      sortByCreatedAt, // "asc" | "desc"
+      page = 1,
+      limit = 10,
     } = req.query;
 
     const pageNumber = Math.max(1, parseInt(page));
     const pageSize = Math.max(1, parseInt(limit));
 
-    // Base query
-    let query = {};
+    const query = {};
 
-    // Build a filter on services array using $elemMatch
+    // Services filter
     const serviceFilters = {};
 
-    if (instrumentFamily) {
-      serviceFilters.instrumentFamily = instrumentFamily;
-    }
-    if (selectInstrument) {
-      serviceFilters.instrumentType = selectInstrument;
-    }
-    if (serviceName) {
-      serviceFilters.name = serviceName;
-    }
-    if (offer) {
-      serviceFilters.category = offer;
-    }
+    if (instrumentFamily) serviceFilters.instrumentFamily = instrumentFamily;
+    if (selectInstrument) serviceFilters.instrumentType = selectInstrument;
+    if (serviceName) serviceFilters.name = serviceName;
+    if (offer) serviceFilters.category = offer;
+
     if (priceMin || priceMax) {
       serviceFilters.$or = [
         {
@@ -117,6 +109,7 @@ exports.getAllBusinesses = async (req, res) => {
       query.services = { $elemMatch: serviceFilters };
     }
 
+    // Open now filter
     if (openNow === "true") {
       const now = new Date();
       const daysOfWeek = [
@@ -141,20 +134,23 @@ exports.getAllBusinesses = async (req, res) => {
       };
     }
 
-    // Build sort object
-    let sortObj = {};
-
+    // Sort options
+    const sortObj = {};
     if (sortByCreatedAt) {
       sortObj.createdAt = sortByCreatedAt.toLowerCase() === "asc" ? 1 : -1;
     }
 
-    // Query with pagination
+    // Get total count (before skip/limit)
+    const totalCount = await Business.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    // Query businesses with pagination & sort
     let businesses = await Business.find(query)
       .sort(sortObj)
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize);
 
-    // Filter by price range again on the result if needed (complex nested price)
+    // Re-filter on price (nested & complex case) after DB query if needed
     if (priceMin || priceMax) {
       businesses = businesses.filter((business) =>
         business.services.some((service) => {
@@ -172,44 +168,40 @@ exports.getAllBusinesses = async (req, res) => {
       );
     }
 
-    // Sort by price low to high or high to low on filtered data
+    // Sort by price lowToHigh / highToLow
     if (priceSort === "lowToHigh") {
       businesses.sort((a, b) => {
-        const aMinPrice = Math.min(
+        const aMin = Math.min(
           ...a.services.map((s) =>
             s.pricingType === "exact"
               ? s.price
               : s.price.min ?? Number.MAX_SAFE_INTEGER
           )
         );
-        const bMinPrice = Math.min(
+        const bMin = Math.min(
           ...b.services.map((s) =>
             s.pricingType === "exact"
               ? s.price
               : s.price.min ?? Number.MAX_SAFE_INTEGER
           )
         );
-        return aMinPrice - bMinPrice;
+        return aMin - bMin;
       });
     } else if (priceSort === "highToLow") {
       businesses.sort((a, b) => {
-        const aMaxPrice = Math.max(
+        const aMax = Math.max(
           ...a.services.map((s) =>
             s.pricingType === "exact" ? s.price : s.price.max ?? 0
           )
         );
-        const bMaxPrice = Math.max(
+        const bMax = Math.max(
           ...b.services.map((s) =>
             s.pricingType === "exact" ? s.price : s.price.max ?? 0
           )
         );
-        return bMaxPrice - aMaxPrice;
+        return bMax - aMax;
       });
     }
-
-    // Optional: total count for pagination (without filters on nested prices)
-    const totalCount = await Business.countDocuments(query);
-    const totalPages = Math.ceil(totalCount / pageSize);
 
     return res.status(200).json({
       success: true,
@@ -223,10 +215,10 @@ exports.getAllBusinesses = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(error);
     res.status(400).json({ success: false, error: error.message });
   }
 };
-
 
 // exports.getAllBusinessesAdmin = async (req, res) => {
 //   try {
