@@ -6,13 +6,13 @@ const businessHoursSchema = new Schema(
     day: {
       type: String,
       enum: [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
       ],
     },
     open: { type: String },
@@ -28,12 +28,12 @@ const serviceSchema = new Schema(
     name: { type: String, required: true },
     category: {
       type: String,
-      enum: ["Repair", "Lesson", "Other"],
+      enum: ["repair", "lesson", "other"],
       required: true,
     },
     pricingType: {
       type: String,
-      enum: ["Exact", "Range", "Hourly"],
+      enum: ["exact", "range", "hourly"],
       required: true,
     },
     price: { type: Schema.Types.Mixed, required: true },
@@ -41,14 +41,15 @@ const serviceSchema = new Schema(
     instrumentFamily: {
       type: String,
       enum: [
-        "Strings",
-        "Woodwinds",
-        "Brass",
-        "Percussions",
-        "Keyboard",
-        "Others",
+        "strings",
+        "woodwinds",
+        "brass",
+        "percussions",
+        "keyboard",
+        "others",
       ],
     },
+    name: { type: String, required: true },
   },
   { _id: false }
 );
@@ -58,12 +59,12 @@ const musicLessonSchema = new Schema(
     instrumentFamily: {
       type: String,
       enum: [
-        "Strings",
-        "Brass",
-        "Woodwinds",
-        "Percussions",
-        "Keyboard",
-        "Others",
+        "strings",
+        "brass",
+        "woodwinds",
+        "percussions",
+        "keyboard",
+        "others",
       ],
       required: true,
     },
@@ -74,52 +75,57 @@ const musicLessonSchema = new Schema(
 );
 
 // Full Business schema
-const businessSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: "User" },
-  adminId: { type: Schema.Types.ObjectId, ref: "User" },
-  businessInfo: {
-    name: { type: String, required: true },
-    image: [
+const businessSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    adminId: { type: Schema.Types.ObjectId, ref: "User" },
+    businessInfo: {
+      name: { type: String, required: true },
+      image: [
+        {
+          type: String,
+          required: true,
+        },
+      ],
+      address: { type: String, required: true },
+      phone: { type: String },
+      email: { type: String },
+      website: { type: String },
+      description: { type: String, required: true },
+    },
+
+    services: [serviceSchema],
+    musicLessons: [musicLessonSchema],
+    businessHours: [businessHoursSchema],
+
+    buyInstruments: { type: Boolean, default: false },
+    sellInstruments: { type: Boolean, default: false },
+    offerMusicLessons: { type: Boolean, default: false },
+    review: [
       {
-        type: String,
-        required: true,
+        type: Schema.Types.ObjectId,
+        ref: "Review",
       },
     ],
-    address: { type: String, required: true },
-    phone: { type: String },
-    email: { type: String },
-    website: { type: String },
-    description: { type: String, required: true },
-  },
-
-  services: [serviceSchema],
-  musicLessons: [musicLessonSchema],
-  businessHours: [businessHoursSchema],
-
-  buyInstruments: { type: Boolean, default: false },
-  sellInstruments: { type: Boolean, default: false },
-  offerMusicLessons: { type: Boolean, default: false },
-  review: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Review",
+    reviewImage: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Picture",
+      },
+    ],
+    isMusiclessons: { type: Boolean, default: true },
+    isVerified: { type: Boolean, default: false },
+    otp: { type: String, default: null },
+    otpExpires: { type: Date, default: null },
+    isMailVerified: {
+      type: Boolean,
+      default: false,
     },
-  ],
-  reviewImage: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Picture",
-    },
-  ],
-  isMusiclessons: { type: Boolean, default: true },
-  isVerified: { type: Boolean, default: false },
-  otp: { type: String, default: null },
-  otpExpires: { type: Date, default: null },
-  isMailVerified: {
-    type: Boolean,
-    default: false,
   },
-});
+  {
+    timestamps: true,
+  }
+);
 
 const Business = model("Business", businessSchema);
 module.exports = Business;

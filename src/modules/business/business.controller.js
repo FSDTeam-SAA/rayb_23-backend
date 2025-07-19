@@ -56,17 +56,177 @@ exports.createBusiness = async (req, res) => {
 
 exports.getAllBusinesses = async (req, res) => {
   try {
-    const result = await Business.find({});
+    const {
+      instrumentFamily,
+      selectInstrument,
+      serviceName,
+      offer, // corresponds to category in services
+      priceMin,
+      priceMax,
+      priceSort, // "lowToHigh", "highToLow", or undefined
+      openNow, // "true" or "false"
+      sortByCreatedAt, // "asc" or "desc"
+      page = 1, // default page 1
+      limit = 10, // default limit 10
+    } = req.query;
+
+    const pageNumber = Math.max(1, parseInt(page));
+    const pageSize = Math.max(1, parseInt(limit));
+
+    // Base query
+    let query = {};
+
+    // Build a filter on services array using $elemMatch
+    const serviceFilters = {};
+
+    if (instrumentFamily) {
+      serviceFilters.instrumentFamily = instrumentFamily;
+    }
+    if (selectInstrument) {
+      serviceFilters.instrumentType = selectInstrument;
+    }
+    if (serviceName) {
+      serviceFilters.name = serviceName;
+    }
+    if (offer) {
+      serviceFilters.category = offer;
+    }
+    if (priceMin || priceMax) {
+      serviceFilters.$or = [
+        {
+          pricingType: "exact",
+          price: {},
+        },
+        {
+          pricingType: "range",
+          price: {},
+        },
+      ];
+
+      if (priceMin) {
+        serviceFilters.$or[0].price.$gte = Number(priceMin);
+        serviceFilters.$or[1].price.min = { $gte: Number(priceMin) };
+      }
+      if (priceMax) {
+        serviceFilters.$or[0].price.$lte = Number(priceMax);
+        serviceFilters.$or[1].price.max = { $lte: Number(priceMax) };
+      }
+    }
+
+    if (Object.keys(serviceFilters).length > 0) {
+      query.services = { $elemMatch: serviceFilters };
+    }
+
+    if (openNow === "true") {
+      const now = new Date();
+      const daysOfWeek = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
+      const currentDay = daysOfWeek[now.getDay()];
+      const currentTime = now.toTimeString().slice(0, 5);
+
+      query.businessHours = {
+        $elemMatch: {
+          day: currentDay,
+          closed: false,
+          open: { $lte: currentTime },
+          close: { $gte: currentTime },
+        },
+      };
+    }
+
+    // Build sort object
+    let sortObj = {};
+
+    if (sortByCreatedAt) {
+      sortObj.createdAt = sortByCreatedAt.toLowerCase() === "asc" ? 1 : -1;
+    }
+
+    // Query with pagination
+    let businesses = await Business.find(query)
+      .sort(sortObj)
+      .skip((pageNumber - 1) * pageSize)
+      .limit(pageSize);
+
+    // Filter by price range again on the result if needed (complex nested price)
+    if (priceMin || priceMax) {
+      businesses = businesses.filter((business) =>
+        business.services.some((service) => {
+          if (service.pricingType === "exact") {
+            if (priceMin && service.price < Number(priceMin)) return false;
+            if (priceMax && service.price > Number(priceMax)) return false;
+            return true;
+          } else if (service.pricingType === "range") {
+            if (priceMin && service.price.min < Number(priceMin)) return false;
+            if (priceMax && service.price.max > Number(priceMax)) return false;
+            return true;
+          }
+          return false;
+        })
+      );
+    }
+
+    // Sort by price low to high or high to low on filtered data
+    if (priceSort === "lowToHigh") {
+      businesses.sort((a, b) => {
+        const aMinPrice = Math.min(
+          ...a.services.map((s) =>
+            s.pricingType === "exact"
+              ? s.price
+              : s.price.min ?? Number.MAX_SAFE_INTEGER
+          )
+        );
+        const bMinPrice = Math.min(
+          ...b.services.map((s) =>
+            s.pricingType === "exact"
+              ? s.price
+              : s.price.min ?? Number.MAX_SAFE_INTEGER
+          )
+        );
+        return aMinPrice - bMinPrice;
+      });
+    } else if (priceSort === "highToLow") {
+      businesses.sort((a, b) => {
+        const aMaxPrice = Math.max(
+          ...a.services.map((s) =>
+            s.pricingType === "exact" ? s.price : s.price.max ?? 0
+          )
+        );
+        const bMaxPrice = Math.max(
+          ...b.services.map((s) =>
+            s.pricingType === "exact" ? s.price : s.price.max ?? 0
+          )
+        );
+        return bMaxPrice - aMaxPrice;
+      });
+    }
+
+    // Optional: total count for pagination (without filters on nested prices)
+    const totalCount = await Business.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     return res.status(200).json({
       success: true,
       message: "Businesses fetched successfully",
-      data: result,
+      data: businesses,
+      pagination: {
+        page: pageNumber,
+        limit: pageSize,
+        totalPages,
+        totalCount,
+      },
     });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
 };
+
 
 // exports.getAllBusinessesAdmin = async (req, res) => {
 //   try {
@@ -176,7 +336,6 @@ exports.getBusinessesByUser = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 exports.updateBusiness = async (req, res) => {
   try {
@@ -290,7 +449,6 @@ exports.updateBusiness = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
-
 
 exports.deleteBusiness = async (req, res) => {
   try {
