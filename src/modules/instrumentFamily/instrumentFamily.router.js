@@ -1,14 +1,12 @@
-const express = require('express');
-const { createInstrumentFamily, getAllInstrumentFamilies, deleteInstrumentFamily } = require('./instrumentFamily.controller');
-const auth = require('../../middleware/auth');
-const USER_ROLE = require('../user/user.constant');
+const { Router } = require("express");
+const instrumentController = require("./instrumentFamily.controller");
 
-const router = express.Router();
+const router = Router();
 
-router.post ("/create",auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.businessMan), createInstrumentFamily);
-router.get ("/all", getAllInstrumentFamilies);
-router.put("/:id", auth(USER_ROLE.admin),)
-router.delete ("/:id", auth( USER_ROLE.admin),deleteInstrumentFamily);
+//only admin can create
+router.post("/create", instrumentController.createInstrument);
+
+router.get("/", instrumentController.getAllInstrument);
 
 const instrumentFamilyRouter = router;
 module.exports = instrumentFamilyRouter;
