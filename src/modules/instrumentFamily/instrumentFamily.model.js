@@ -1,17 +1,37 @@
-const mongoose = require ('mongoose');
+const mongoose = require("mongoose");
 
-const instrumentFamilySchema = new mongoose.Schema({
-  instrumentFamily:{
-    type:String,
-    require :true
+const instrumentFamilySchema = new mongoose.Schema(
+  {
+    instrumentFamily: {
+      type: String,
+      enum: [
+        "Strings",
+        "Woodwinds",
+        "Brass",
+        "Percussions",
+        "Keyboard",
+        "Others",
+      ],
+      require: true,
+    },
+    instrumentTypes: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
+    serviceType: {
+      type: String,
+      required: true,
+    },
   },
-  status: {
-    type: String,
-    enum: ['active', 'inactive'],
-  },
- }, {
-    timestamps: true
-    });
+  {
+    timestamps: true,
+  }
+);
 
-const InstrumentFamilyModel = mongoose.model('InstrumentFamily', instrumentFamilySchema);
+const InstrumentFamilyModel = mongoose.model(
+  "InstrumentFamily",
+  instrumentFamilySchema
+);
 module.exports = InstrumentFamilyModel;
