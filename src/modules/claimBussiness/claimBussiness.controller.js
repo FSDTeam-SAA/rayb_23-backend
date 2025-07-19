@@ -29,12 +29,17 @@ const documentVerification = async (req, res) => {
 
 const getAllClaimBussiness = async (req, res) => {
   try {
-    const result = await claimBussinessService.getAllClaimBussiness();
+    const { claimType, time } = req.query;
+
+    const result = await claimBussinessService.getAllClaimBussiness({
+      claimType,
+      time,
+    });
 
     return res.status(200).json({
       success: true,
       code: 200,
-      message: "Claim bussiness retrieved successfully",
+      message: "Claim business retrieved successfully",
       data: result,
     });
   } catch (error) {

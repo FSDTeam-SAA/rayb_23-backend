@@ -1,44 +1,55 @@
 const express = require("express");
-const { createBusiness, getAllBusinesses, getBusinessById, updateBusiness, getBusinessesByUser, deleteBusiness, getAllBusinessesAdmin } = require("./business.controller");
+const {
+  createBusiness,
+  getAllBusinesses,
+  getBusinessById,
+  updateBusiness,
+  getBusinessesByUser,
+  deleteBusiness,
+  getAllBusinessesAdmin,
+} = require("./business.controller");
 const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
 const USER_ROLE = require("../user/user.constant");
 const auth = require("../../middleware/auth");
-const { verifyToken } = require("../auth/auth.service");
 
 // Create new business
 router.post(
   "/create",
-  upload.array("image", 5), // 🔹 Accept up to 5 images with field name "image"
-
+  upload.array("image", 5),
+  (req, res, next) => {
+    if (req.body?.data) {
+      try {
+        req.body = JSON.parse(req.body.data);
+      } catch (err) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid JSON format in 'data' field",
+        });
+      }
+    }
+    next();
+  },
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-
   createBusiness
 );
 
-//get all business
+router.get("/", getAllBusinesses);
 
-router.get("/", getAllBusinesses )
+// router.get("/all", getAllBusinessesAdmin);
 
-
-// Get all approve businesses
-router.get("/all", auth(USER_ROLE.admin), getAllBusinessesAdmin);
-
-
-//get by user
 router.get(
   "/my-add-business",
   auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.businessMan, USER_ROLE.ad),
   getBusinessesByUser
 );
-// Get business by ID
+
 router.get(
-  "/:id",
-  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  "/:businessId",
+  // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   getBusinessById
 );
 
-// update business by user
 router.put(
   "/my-add-business/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
@@ -46,7 +57,6 @@ router.put(
   updateBusiness
 );
 
-//delete business by user
 router.delete(
   "/delete-business/:id",
   auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.bussiness),

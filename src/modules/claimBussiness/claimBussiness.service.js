@@ -12,7 +12,6 @@ const documentVerification = async (payload, email, files, bussinessId) => {
   if (!user) throw new Error("User not found");
   if (!user.isActive) throw new Error("User is not active");
 
-
   const business = await BusinessModel.findById(bussinessId);
   if (!business) throw new Error("Business not found");
 
@@ -50,11 +49,37 @@ const documentVerification = async (payload, email, files, bussinessId) => {
 
   return result;
 };
-const getAllClaimBussiness = async () => {
-  const result = await ClaimBussiness.find({}).populate({
-    path: "userId",
-    select: "name email number",
-  });
+
+const getAllClaimBussiness = async ({ claimType, time }) => {
+  console.log("claimType:", claimType);
+  const filter = {};
+
+  // Filter by claimType if provided
+  if (claimType && ["pending", "approved", "reject"].includes(claimType)) {
+    filter.status = claimType;
+  }
+
+  // Filter by time if provided
+  if (time && ["last-7", "last-30"].includes(time)) {
+    const now = new Date();
+    const pastDate = new Date();
+
+    if (time === "last-7") {
+      pastDate.setDate(now.getDate() - 7);
+    } else if (time === "last-30") {
+      pastDate.setDate(now.getDate() - 30);
+    }
+
+    filter.createdAt = { $gte: pastDate };
+  }
+
+  const result = await ClaimBussiness.find(filter)
+    .populate({
+      path: "userId",
+      select: "name email number",
+    })
+    .sort({ createdAt: -1 });
+
   return result;
 };
 
