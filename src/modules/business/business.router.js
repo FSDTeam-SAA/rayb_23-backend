@@ -6,7 +6,6 @@ const {
   updateBusiness,
   getBusinessesByUser,
   deleteBusiness,
-  getAllBusinessesAdmin,
 } = require("./business.controller");
 const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
