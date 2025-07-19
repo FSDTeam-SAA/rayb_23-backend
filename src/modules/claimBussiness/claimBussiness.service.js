@@ -27,7 +27,7 @@ const documentVerification = async (payload, email, files, bussinessId) => {
     );
   }
 
-  console.log("📄 Uploaded documents:", uploadedDocuments);
+  // console.log("📄 Uploaded documents:", uploadedDocuments);
 
   const filter = {
     bussinessId: new mongoose.Types.ObjectId(business._id),
@@ -89,9 +89,9 @@ const getMyClaimBussiness = async (email) => {
 
   if (!user.isActive) throw new Error("User is not active");
 
-  const result = await ClaimBussiness.findOne({ userId: user._id }).populate({
+  const result = await ClaimBussiness.find({ userId: user._id }).populate({
     path: "userId",
-    select: "name email number",
+    select: "name email",
   });
   return result;
 };
@@ -162,7 +162,7 @@ const bussinessEmailVerify = async (userEmail, bussinessId, payload) => {
   const newClaim = await ClaimBussiness.create({
     bussinessId: bussiness._id,
     userId: user._id,
-    status: "Pending",
+    status: "pending",
     isVerified: false,
     otp: null,
     otpExpires: null,

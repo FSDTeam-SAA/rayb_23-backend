@@ -63,6 +63,10 @@ const userModel = new Schema(
       type: Boolean,
       default: false,
     },
+    support: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true, versionKey: false }
 );

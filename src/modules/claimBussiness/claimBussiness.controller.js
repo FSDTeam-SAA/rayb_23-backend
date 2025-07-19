@@ -57,7 +57,7 @@ const getMyClaimBussiness = async (req, res) => {
     return res.status(200).json({
       success: true,
       code: 200,
-      message: "Claim bussiness retrieved successfully",
+      message: "Your claim business retrieved successfully",
       data: result,
     });
   } catch (error) {
