@@ -8,16 +8,12 @@ const verificationCodeTemplate = require("../../utils/verificationCodeTemplate")
 const sendEmail = require("../../utils/sendEmail");
 
 const loginUser = async (payload) => {
-  const user = await User.findOne({ email: payload.email }).select("+password");
-  if (!user) {
-    throw new Error("User not found");
-  }
+  const user = await User.findOne({ email: payload.email }).select(
+    "+password +toFactorAuth +otp +otpExpires"
+  );
 
-  //? here we add some logic to check toFactorAuth status true then we add some logic.......
-
-  if (!user.isActive) {
-    throw new Error("Account permanently deactivated");
-  }
+  if (!user) throw new Error("User not found");
+  if (!user.isActive) throw new Error("Account permanently deactivated");
 
   if (user.isDeactived) {
     const now = new Date();
@@ -34,23 +30,11 @@ const loginUser = async (payload) => {
     }
   }
 
-  if (!user.isVerified) {
+  if (!user.isVerified)
     throw new Error("Please verify your email address first");
-  }
 
   const isPasswordValid = await bcrypt.compare(payload.password, user.password);
-  if (!isPasswordValid) {
-    throw new Error("Invalid password");
-  }
-
-  const userObj = user.toObject();
-  delete userObj.password;
-  delete userObj.resetPasswordOtp;
-  delete userObj.resetPasswordOtpExpires;
-  delete userObj.verificationOtp;
-  delete userObj.verificationOtpExpires;
-  delete userObj.otp;
-  delete userObj.otpExpires;
+  if (!isPasswordValid) throw new Error("Invalid password");
 
   const tokenPayload = {
     userId: user._id,
@@ -69,6 +53,40 @@ const loginUser = async (payload) => {
     config.refreshTokenSecret,
     config.jwtRefreshTokenExpiresIn
   );
+
+  if (String(user.toFactorAuth) === "true") {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await bcrypt.hash(otp, 10);
+    const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
+
+    user.otp = hashedOtp;
+    user.otpExpires = otpExpires;
+    await user.save();
+
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Your 2FA Verification Code",
+        html: verificationCodeTemplate(otp),
+      });
+    } catch (err) {
+      throw new Error("Could not send 2FA verification email");
+    }
+
+    return {
+      message: "Please verify your email",
+      accessToken,
+    };
+  }
+
+  const userObj = user.toObject();
+  delete userObj.password;
+  delete userObj.resetPasswordOtp;
+  delete userObj.resetPasswordOtpExpires;
+  delete userObj.verificationOtp;
+  delete userObj.verificationOtpExpires;
+  delete userObj.otp;
+  delete userObj.otpExpires;
 
   return {
     accessToken,

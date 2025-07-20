@@ -7,7 +7,6 @@ const User = require("./user.model");
 const bcrypt = require("bcrypt");
 
 const createNewAccountInDB = async (payload) => {
-  console.log(payload);
   const existingUser = await User.findOne({ email: payload.email });
   if (existingUser) {
     throw new Error("User already exists");
@@ -87,10 +86,6 @@ const verifyUserEmail = async (payload, email) => {
 
   if (existingUser.otpExpires < new Date()) {
     throw new Error("OTP has expired");
-  }
-
-  if (existingUser.isVerified === true) {
-    throw new Error("User already verified");
   }
 
   const isOtpMatched = await bcrypt.compare(otp.toString(), existingUser.otp);
