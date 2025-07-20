@@ -10,13 +10,24 @@ const loginUser = async (req, res) => {
   try {
     const io = req.app.get("io");
     const result = await authService.loginUser(req.body);
+
+    if (result?.message === "Please verify your email" && result.accessToken) {
+      return res.status(200).json({
+        success: true,
+        message: result.message, 
+        data: {
+          accessToken: result.accessToken,
+        },
+      });
+    }
+
     const { refreshToken, accessToken, user } = result;
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: config.NODE_ENV === "production",
       sameSite: config.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
     });
 
     return res.status(200).json({
@@ -28,11 +39,14 @@ const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    return res
-      .status(400)
-      .json({ success: false, code: 400, message: error.message });
+    return res.status(400).json({
+      success: false,
+      code: 400,
+      message: error.message,
+    });
   }
 };
+
 
 const refreshToken = async (req, res) => {
   try {
