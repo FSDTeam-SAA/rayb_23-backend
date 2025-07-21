@@ -50,13 +50,15 @@ const documentVerification = async (payload, email, files, bussinessId) => {
   return result;
 };
 
-const getAllClaimBussiness = async ({ claimType, time }) => {
+const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
   const filter = {};
 
+  // Filter by claimType
   if (claimType && ["pending", "approved", "reject"].includes(claimType)) {
     filter.status = claimType;
   }
 
+  // Filter by time
   if (time && ["last-7", "last-30"].includes(time)) {
     const now = new Date();
     const pastDate = new Date();
@@ -70,14 +72,85 @@ const getAllClaimBussiness = async ({ claimType, time }) => {
     filter.createdAt = { $gte: pastDate };
   }
 
-  const result = await ClaimBussiness.find(filter)
-    .populate({
-      path: "userId",
-      select: "name email number",
-    })
-    .sort({ createdAt: -1 });
+  // Default sort: latest
+  let sortQuery = { createdAt: -1 };
 
-  return result;
+  if (sortBy === "latest") {
+    sortQuery = { createdAt: -1 };
+  } else if (sortBy === "oldest") {
+    sortQuery = { createdAt: 1 };
+  } else if (sortBy === "A-Z") {
+    sortQuery = { name: 1 }; // assumes there is a `name` field
+  } else if (sortBy === "status") {
+    sortQuery = {}; // handled in aggregation
+  }
+
+  if (sortBy === "status") {
+    // 🔷 Aggregation pipeline with populated userId + businessId
+    const result = await ClaimBussiness.aggregate([
+      { $match: filter },
+      {
+        $addFields: {
+          statusOrder: {
+            $switch: {
+              branches: [
+                { case: { $eq: ["$status", "pending"] }, then: 1 },
+                { case: { $eq: ["$status", "approved"] }, then: 2 },
+                { case: { $eq: ["$status", "reject"] }, then: 3 },
+              ],
+              default: 4,
+            },
+          },
+        },
+      },
+      { $sort: { statusOrder: 1, createdAt: -1 } },
+      // lookup user
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      // lookup business
+      {
+        $lookup: {
+          from: "businesses", // adjust if your collection is named differently
+          localField: "businessId",
+          foreignField: "_id",
+          as: "business",
+        },
+      },
+      { $unwind: "$business" },
+      {
+        $project: {
+          user: { name: 1, email: 1, number: 1 },
+          business: { name: 1, address: 1, phone: 1 }, // adjust fields
+          name: 1,
+          status: 1,
+          createdAt: 1,
+        },
+      },
+    ]);
+
+    return result;
+  } else {
+    // 🔷 Normal query with populated userId + businessId
+    const result = await ClaimBussiness.find(filter)
+      .populate({
+        path: "userId",
+        select: "name email number",
+      })
+      .populate({
+        path: "businessId",
+        select: "businessInfo", // adjust fields
+      })
+      .sort(sortQuery);
+
+    return result;
+  }
 };
 
 const getMyClaimBussiness = async (email) => {

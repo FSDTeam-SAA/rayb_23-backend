@@ -29,11 +29,12 @@ const documentVerification = async (req, res) => {
 
 const getAllClaimBussiness = async (req, res) => {
   try {
-    const { claimType, time } = req.query;
+    const { claimType, time, sortBy } = req.query;
 
     const result = await claimBussinessService.getAllClaimBussiness({
       claimType,
       time,
+      sortBy,
     });
 
     return res.status(200).json({

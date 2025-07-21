@@ -2,7 +2,7 @@ const { Schema, model } = require("mongoose");
 
 const claimBussinessSchema = new Schema(
   {
-    bussinessId: {
+    businessId: {
       type: Schema.Types.ObjectId,
       ref: "Business",
     },
