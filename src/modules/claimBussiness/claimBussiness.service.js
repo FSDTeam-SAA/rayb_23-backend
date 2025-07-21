@@ -52,12 +52,10 @@ const documentVerification = async (payload, email, files, businessId) => {
 const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
   const filter = {};
 
-  // 🔷 Filter by claimType
   if (claimType && ["pending", "approved", "rejected"].includes(claimType)) {
     filter.status = claimType;
   }
 
-  // 🔷 Filter by time
   if (time && ["last-7", "last-30"].includes(time)) {
     const now = new Date();
     const pastDate = new Date();
@@ -71,7 +69,6 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
     filter.createdAt = { $gte: pastDate };
   }
 
-  // 🔷 Default sort (latest)
   let sortQuery = { createdAt: -1 };
 
   if (sortBy === "latest") {
@@ -80,7 +77,6 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
     sortQuery = { createdAt: 1 };
   }
 
-  // 🔷 Sort by status → pending, approved, rejected
   if (sortBy === "status") {
     const result = await ClaimBussiness.aggregate([
       { $match: filter },
@@ -135,7 +131,6 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
     return result;
   }
 
-  // 🔷 Sort by business name (A-Z)
   if (sortBy === "A-Z") {
     const result = await ClaimBussiness.aggregate([
       { $match: filter },
@@ -181,7 +176,6 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
     return result;
   }
 
-  // 🔷 Default: latest / oldest
   const docs = await ClaimBussiness.find(filter)
     .populate({
       path: "userId",
@@ -208,8 +202,6 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
 
   return result;
 };
-
-
 
 const getMyClaimBussiness = async (email) => {
   const user = await User.findOne({ email });

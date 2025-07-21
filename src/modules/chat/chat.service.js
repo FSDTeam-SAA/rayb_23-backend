@@ -76,10 +76,31 @@ const getMyChat = async (userId) => {
   return result;
 };
 
+const getChatForBusinessMan = async (businessId) => {
+  const business = await BusinessModel.findById(businessId);
+  if (!business) throw new Error("Business not found");
+
+  const result = await Chat.find({ bussinessId: business._id })
+    .populate({
+      path: "userId",
+      select: "name email imageLink",
+    })
+    .populate({
+      path: "lastMessage",
+    })
+    .populate({
+      path: "bussinessId",
+      select: "businessInfo user",
+    });
+
+  return result;
+};
+
 const chatService = {
   createChat,
   getChat,
   getMyChat,
+  getChatForBusinessMan,
 };
 
 module.exports = chatService;
