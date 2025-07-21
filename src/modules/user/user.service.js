@@ -137,17 +137,14 @@ const resendOtpCode = async ({ email }) => {
 const getAllUsersFromDb = async ({ userType, sortBy, time }) => {
   const filter = {};
 
-  // 🔷 userType filter
   if (userType && ["user", "businessOwner"].includes(userType)) {
-    filter.role = userType; // assumes you have `role` field
+    filter.role = userType;
   }
 
-  // 🔷 sortBy = deactivated
   if (sortBy === "deactivated") {
     filter.isActive = false;
   }
 
-  // 🔷 time filter
   if (time && ["last-7", "last-30"].includes(time)) {
     const now = new Date();
     const pastDate = new Date();
@@ -157,11 +154,9 @@ const getAllUsersFromDb = async ({ userType, sortBy, time }) => {
     } else if (time === "last-30") {
       pastDate.setDate(now.getDate() - 30);
     }
-
     filter.createdAt = { $gte: pastDate };
   }
 
-  // 🔷 default sort
   let sortQuery = { createdAt: -1 };
 
   if (sortBy === "latest") {
@@ -169,7 +164,7 @@ const getAllUsersFromDb = async ({ userType, sortBy, time }) => {
   } else if (sortBy === "oldest") {
     sortQuery = { createdAt: 1 };
   } else if (sortBy === "name") {
-    sortQuery = { name: 1 }; // A-Z
+    sortQuery = { name: 1 }; 
   }
 
   const users = await User.find(filter)
