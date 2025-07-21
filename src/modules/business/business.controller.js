@@ -9,6 +9,9 @@ const {
 } = require("../../utils/createNotification");
 const sendNotiFication = require("../../utils/sendNotification");
 const Business = require("./business.model");
+const ReviewModel = require("../review/review.model");
+const PictureModel = require("../picture/picture.model");
+const ClaimBussiness = require("../claimBussiness/claimBussiness.model");
 
 exports.createBusiness = async (req, res) => {
   try {
@@ -326,6 +329,76 @@ exports.getBusinessesByUser = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getDashboardData = async (req, res) => {
+  try {
+    const { range = "day" } = req.query; // "day", "week", "month"
+
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    if (range === "week") {
+      start.setDate(start.getDate() - 7);
+    } else if (range === "month") {
+      start.setDate(1);
+    }
+
+    // Helper to count total and new
+    const countData = async (Model, extraFilter = {}) => {
+      const total = await Model.countDocuments(extraFilter);
+      const newCount = await Model.countDocuments({
+        ...extraFilter,
+        createdAt: { $gte: start },
+      });
+      return { total, new: newCount };
+    };
+
+    const businesses = await countData(Business);
+    const reviews = await countData(ReviewModel);
+    const photos = await countData(PictureModel);
+    const claims = await countData(ClaimBussiness);
+    const users = await countData(User);
+
+    const businessSubmissions = await countData(Business, {
+      status: "pending",
+    });
+    const reviewSubmissions = await countData(ReviewModel, {
+      status: "pending",
+    });
+    const photoSubmissions = await countData(PictureModel, {
+      status: "pending",
+    });
+    const claimRequests = await countData(ClaimBussiness, {
+      status: "pending",
+    });
+    const profilesUnderReview = await countData(User, {
+      status: "pending",
+    });
+
+    const dashboardData = {
+      businesses,
+      reviews,
+      photos,
+      claims,
+      users,
+      businessSubmissions,
+      reviewSubmissions,
+      photoSubmissions,
+      claimRequests,
+      profilesUnderReview,
+    };
+
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Dashboard data get successfully",
+        data: dashboardData,
+      });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
 

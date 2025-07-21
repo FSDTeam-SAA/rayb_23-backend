@@ -54,12 +54,10 @@ const getAllClaimBussiness = async ({ claimType, time }) => {
   console.log("claimType:", claimType);
   const filter = {};
 
-  // Filter by claimType if provided
   if (claimType && ["pending", "approved", "reject"].includes(claimType)) {
     filter.status = claimType;
   }
 
-  // Filter by time if provided
   if (time && ["last-7", "last-30"].includes(time)) {
     const now = new Date();
     const pastDate = new Date();
