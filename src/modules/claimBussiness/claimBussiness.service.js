@@ -8,13 +8,17 @@ const ClaimBussiness = require("./claimBussiness.model");
 const bcrypt = require("bcrypt");
 const Business = require("../business/business.model");
 
-const documentVerification = async (payload, email, files, businessId) => {
+const documentVerification = async (payload, email, files, claimBusinessId) => {
   const user = await User.findOne({ email });
   if (!user) throw new Error("User not found");
   if (!user.isActive) throw new Error("User is not active");
 
-  const business = await BusinessModel.findById(businessId);
+  const claimBusiness = await ClaimBussiness.findById(claimBusinessId);
+  if (!claimBusiness) throw new Error("Claim business not found");
+
+  const business = await BusinessModel.findById(claimBusiness.businessId);
   if (!business) throw new Error("Business not found");
+  // console.log(business);
 
   let uploadedDocuments = [];
 

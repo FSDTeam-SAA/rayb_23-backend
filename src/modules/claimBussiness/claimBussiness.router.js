@@ -7,7 +7,7 @@ const claimBussinessController = require("./claimBussiness.controller");
 const router = Router();
 
 router.put(
-  "/:businessId",
+  "/:claimBusinessId",
   upload.array("document", 5),
   (req, res, next) => {
     if (req.body?.data) {
