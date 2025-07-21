@@ -27,6 +27,11 @@ router.post(
   authController.changePassword
 );
 
+router.post(
+  "/toggle-auth",
+  auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
+  authController.toggleTwoFactorAuthentication
+);
 
 const authRouter = router;
 module.exports = authRouter;

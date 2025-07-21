@@ -14,7 +14,7 @@ const loginUser = async (req, res) => {
     if (result?.message === "Please verify your email" && result.accessToken) {
       return res.status(200).json({
         success: true,
-        message: result.message, 
+        message: result.message,
         data: {
           accessToken: result.accessToken,
         },
@@ -27,7 +27,7 @@ const loginUser = async (req, res) => {
       httpOnly: true,
       secure: config.NODE_ENV === "production",
       sameSite: config.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, 
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({
@@ -46,7 +46,6 @@ const loginUser = async (req, res) => {
     });
   }
 };
-
 
 const refreshToken = async (req, res) => {
   try {
@@ -137,6 +136,21 @@ const changePassword = async (req, res) => {
   }
 };
 
+const toggleTwoFactorAuthentication = async (req, res) => {
+  try {
+    const { email } = req.user;
+    const result = await authService.toggleTwoFactorAuthentication(email);
+
+    return res.status(200).json({
+      success: true,
+      message: "Two-factor authentication toggled successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 const authController = {
   loginUser,
   refreshToken,
@@ -144,6 +158,7 @@ const authController = {
   verifyToken,
   resetPassword,
   changePassword,
+  toggleTwoFactorAuthentication,
 };
 
 module.exports = authController;

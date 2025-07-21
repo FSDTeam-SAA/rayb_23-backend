@@ -267,6 +267,21 @@ const changePassword = async (payload, email) => {
   return result;
 };
 
+const toggleTwoFactorAuthentication = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  user.toFactorAuth = !user.toFactorAuth;
+  await user.save();
+
+  return {
+    success: true,
+    message: `Two-factor authentication ${
+      user.toFactorAuth ? "enabled" : "disabled"
+    } successfully`,
+  };
+};
+
 const authService = {
   loginUser,
   LoginRefreshToken,
@@ -274,6 +289,7 @@ const authService = {
   verifyToken,
   resetPassword,
   changePassword,
+  toggleTwoFactorAuthentication,
 };
 
 module.exports = authService;
