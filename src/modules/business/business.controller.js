@@ -315,12 +315,12 @@ exports.getBusinessesByUser = async (req, res) => {
     }
 
     const businesses = await Business.find({ userId });
-    if (!businesses || businesses.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No businesses found for this user",
-      });
-    }
+    // if (!businesses || businesses.length === 0) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: "No businesses found for this user",
+    //   });
+    // }
 
     return res.status(200).json({
       success: true,
@@ -328,7 +328,7 @@ exports.getBusinessesByUser = async (req, res) => {
       data: businesses,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -390,13 +390,11 @@ exports.getDashboardData = async (req, res) => {
       profilesUnderReview,
     };
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Dashboard data get successfully",
-        data: dashboardData,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Dashboard data get successfully",
+      data: dashboardData,
+    });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }
