@@ -8,12 +8,12 @@ const ClaimBussiness = require("./claimBussiness.model");
 const bcrypt = require("bcrypt");
 const Business = require("../business/business.model");
 
-const documentVerification = async (payload, email, files, bussinessId) => {
+const documentVerification = async (payload, email, files, businessId) => {
   const user = await User.findOne({ email });
   if (!user) throw new Error("User not found");
   if (!user.isActive) throw new Error("User is not active");
 
-  const business = await BusinessModel.findById(bussinessId);
+  const business = await BusinessModel.findById(businessId);
   if (!business) throw new Error("Business not found");
 
   let uploadedDocuments = [];
@@ -28,10 +28,8 @@ const documentVerification = async (payload, email, files, bussinessId) => {
     );
   }
 
-  // console.log("📄 Uploaded documents:", uploadedDocuments);
-
   const filter = {
-    bussinessId: new mongoose.Types.ObjectId(business._id),
+    businessId: new mongoose.Types.ObjectId(business._id),
     userId: new mongoose.Types.ObjectId(user._id),
   };
 
@@ -55,7 +53,7 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
   const filter = {};
 
   // Filter by claimType
-  if (claimType && ["pending", "approved", "reject"].includes(claimType)) {
+  if (claimType && ["pending", "approved", "rejected"].includes(claimType)) {
     filter.status = claimType;
   }
 
@@ -97,7 +95,7 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
               branches: [
                 { case: { $eq: ["$status", "pending"] }, then: 1 },
                 { case: { $eq: ["$status", "approved"] }, then: 2 },
-                { case: { $eq: ["$status", "reject"] }, then: 3 },
+                { case: { $eq: ["$status", "rejected"] }, then: 3 },
               ],
               default: 4,
             },
