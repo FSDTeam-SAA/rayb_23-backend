@@ -45,6 +45,12 @@ exports.createBusiness = async (req, res) => {
       },
     });
 
+    await User.findByIdAndUpdate(user._id, {
+      $push: {
+        businesses: result._id,
+      },
+    });
+
     const business = await Business.findById(result._id);
 
     res.status(201).json({
