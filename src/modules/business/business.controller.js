@@ -53,6 +53,8 @@ exports.createBusiness = async (req, res) => {
 
     const business = await Business.findById(result._id);
 
+    //? Create notification for business creation............
+
     res.status(201).json({
       success: true,
       message: "Business created successfully",
