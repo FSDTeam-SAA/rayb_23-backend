@@ -51,7 +51,6 @@ const documentVerification = async (payload, email, files, bussinessId) => {
 };
 
 const getAllClaimBussiness = async ({ claimType, time }) => {
-  console.log("claimType:", claimType);
   const filter = {};
 
   if (claimType && ["pending", "approved", "reject"].includes(claimType)) {

@@ -334,7 +334,7 @@ exports.getBusinessesByUser = async (req, res) => {
 
 exports.getDashboardData = async (req, res) => {
   try {
-    const { range = "day" } = req.query; // "day", "week", "month"
+    const { range = "day" } = req.query;
 
     const start = new Date();
     start.setHours(0, 0, 0, 0);
