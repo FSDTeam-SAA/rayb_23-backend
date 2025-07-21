@@ -7,7 +7,7 @@ const claimBussinessController = require("./claimBussiness.controller");
 const router = Router();
 
 router.put(
-  "/:bussinessId",
+  "/:businessId",
   upload.array("document", 5),
   (req, res, next) => {
     if (req.body?.data) {
@@ -51,7 +51,7 @@ router.post(
 );
 
 router.post(
-  "/verify-email/:bussinessId",
+  "/verify-email/:businessId",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   claimBussinessController.bussinessEmailVerify
 );

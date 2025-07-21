@@ -5,13 +5,13 @@ const claimBussinessService = require("./claimBussiness.service");
 const documentVerification = async (req, res) => {
   try {
     const { email } = req.user;
-    const { bussinessId } = req.params;
+    const { businessId } = req.params;
 
     const result = await claimBussinessService.documentVerification(
       req.body,
       email,
       req.files,
-      bussinessId
+      businessId
     );
 
     return res.status(200).json({
@@ -113,10 +113,10 @@ const sendOtp = async (req, res) => {
 const bussinessEmailVerify = async (req, res) => {
   try {
     const { email } = req.user;
-    const { bussinessId } = req.params;
+    const { businessId } = req.params;
     const result = await claimBussinessService.bussinessEmailVerify(
       email,
-      bussinessId,
+      businessId,
       req.body
     );
 
