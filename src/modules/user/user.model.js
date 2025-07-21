@@ -66,6 +66,11 @@ const userModel = new Schema(
       type: String,
       default: null,
     },
+    businessId: {
+      type: Schema.Types.ObjectId,
+      ref: "Business",
+      default: null,
+    },
   },
   { timestamps: true, versionKey: false }
 );

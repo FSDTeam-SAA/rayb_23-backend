@@ -3,6 +3,7 @@ const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const sendEmail = require("../../utils/sendEmail");
 const { createToken } = require("../../utils/tokenGenerate");
 const verificationCodeTemplate = require("../../utils/verificationCodeTemplate");
+const Business = require("../business/business.model");
 const User = require("./user.model");
 const bcrypt = require("bcrypt");
 
@@ -164,7 +165,7 @@ const getAllUsersFromDb = async ({ userType, sortBy, time }) => {
   } else if (sortBy === "oldest") {
     sortQuery = { createdAt: 1 };
   } else if (sortBy === "name") {
-    sortQuery = { name: 1 }; 
+    sortQuery = { name: 1 };
   }
 
   const users = await User.find(filter)
@@ -174,9 +175,15 @@ const getAllUsersFromDb = async ({ userType, sortBy, time }) => {
   return users;
 };
 
-const getMyProfileFromDb = async (email) => {
-  const user = await User.findOne(email).select("-password -otp -otpExpires");
+const getMyProfileFromDb = async ({ email }) => {
+  const user = await User.findOne({ email })
+    .select("name email userType imageLink bio address phone")
+    .populate({
+      path: "businessId",
+      select: "businessInfo",
+    });
   if (!user) throw new Error("User not found");
+
   return user;
 };
 
