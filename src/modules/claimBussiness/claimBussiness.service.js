@@ -175,10 +175,12 @@ const toggleClaimBussinessStatus = async (claimBusinessId, payload) => {
 
   const businessClaim = await ClaimBussiness.findById(claimBusinessId);
   if (!businessClaim) throw new Error("Claim business not found");
-  console.log("Claim business found:", businessClaim);
 
   const business = await Business.findById(businessClaim.businessId);
   if (!business) throw new Error("Business not found");
+
+  const user = await User.findById(businessClaim.userId);
+  if (!user) throw new Error("User not found");
 
   const result = await ClaimBussiness.findByIdAndUpdate(
     { _id: claimBusinessId },
@@ -187,6 +189,12 @@ const toggleClaimBussinessStatus = async (claimBusinessId, payload) => {
   )
     .populate("userId", "name email number")
     .populate("businessId", "businessInfo");
+
+  await User.findByIdAndUpdate(
+    user._id,
+    { $set: { userType: "businessMan" } },
+    { new: true }
+  );
 
   return result;
 };
