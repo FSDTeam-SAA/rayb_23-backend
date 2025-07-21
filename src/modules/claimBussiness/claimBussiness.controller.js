@@ -94,8 +94,8 @@ const toggleClaimBussinessStatus = async (req, res) => {
 
 const sendOtp = async (req, res) => {
   try {
-    const { bussinessId } = req.params;
-    const result = await claimBussinessService.sendOtp(req.body, bussinessId);
+    const { businessId } = req.params;
+    const result = await claimBussinessService.sendOtp(req.body, businessId);
 
     return res.status(200).json({
       success: true,

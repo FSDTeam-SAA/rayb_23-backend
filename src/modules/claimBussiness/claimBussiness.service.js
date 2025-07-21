@@ -191,10 +191,10 @@ const toggleClaimBussinessStatus = async (claimBusinessId, payload) => {
   return result;
 };
 
-const sendOtp = async (payload, bussinessId) => {
+const sendOtp = async (payload, businessId) => {
   const { email } = payload;
 
-  const bussiness = await BusinessModel.findById(bussinessId);
+  const bussiness = await BusinessModel.findById(businessId);
   if (!bussiness) throw new Error("Business not found");
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -202,7 +202,7 @@ const sendOtp = async (payload, bussinessId) => {
   const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
   await BusinessModel.findOneAndUpdate(
-    { _id: bussinessId },
+    { _id: businessId },
     { $set: { otp: hashedOtp, otpExpires } },
     { new: true }
   );
@@ -214,10 +214,10 @@ const sendOtp = async (payload, bussinessId) => {
   });
 };
 
-const bussinessEmailVerify = async (userEmail, bussinessId, payload) => {
+const bussinessEmailVerify = async (userEmail, businessId, payload) => {
   const { otp } = payload;
 
-  const bussiness = await BusinessModel.findById(bussinessId);
+  const bussiness = await BusinessModel.findById(businessId);
   if (!bussiness) throw new Error("Business not found");
 
   const user = await User.findOne({ email: userEmail });
@@ -241,7 +241,7 @@ const bussinessEmailVerify = async (userEmail, bussinessId, payload) => {
   await bussiness.save();
 
   const newClaim = await ClaimBussiness.create({
-    bussinessId: bussiness._id,
+    businessId: bussiness._id,
     userId: user._id,
     status: "pending",
     isVerified: false,

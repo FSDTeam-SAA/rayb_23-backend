@@ -45,7 +45,7 @@ router.put(
 );
 
 router.post(
-  "/send-otp/:bussinessId",
+  "/send-otp/:businessId",
   // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   claimBussinessController.sendOtp
 );
