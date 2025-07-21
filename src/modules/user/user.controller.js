@@ -59,7 +59,14 @@ const resendOtpCode = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const users = await userService.getAllUsersFromDb();
+    const { userType, sortBy, time } = req.query;
+
+    const users = await userService.getAllUsersFromDb({
+      userType,
+      sortBy,
+      time,
+    });
+
     return res.status(200).json({
       success: true,
       message: "Users retrieved successfully",
