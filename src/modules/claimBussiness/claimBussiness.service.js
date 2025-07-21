@@ -71,8 +71,8 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
     filter.createdAt = { $gte: pastDate };
   }
 
-  // 🔷 Default sort
-  let sortQuery = { createdAt: -1 }; // latest by default
+  // 🔷 Default sort (latest)
+  let sortQuery = { createdAt: -1 };
 
   if (sortBy === "latest") {
     sortQuery = { createdAt: -1 };
@@ -80,7 +80,7 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
     sortQuery = { createdAt: 1 };
   }
 
-  // 🔷 Custom: sortBy status
+  // 🔷 Sort by status → pending, approved, rejected
   if (sortBy === "status") {
     const result = await ClaimBussiness.aggregate([
       { $match: filter },
@@ -135,7 +135,7 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
     return result;
   }
 
-  // 🔷 Custom: sortBy A-Z
+  // 🔷 Sort by business name (A-Z)
   if (sortBy === "A-Z") {
     const result = await ClaimBussiness.aggregate([
       { $match: filter },
@@ -181,8 +181,8 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
     return result;
   }
 
-  // 🔷 Default: latest/oldest
-  const result = await ClaimBussiness.find(filter)
+  // 🔷 Default: latest / oldest
+  const docs = await ClaimBussiness.find(filter)
     .populate({
       path: "userId",
       select: "name email number",
@@ -192,21 +192,23 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
       select: "businessInfo",
     })
     .sort(sortQuery)
-    .lean()
-    .map((doc) => ({
-      user: doc.userId,
-      businessId: doc.businessId?._id,
-      business: {
-        name: doc.businessId?.businessInfo?.name,
-        address: doc.businessId?.businessInfo?.address,
-        phone: doc.businessId?.businessInfo?.phone,
-      },
-      status: doc.status,
-      createdAt: doc.createdAt,
-    }));
+    .lean();
+
+  const result = docs.map((doc) => ({
+    user: doc.userId,
+    businessId: doc.businessId?._id,
+    business: {
+      name: doc.businessId?.businessInfo?.name,
+      address: doc.businessId?.businessInfo?.address,
+      phone: doc.businessId?.businessInfo?.phone,
+    },
+    status: doc.status,
+    createdAt: doc.createdAt,
+  }));
 
   return result;
 };
+
 
 
 const getMyClaimBussiness = async (email) => {
