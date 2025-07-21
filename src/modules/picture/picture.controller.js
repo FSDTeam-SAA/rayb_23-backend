@@ -137,12 +137,12 @@ exports.getAllPicturesByUser = async (req, res) => {
       "business",
       "businessInfo"
     );
-    if (!pictures || pictures.length === 0) {
-      return res.status(204).json({
-        status: false,
-        message: "No pictures found for this user",
-      });
-    }
+    // if (!pictures || pictures.length === 0) {
+    //   return res.status(200).json({
+    //     status: false,
+    //     message: "No pictures found for this user",
+    //   });
+    // }
     return res.status(200).json({
       status: true,
       message: "Pictures fetched successfully",
