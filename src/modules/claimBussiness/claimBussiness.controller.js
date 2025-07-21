@@ -5,13 +5,13 @@ const claimBussinessService = require("./claimBussiness.service");
 const documentVerification = async (req, res) => {
   try {
     const { email } = req.user;
-    const { businessId } = req.params;
+    const { claimBusinessId } = req.params;
 
     const result = await claimBussinessService.documentVerification(
       req.body,
       email,
       req.files,
-      businessId
+      claimBusinessId
     );
 
     return res.status(200).json({
