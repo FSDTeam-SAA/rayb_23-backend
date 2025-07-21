@@ -134,10 +134,48 @@ const resendOtpCode = async ({ email }) => {
   return result;
 };
 
-const getAllUsersFromDb = async () => {
-  const users = await User.find({ isVerified: true }).select(
-    "-password -otp -otpExpires"
-  );
+const getAllUsersFromDb = async ({ userType, sortBy, time }) => {
+  const filter = {};
+
+  // 🔷 userType filter
+  if (userType && ["user", "businessOwner"].includes(userType)) {
+    filter.role = userType; // assumes you have `role` field
+  }
+
+  // 🔷 sortBy = deactivated
+  if (sortBy === "deactivated") {
+    filter.isActive = false;
+  }
+
+  // 🔷 time filter
+  if (time && ["last-7", "last-30"].includes(time)) {
+    const now = new Date();
+    const pastDate = new Date();
+
+    if (time === "last-7") {
+      pastDate.setDate(now.getDate() - 7);
+    } else if (time === "last-30") {
+      pastDate.setDate(now.getDate() - 30);
+    }
+
+    filter.createdAt = { $gte: pastDate };
+  }
+
+  // 🔷 default sort
+  let sortQuery = { createdAt: -1 };
+
+  if (sortBy === "latest") {
+    sortQuery = { createdAt: -1 };
+  } else if (sortBy === "oldest") {
+    sortQuery = { createdAt: 1 };
+  } else if (sortBy === "name") {
+    sortQuery = { name: 1 }; // A-Z
+  }
+
+  const users = await User.find(filter)
+    .select("-password -otp -otpExpires")
+    .sort(sortQuery);
+
   return users;
 };
 

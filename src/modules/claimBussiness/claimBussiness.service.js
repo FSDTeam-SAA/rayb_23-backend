@@ -6,6 +6,7 @@ const BusinessModel = require("../business/business.model");
 const User = require("../user/user.model");
 const ClaimBussiness = require("./claimBussiness.model");
 const bcrypt = require("bcrypt");
+const Business = require("../business/business.model");
 
 const documentVerification = async (payload, email, files, bussinessId) => {
   const user = await User.findOne({ email });
@@ -166,17 +167,29 @@ const getMyClaimBussiness = async (email) => {
   return result;
 };
 
-const toggleClaimBussinessStatus = async (bussinessId, payload) => {
+const toggleClaimBussinessStatus = async (claimBusinessId, payload) => {
   const { status } = payload;
 
-  const businessClaim = await ClaimBussiness.findById(bussinessId);
-  if (!businessClaim) throw new Error("Business claim not found");
+  const allowedStatuses = ["pending", "approved", "rejected"];
+  if (!allowedStatuses.includes(status)) {
+    throw new Error(`Invalid status: ${status}`);
+  }
 
-  const result = await ClaimBussiness.findOneAndUpdate(
-    { _id: bussinessId },
+  const businessClaim = await ClaimBussiness.findById(claimBusinessId);
+  if (!businessClaim) throw new Error("Claim business not found");
+  console.log("Claim business found:", businessClaim);
+
+  const business = await Business.findById(businessClaim.businessId);
+  if (!business) throw new Error("Business not found");
+
+  const result = await ClaimBussiness.findByIdAndUpdate(
+    { _id: claimBusinessId },
     { $set: { status } },
     { new: true }
-  ).populate("userId", "name email number");
+  )
+    .populate("userId", "name email number")
+    .populate("businessId", "businessInfo");
+
   return result;
 };
 

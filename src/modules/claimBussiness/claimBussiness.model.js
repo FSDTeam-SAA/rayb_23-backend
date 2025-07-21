@@ -23,10 +23,6 @@ const claimBussinessSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    // isMailVerified: {
-    //   type: Boolean,
-    //   default: false,
-    // },
   },
   {
     timestamps: true,
