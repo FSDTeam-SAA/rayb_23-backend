@@ -189,6 +189,7 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
     .lean();
 
   const result = docs.map((doc) => ({
+    _id: doc._id,
     user: doc.userId,
     businessId: doc.businessId?._id,
     business: {
