@@ -171,6 +171,7 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
             address: "$business.businessInfo.address",
             phone: "$business.businessInfo.phone",
           },
+
           status: 1,
           createdAt: 1,
         },
@@ -201,6 +202,7 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
       address: doc.businessId?.businessInfo?.address,
       phone: doc.businessId?.businessInfo?.phone,
     },
+    documents: doc.documents,
     status: doc.status,
     createdAt: doc.createdAt,
   }));
