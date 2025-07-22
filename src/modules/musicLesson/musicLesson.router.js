@@ -11,5 +11,17 @@ router.post(
   musicLessonsController.createMusicLesson
 );
 
+router.get(
+  "/my-music-lessons",
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  musicLessonsController.getMyMusicLessons
+);
+
+router.patch(
+  "/add-pricing/:musiclessonId",
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  musicLessonsController.addPricingMusicLesson
+);
+
 const musicLesson = router;
 module.exports = musicLesson;
