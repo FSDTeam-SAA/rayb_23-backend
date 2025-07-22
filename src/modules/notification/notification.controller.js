@@ -1,118 +1,85 @@
-const NotifyModel = require("./notification.model");
+const Notification = require("./notification.model");
 const User = require("../user/user.model");
 
-
-exports.getAllNotification = async (req, res) => {
+exports.createNotification = async (req, res) => {
   try {
-    const { userId } = req.user;
+    const { receiverId, userType, type, title, message, metadata } = req.body;
+    const senderId = req.user.userId;
 
-    const isExist = await User.findById({ _id: userId });
-    if (!isExist) {
-      return res.status(400).json({
-        status: false,
-        message: "User not found.",
-      });
+    const notify = await Notification.create({
+      senderId,
+      receiverId,
+      userType,
+      type,
+      title,
+      message,
+      metadata,
+    });
+
+    return res.status(201).json({
+      status: true,
+      message: "Notification created.",
+      notify,
+    });
+  } catch (error) {
+    res.status(500).json({ status: false, message: "Error", error: error.message });
+  }
+};
+
+
+exports.getNotifications = async (req, res) => {
+  try {
+    const { userId, userType } = req.user;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
     }
-
-    const notify = await NotifyModel.find({ user: userId });
-    if (!notify) {
-      return res.status(404).json({
-        status: false,
-        message: "Notification not found",
-      });
+    let notify;
+    if (userType === "admin") {
+      notify = await Notification.find().sort({ createdAt: -1 });
+    } else {
+      notify = await Notification.find({ receiverId: userId, }).sort({ createdAt: -1 });
     }
 
     return res.status(200).json({
       status: true,
-      message: "notification fetched successfully.",
+      message: "Notifications fetched",
       notify,
     });
   } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "server error",
-      error: error.message,
-    });
+    res.status(500).json({ status: false, message: "Error", error: error.message });
   }
 };
 
-exports.getSingleNotification = async (req, res) => {
+
+exports.markAsRead = async (req, res) => {
   try {
-    const { id } = req.param;
-    const notify = await NotifyModel.findById(id);
-    if (!notify) {
-      return res
-        .status(404)
-        .json({ success: false, message: "notification not found" });
-    }
-    res.status(200).json({
-      success: true,
-      message: "notification fetched successfully",
-      notify,
+    const { id } = req.params;
+
+    const updated = await Notification.findByIdAndUpdate(id, { isRead: true }, { new: true });
+
+    return res.status(200).json({
+      status: true,
+      message: "Marked as read",
+      updated,
     });
   } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "server error",
-      error: error.message,
-    });
+    res.status(500).json({ status: false, message: "Error", error: error.message });
   }
 };
+
 
 exports.deleteNotification = async (req, res) => {
   try {
-    const { id } = req.param;
-    const notify = await NotifyModel.findByIdAndDelete(id);
-    if (!notify) {
-      return res.status(404).json({
-        status: false,
-        message: "Notification not found .",
-      });
-    }
+    const { id } = req.params;
+
+    await Notification.findByIdAndDelete(id);
 
     return res.status(200).json({
       status: true,
-      message: "Notification deleted successfully.",
+      message: "Notification deleted",
     });
   } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "server error",
-      error: error.message,
-    });
-  }
-};
-
-exports.read = async (req, res) => {
-  try {
-    const { userId} = req.user;
-    const { id } = req.param;
-    const isExist = await User.findById({ _id: userId });
-    if (!isExist) {
-      return res.status(400).json({
-        status: false,
-        message: "User not found.",
-      });
-    }
-
-    const updatedNotify = await NotifyModel.findByIdAndUpdate(
-      id,
-      { read: true },
-      {
-        new: true,
-      }
-    );
-
-    res.status(200).json({
-      status: true,
-      message: "Notification have  seen .",
-      updatedNotify,
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "server error",
-      error: error.message,
-    });
+    res.status(500).json({ status: false, message: "Error", error: error.message });
   }
 };

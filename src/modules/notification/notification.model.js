@@ -4,7 +4,7 @@ const notificationSchema = new mongoose.Schema(
   {
     senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     receiverId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    role: {
+    userType: {
       type: String,
       enum: ["admin", "businessMan", "user"],
       required: true,
@@ -12,16 +12,6 @@ const notificationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: [
-        "business_review",
-        "message",
-        "photo_upload",
-        "business_approved",
-        "business_rejected",
-        "review_reply",
-        "claim_approved",
-        "other"
-      ],
     },
     title: String,
     message: String,
