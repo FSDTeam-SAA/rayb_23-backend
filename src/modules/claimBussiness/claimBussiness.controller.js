@@ -1,10 +1,14 @@
+const Notification = require("../notification/notification.model");
+const User = require("../user/user.model");
 const claimBussinessService = require("./claimBussiness.service");
 
 //TODO: When admin approved then user userType is changed.
 
 const documentVerification = async (req, res) => {
   try {
+    io = req.app.get("io");
     const { email } = req.user;
+    const user = await User.findOne({ email });
     const { claimBusinessId } = req.params;
 
     const result = await claimBussinessService.documentVerification(
@@ -14,6 +18,32 @@ const documentVerification = async (req, res) => {
       claimBusinessId
     );
 
+    const notifyUser = await Notification.create({
+      senderId: null, // sent from system/admin
+      receiverId: user._id,
+      userType: "user",
+      type: "document_verified",
+      title: "Document Verification Successful",
+      message: `Your claim business documents have been successfully verified. Waiting for admin approval.`,
+      metadata: { claimBusinessId },
+    });
+    io.to(`user_${user._id}`).emit("new_notification", notifyUser);
+
+    const admins = await User.find({ userType: "admin" });
+
+    for (const admin of admins) {
+      const notifyAdmin = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "claim_verification_done",
+        title: "Claim Business Ready for Approval",
+        message: `${user.name} has submitted verified documents for a claim business. Please review and approve.`,
+        metadata: { claimBusinessId },
+      });
+
+      io.to(`admin_${admin._id}`).emit("new_notification", notifyAdmin);
+    }
     return res.status(200).json({
       success: true,
       code: 200,
@@ -71,12 +101,52 @@ const getMyClaimBussiness = async (req, res) => {
 const toggleClaimBussinessStatus = async (req, res) => {
   try {
     const { claimBusinessId } = req.params;
+    const { status } = req.body;
+    const io = req.app.get("io");
     console.log(req.params);
+
 
     const result = await claimBussinessService.toggleClaimBussinessStatus(
       claimBusinessId,
       req.body
     );
+
+    const claimBusiness = await ClaimBusinessModel.findById(claimBusinessId).populate("userId");
+
+       if (!claimBusiness) {
+      return res.status(404).json({
+        success: false,
+        message: "Claim business not found",
+      });
+    }
+    const user = claimBusiness.userId;
+
+    // Send notification to user based on status
+    let title = "";
+    let message = "";
+
+    if (status === "approved") {
+      title = "Claim Approved";
+      message = `Your claim business request has been approved by the admin.`;
+    } else if (status === "rejected") {
+      title = "Claim Rejected";
+      message = `Your claim business request has been rejected by the admin.`;
+    }
+
+    if (status === "approved" || status === "rejected") {
+      const notify = await Notification.create({
+        senderId: null, // or admin._id if you want to show admin
+        receiverId: user._id,
+        userType: "user",
+        type: "claim_status_change",
+        title,
+        message,
+        metadata: { claimBusinessId },
+      });
+
+      io.to(`user_${user._id}`).emit("new_notification", notify);
+    }
+
 
     return res.status(200).json({
       success: true,
