@@ -6,15 +6,18 @@ const Business = require("./business.model");
 const ReviewModel = require("../review/review.model");
 const PictureModel = require("../picture/picture.model");
 const ClaimBussiness = require("../claimBussiness/claimBussiness.model");
-
+const ServiceOffered = require("../serviceOffered/serviceOffered.model");
+const { default: mongoose } = require("mongoose");
+const MusicLesson = require("../musicLesson/musicLesson.model");
 
 exports.createBusiness = async (req, res) => {
   try {
     const io = req.app.get("io");
     const { email, userType } = req.user;
-    const { services: servicesIds, businessInfo, ...otherFields } = req.body;
+    const { services, businessInfo, businessHours, ...rest } = req.body;
     const files = req.files;
 
+    // find user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ success: false, error: "User not found" });
@@ -22,12 +25,53 @@ exports.createBusiness = async (req, res) => {
 
     const ownerField = userType === "admin" ? "adminId" : "user";
 
-    // Verify all serviceOffered IDs exist
-    const services = await ServiceOffered.find({ _id: { $in: servicesIds } });
-    if (services.length !== servicesIds.length) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Some services not found" });
+    // Validate and fetch services
+    let validServiceIds = [];
+    if (services && Array.isArray(services) && services.length > 0) {
+      if (!services.every((id) => mongoose.Types.ObjectId.isValid(id))) {
+        return res.status(400).json({
+          success: false,
+          error:
+            "One or more service IDs are invalid. Must be valid 24-character ObjectIds.",
+        });
+      }
+
+      const servicesFromDB = await ServiceOffered.find({
+        _id: { $in: services },
+      }).select("_id");
+
+      validServiceIds = servicesFromDB.map((s) => s._id);
+    }
+
+    // Validate and fetch musicLessons
+    let validMusicLessonIds = [];
+    if (
+      rest.musicLessons &&
+      Array.isArray(rest.musicLessons) &&
+      rest.musicLessons.length > 0
+    ) {
+      if (
+        !rest.musicLessons.every((id) => mongoose.Types.ObjectId.isValid(id))
+      ) {
+        return res.status(400).json({
+          success: false,
+          error:
+            "One or more music lesson IDs are invalid. Must be valid 24-character ObjectIds.",
+        });
+      }
+
+      const musicLessonsFromDB = await MusicLesson.find({
+        _id: { $in: rest.musicLessons },
+      }).select("_id");
+
+      if (musicLessonsFromDB.length !== rest.musicLessons.length) {
+        return res.status(400).json({
+          success: false,
+          error: "Some music lessons do not exist in the database.",
+        });
+      }
+
+      validMusicLessonIds = musicLessonsFromDB.map((ml) => ml._id);
     }
 
     // Upload images if provided
@@ -42,42 +86,32 @@ exports.createBusiness = async (req, res) => {
       );
     }
 
-    // Merge images into businessInfo
     const newBusinessInfo = {
       ...businessInfo,
       ...(image.length > 0 ? { image } : {}),
     };
 
-    // Create business document with all other fields and services array
     const newBusiness = await Business.create({
-      ...otherFields,
+      ...rest,
       [ownerField]: user._id,
-      services: servicesIds,
+      services: validServiceIds,
       businessInfo: newBusinessInfo,
+      musicLessons: validMusicLessonIds,
+      businessHours: businessHours || [],
     });
 
-    // Push business ref to user.businesses array (optional)
+    // optionally, link business to user
     await User.findByIdAndUpdate(user._id, {
       $push: { businesses: newBusiness._id },
     });
 
-    const userAdmin = await User.find({ userType: "admin" });
 
-    for (const admin of userAdmin) {
-      const notify = await Notification.create({
-        senderId: user._id,
-        receiverId: admin._id,
-        userType: "admin",
-        type: "business_created",
-        title: "New Business Submission",
-        message: `${user.name} has submitted a new business for approval .`,
-        metadata: { businessId: result._id },
-      });
-
-      // Emit to admin socket room
-      io.to(`admin_${admin._id}`).emit("new_notification", notify);
-    }
-
+    const populatedBusiness = await Business.findById(newBusiness._id)
+      .populate("user", "name email")
+      .populate("adminId", "name email")
+      .populate("services") // show full service docs
+      .populate("musicLessons")
+      .populate("review");
 
     return res.status(201).json({
       success: true,
@@ -85,11 +119,9 @@ exports.createBusiness = async (req, res) => {
       data: populatedBusiness,
     });
   } catch (error) {
-    console.error("Create business error:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 };
-
 exports.getAllBusinesses = async (req, res) => {
   try {
     const {

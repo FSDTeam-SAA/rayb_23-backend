@@ -21,26 +21,6 @@ const businessHoursSchema = new Schema(
   { _id: false }
 );
 
-const musicLessonSchema = new Schema(
-  {
-    instrumentFamily: {
-      type: String,
-      enum: [
-        "strings",
-        "brass",
-        "woodwinds",
-        "percussions",
-        "keyboard",
-        "others",
-      ],
-      required: true,
-    },
-    instrumentType: { type: String, required: true },
-    pricing: { type: Number },
-  },
-  { _id: false }
-);
-
 const businessSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User" },
@@ -65,7 +45,12 @@ const businessSchema = new Schema(
         ref: "ServiceOffered",
       },
     ],
-    musicLessons: [musicLessonSchema],
+    musicLessons: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "MusicLesson",
+      },
+    ],
     businessHours: [businessHoursSchema],
 
     buyInstruments: { type: Boolean, default: false },
