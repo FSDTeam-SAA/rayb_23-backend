@@ -2,11 +2,6 @@ const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const { LessonService } = require("../lessonService/lessonService.model");
 const User = require("../user/user.model");
 const fs = require("fs");
-const {
-  createNotification,
-  createNotificationAdmin,
-} = require("../../utils/createNotification");
-const sendNotiFication = require("../../utils/sendNotification");
 const Business = require("./business.model");
 const ReviewModel = require("../review/review.model");
 const PictureModel = require("../picture/picture.model");
@@ -66,7 +61,6 @@ exports.createBusiness = async (req, res) => {
       $push: { businesses: newBusiness._id },
     });
 
-    const business = await Business.findById(result._id);
     const userAdmin = await User.find({ userType: "admin" });
 
     for (const admin of userAdmin) {
@@ -83,6 +77,7 @@ exports.createBusiness = async (req, res) => {
       // Emit to admin socket room
       io.to(`admin_${admin._id}`).emit("new_notification", notify);
     }
+
 
     return res.status(201).json({
       success: true,
