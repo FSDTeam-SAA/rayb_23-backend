@@ -11,7 +11,7 @@ const Notification = require("../notification/notification.model");
 exports.createReview = async (req, res) => {
   try {
     const io = req.app.get("io");
-    const { email: userEmail, userId } = req.user;
+    const { email: userEmail } = req.user;
     const user = await User.findOne({ email: userEmail });
     if (!user) {
       return res.status(400).json({ status: false, message: "User not found" });
@@ -81,8 +81,8 @@ exports.createReview = async (req, res) => {
       io.to(`admin_${admin._id}`).emit("new_notification", notify);
     }
 
-    if (businessData?.userId) {
-      const ownerId = businessData.userId;
+    if (businessData?.user) {
+      const ownerId = businessData.user;
 
       const notify = await Notification.create({
         senderId: user._id,
@@ -204,7 +204,7 @@ exports.updateReview = async (req, res) => {
 
     const adminUsers = await User.find({ userType: "admin" });
     const business = await Business.findById(result.business);
-    const ownerId = business?.userId;
+    const ownerId = business?.user;
 
 
     for (const admin of adminUsers) {
@@ -273,7 +273,7 @@ exports.deleteReview = async (req, res) => {
 
     const adminUsers = await User.find({ userType: "admin" });
     const business = await Business.findById(review.business); 
-    const ownerId = business?.userId;
+    const ownerId = business?.user;
 
     for (const admin of adminUsers) {
       const notify = await Notification.create({
