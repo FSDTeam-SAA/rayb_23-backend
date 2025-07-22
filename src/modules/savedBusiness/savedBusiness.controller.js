@@ -1,9 +1,12 @@
 const SavedBusinessModel = require("./SavedBusiness.model");
 const User = require("../user/user.model");
+const Business = require("../business/business.model");
+const Notification = require("../notification/notification.model");
 
 // Create Saved Business
 exports.createSavedBusiness = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const { savedBusiness } = req.body;
 
     const userId = req.user.userId;
@@ -12,19 +15,13 @@ exports.createSavedBusiness = async (req, res) => {
       throw new Error("User not found");
     }
 
-    // const userId = req.user.userId;
-    // if (!userId) {
-    //   return res.status(401).json({ message: "Unauthorized user" });
-    // }
+
 
     if (!savedBusiness) {
       return res.status(400).json({ message: "Business ID is required" });
     }
 
-    // const userExists = await User.findById(userId);
-    // if (!userExists) {
-    //   return res.status(404).json({ message: "User not found" });
-    // }
+
 
     const alreadySaved = await SavedBusinessModel.findOne({
       savedBusiness: savedBusiness,
@@ -41,6 +38,43 @@ exports.createSavedBusiness = async (req, res) => {
     });
 
     const savedData = await newSaved.save();
+
+
+    const business = await Business.findById(savedBusiness);
+    const businessOwner = business.userId;
+    const businessId = business._id;
+
+  
+    if (businessOwner && businessOwner._id.toString() !== userId) {
+      const notifyOwner = await Notification.create({
+        senderId: user._id,
+        receiverId: businessOwner._id,
+        userType: "businessMan",
+        type: "business_saved",
+        title: "Business Saved",
+        message: `${user.name} has saved your business "${business.businessInfo.name}"`,
+        metadata: { businessId: businessId },
+      });
+
+      io.to(`user_${businessOwner._id}`).emit("new_notification", notifyOwner);
+    }
+
+   
+    const admins = await User.find({ userType: "admin" });
+    for (const admin of admins) {
+      const notifyAdmin = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "business_saved",
+        title: "Business Saved",
+        message: `${user.name} has saved a business "${business.businessInfo.name}"`,
+        metadata: { businessId: businessId },
+      });
+
+      io.to(`admin_${admin._id}`).emit("new_notification", notifyAdmin);
+    }
+
 
     return res.status(201).json({
       message: "Business saved successfully",
