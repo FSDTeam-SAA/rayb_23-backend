@@ -105,7 +105,6 @@ exports.createBusiness = async (req, res) => {
       $push: { businesses: newBusiness._id },
     });
 
-
     const populatedBusiness = await Business.findById(newBusiness._id)
       .populate("user", "name email")
       .populate("adminId", "name email")
@@ -288,72 +287,22 @@ exports.getAllBusinesses = async (req, res) => {
   }
 };
 
-// exports.getAllBusinessesAdmin = async (req, res) => {
-//   try {
-//     const { userId: userID } = req.user;
-//     console.log(req.user);
-//     const isAdmin = await User.findById(userID);
-//     if (isAdmin.userType !== "admin") {
-//       return res.status(403).json({
-//         status: false,
-//         message: "Access denied. Admins only.",
-//       });
-//     }
-//     const { search = "" } = req.query;
-
-//     const page = parseInt(req.query.page) || 1; // default page = 1
-//     const limit = parseInt(req.query.limit) || 10; // default limit = 10
-//     const skip = (page - 1) * limit;
-
-//     const total = await Business.countDocuments();
-
-//     const filter = {
-//       "businessInfo.name": { $regex: search, $options: "i" },
-//     };
-
-//     const businesses = await Business.find(filter)
-//       .skip(skip)
-//       .limit(limit)
-//       .populate("instrumentInfo")
-//       .populate("lessonServicePrice")
-//       .populate({
-//         path: "review",
-//         populate: {
-//           path: "user",
-//           select: "name email",
-//         },
-//       })
-//       .populate("user", "name email role");
-
-//     if (businesses.length === 0) {
-//       return res.status(201).json({
-//         success: true,
-//         message: "No businesses found",
-//       });
-//     }
-//     const totalPages = Math.ceil(total / limit);
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Businesses fetched successfully",
-//       currentPage: page,
-//       totalPages,
-//       totalItems: total,
-//       data: businesses,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
 exports.getBusinessById = async (req, res) => {
   try {
     const { businessId } = req.params;
-    const business = await Business.findById(businessId);
+
+    const business = await Business.findById(businessId)
+      .populate("services") 
+      .populate("musicLessons")
+      .populate("user", "name email") 
+      .populate("adminId", "name email")
+      .populate("review"); 
+
     if (!business) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Business not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Business not found",
+      });
     }
 
     return res.status(200).json({
@@ -362,7 +311,10 @@ exports.getBusinessById = async (req, res) => {
       data: business,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
@@ -487,6 +439,30 @@ exports.getDashboardData = async (req, res) => {
   }
 };
 
+// exports.getBusinessDetails = async (req, res) => {
+//   try {
+//     const { businessId } = req.params;
+//     const business = await Business.findById(businessId).populate(
+//       "user",
+//       "name email"
+//     );
+//     if (!business) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Business not found",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Business details fetched successfully",
+//       data: business,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
 // exports.updateBusiness = async (req, res) => {
 //   try {
 //     const io = req.app.get("io");
@@ -497,8 +473,6 @@ exports.getDashboardData = async (req, res) => {
 //       return res.status(400).json({ status: false, message: "User not found" });
 //     }
 
-
-
 //     // ✅ Save new lessonServicePrice if provided
 //     let savedLessonServiceId = null;
 //     if (data.lessonServicePrice) {
@@ -506,8 +480,6 @@ exports.getDashboardData = async (req, res) => {
 //       const savedLessonService = await lessonService.save();
 //       savedLessonServiceId = savedLessonService._id;
 //     }
-
-
 
 //     const savedBusiness = await new Business(updatedBusiness).save();
 //     const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
@@ -524,4 +496,3 @@ exports.getDashboardData = async (req, res) => {
 //     );
 
 //     await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
-
