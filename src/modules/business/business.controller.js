@@ -17,18 +17,8 @@ exports.createBusiness = async (req, res) => {
   try {
     const io = req.app.get("io");
     const { email, userType } = req.user;
-    const { services: servicesIds, businessInfo, ...otherFields } = req.body; 
+    const { services: servicesIds, businessInfo, ...otherFields } = req.body;
     const files = req.files;
-
-    // if (
-    //   !servicesIds ||
-    //   !Array.isArray(servicesIds) ||
-    //   servicesIds.length === 0
-    // ) {
-    //   return res
-    //     .status(400)
-    //     .json({ success: false, error: "servicesIds array is required" });
-    // }
 
     const user = await User.findOne({ email });
     if (!user) {
