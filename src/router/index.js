@@ -13,6 +13,7 @@ const reviewRouter = require("../modules/review/review.router");
 const pictureRouter = require("../modules/picture/picture.router");
 const instrumentAndServiceRouter = require("../modules/instrumentAndService/instrumentAndService.routrer");
 const notificationRouter = require("../modules/notification/notification.router");
+const serviceOfferRouter = require("../modules/serviceOffered/serviceOffered.router");
 // const instrumentNameRouter = require("../modules/instrumentName/instrumentName.router");
 
 const router = Router();
@@ -71,6 +72,10 @@ const moduleRouter = [
   {
     path: "/notification",
     router: notificationRouter,
+  },
+  {
+    path: "/service-offered",
+    router: serviceOfferRouter,
   },
 ];
 
