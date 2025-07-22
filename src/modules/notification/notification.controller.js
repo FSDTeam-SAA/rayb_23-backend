@@ -1,13 +1,12 @@
 const NotifyModel = require("./notification.model");
 const User = require("../user/user.model");
-const { param } = require("../business/business.router");
-const { default: status } = require("http-status");
+
 
 exports.getAllNotification = async (req, res) => {
   try {
-    const { userId: userID } = req.user;
+    const { userId } = req.user;
 
-    const isExist = await User.findById({ _id: userID });
+    const isExist = await User.findById({ _id: userId });
     if (!isExist) {
       return res.status(400).json({
         status: false,
@@ -15,7 +14,7 @@ exports.getAllNotification = async (req, res) => {
       });
     }
 
-    const notify = await NotifyModel.find({ userId: userID });
+    const notify = await NotifyModel.find({ user: userId });
     if (!notify) {
       return res.status(404).json({
         status: false,
@@ -86,9 +85,9 @@ exports.deleteNotification = async (req, res) => {
 
 exports.read = async (req, res) => {
   try {
-    const { userId: userID } = req.user;
+    const { userId} = req.user;
     const { id } = req.param;
-    const isExist = await User.findById({ _id: userID });
+    const isExist = await User.findById({ _id: userId });
     if (!isExist) {
       return res.status(400).json({
         status: false,
