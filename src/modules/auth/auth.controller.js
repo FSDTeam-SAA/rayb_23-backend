@@ -1,14 +1,8 @@
 const config = require("../../config");
-const {
-  createNotification,
-  createNotificationAdmin,
-} = require("../../utils/createNotification");
-const sendNotiFication = require("../../utils/sendNotification");
 const authService = require("./auth.service");
 
 const loginUser = async (req, res) => {
   try {
-    const io = req.app.get("io");
     const result = await authService.loginUser(req.body);
 
     if (result?.message === "Please verify your email" && result.accessToken) {
