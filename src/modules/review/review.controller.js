@@ -4,16 +4,14 @@ const User = require("../user/user.model");
 const { sendImageToCloudinary } = require("../../utils/cloudnary"); // assume you're using this
 const fs = require("fs");
 const ReviewModel = require("./review.model");
-const {
-  createNotificationAdmin,
-  createNotification,
-} = require("../../utils/createNotification");
-const sendNotiFication = require("../../utils/sendNotification");
+const Notification = require("../notification/notification.model");
+
+
 
 exports.createReview = async (req, res) => {
   try {
     const io = req.app.get("io");
-    const { email: userEmail, userId: userID } = req.user;
+    const { email: userEmail, userId } = req.user;
     const user = await User.findOne({ email: userEmail });
     if (!user) {
       return res.status(400).json({ status: false, message: "User not found" });
@@ -64,20 +62,41 @@ exports.createReview = async (req, res) => {
       $push: { review: review._id },
     });
 
-    const message1 = `${user.name} has added a new review in ${review.business.name}`;
-    const message2 = `You have added a new review in ${review.business.name}`;
-    const saveNotification = await createNotification(
-      userID,
-      message2,
-      "Review created"
-    );
-    const saveNotificationAdmin = await createNotificationAdmin(
-      userID,
-      message1,
-      "Review created"
-    );
+    const businessData = await Business.findById(business);
 
-    await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+
+    const adminUsers = await User.find({ userType: "admin" });
+
+    for (const admin of adminUsers) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "business_review",
+        title: "New Business Review",
+        message: `${user.name} added a review on a business.`,
+        metadata: { businessId: business },
+      });
+
+      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+    }
+
+    if (businessData?.userId) {
+      const ownerId = businessData.userId;
+
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: ownerId,
+        userType: "businessMan",
+        type: "business_review",
+        title: "New Review on Your Business",
+        message: `${user.name} has reviewed your business.`,
+        metadata: { businessId: business, reviewId: review._id },
+      });
+
+      io.to(`businessMan_${ownerId}`).emit("new_notification", notify);
+    }
+
 
     return res.status(201).json({
       status: true,
@@ -158,6 +177,7 @@ exports.getMyReviews = async (req, res) => {
 
 exports.updateReview = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const { email } = req.user;
     const { id } = req.params;
     const user = await User.findOne({ email });
@@ -182,6 +202,39 @@ exports.updateReview = async (req, res) => {
       new: true,
     });
 
+    const adminUsers = await User.find({ userType: "admin" });
+    const business = await Business.findById(result.business);
+    const ownerId = business?.userId;
+
+
+    for (const admin of adminUsers) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "review_updated",
+        title: "Review Updated",
+        message: `${user.name || "A user"} updated a review.`,
+        metadata: { businessId: business?._id, reviewId: result._id }
+      });
+      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+    }
+
+
+    if (ownerId) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: ownerId,
+        userType: "businessMan",
+        type: "review_updated",
+        title: "A Review Was Updated",
+        message: `${user.name || "A user"} updated their review on your business.`,
+        metadata: { businessId: business._id, reviewId: result._id }
+      });
+      io.to(`businessMan_${ownerId}`).emit("new_notification", notify);
+    }
+
+
     return res.json({
       status: true,
       message: "Review updated successfully",
@@ -194,23 +247,65 @@ exports.updateReview = async (req, res) => {
 
 exports.deleteReview = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const { email: userEmail } = req.user;
-    const user = await User.findOne({ email: userEmail });
 
+    const user = await User.findOne({ email: userEmail });
     if (!user) {
       return res.status(400).json({ status: false, message: "User not found" });
     }
 
     const { id } = req.params;
     if (!id) {
-      return res
-        .status(400)
-        .json({ status: false, message: "Review ID is required" });
+      return res.status(400).json({
+        status: false,
+        message: "Review ID is required",
+      });
     }
-    await Business.findByIdAndDelete(id);
-    res
-      .status(200)
-      .json({ success: true, message: "Business deleted successfully" });
+
+    const review = await ReviewModel.findByIdAndDelete(id); 
+    if (!review) {
+      return res.status(404).json({
+        status: false,
+        message: "Review not found",
+      });
+    }
+
+    const adminUsers = await User.find({ userType: "admin" });
+    const business = await Business.findById(review.business); 
+    const ownerId = business?.userId;
+
+    for (const admin of adminUsers) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "review_deleted",
+        title: "Review Deleted",
+        message: `${user.name || "A user"} deleted a review.`,
+        metadata: { businessId: business?._id, reviewId: review._id },
+      });
+      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+    }
+
+   
+    if (ownerId) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: ownerId,
+        userType: "businessMan",
+        type: "review_deleted",
+        title: "A Review Was Deleted",
+        message: `${user.name || "A user"} deleted their review on your business.`,
+        metadata: { businessId: business._id, reviewId: review._id },
+      });
+      io.to(`businessMan_${ownerId}`).emit("new_notification", notify);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Review deleted successfully",
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -12,9 +12,12 @@ const Business = require("./business.model");
 const ReviewModel = require("../review/review.model");
 const PictureModel = require("../picture/picture.model");
 const ClaimBussiness = require("../claimBussiness/claimBussiness.model");
+const Notification = require("../notification/notification.model");
+
 
 exports.createBusiness = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const { email, userType } = req.user;
     const files = req.files;
     const user = await User.findOne({ email });
@@ -52,6 +55,39 @@ exports.createBusiness = async (req, res) => {
     });
 
     const business = await Business.findById(result._id);
+    const userAdmin = await User.find({ userType: "admin" });
+
+    for (const admin of userAdmin) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "business_created",
+        title: "New Business Submission",
+        message: `${user.name} has submitted a new business for approval.`,
+        metadata: { businessId: result._id },
+      });
+
+      // Emit to admin socket room
+      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+    }
+
+    // If user is not admin, send confirmation to him too
+    if (userType !== "admin") {
+      const notifyUser = await Notification.create({
+        senderId: user._id,
+        receiverId: user._id,
+        userType: "user",
+        type: "business_created",
+        title: "Business Created",
+        message: `Your business was submitted successfully. Awaiting approval.`,
+        metadata: { businessId: result._id },
+      });
+
+      // Emit to user socket room
+      io.to(`user_${user._id}`).emit("new_notification", notifyUser);
+    }
+
 
     //? Create notification for business creation............
 
@@ -323,12 +359,6 @@ exports.getBusinessesByUser = async (req, res) => {
     }
 
     const businesses = await Business.find({ userId });
-    // if (!businesses || businesses.length === 0) {
-    //   return res.status(404).json({
-    //     success: false,
-    //     message: "No businesses found for this user",
-    //   });
-    // }
 
     return res.status(200).json({
       success: true,
@@ -434,7 +464,7 @@ exports.updateBusiness = async (req, res) => {
 
     const data = JSON.parse(req.body.data);
 
-    // ✅ Optional image upload
+
     let uploadedImages;
     if (req.files && req.files.length > 0) {
       uploadedImages = await Promise.all(
@@ -450,14 +480,14 @@ exports.updateBusiness = async (req, res) => {
       );
     }
 
-    // ✅ Save new instrumentInfo if provided
+
     let instrumentIds = [];
     if (data.instrumentInfo && Array.isArray(data.instrumentInfo)) {
       const savedInstruments = await Instrument.insertMany(data.instrumentInfo);
       instrumentIds = savedInstruments.map((inst) => inst._id);
     }
 
-    // ✅ Save new lessonServicePrice if provided
+
     let savedLessonServiceId = null;
     if (data.lessonServicePrice) {
       const lessonService = new LessonService(data.lessonServicePrice);
@@ -465,7 +495,7 @@ exports.updateBusiness = async (req, res) => {
       savedLessonServiceId = savedLessonService._id;
     }
 
-    // ✅ Prepare update payload
+
     const updatePayload = {
       businessInfo: {
         ...data.businessInfo,
@@ -486,29 +516,43 @@ exports.updateBusiness = async (req, res) => {
         new: true,
       }
     );
-    const message = `${data.businessInfo.name}: business has been updated`;
-    createNotification(userId, message, "Business");
     if (!updatedBusiness) {
       return res
         .status(404)
         .json({ success: false, message: "Business not found" });
     }
 
-    const savedBusiness = await new Business(updatedBusiness).save();
-    const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
-    const message2 = `You have updated a business: ${savedBusiness.businessInfo.name}`;
-    const saveNotification = await createNotification(
-      userId,
-      message2,
-      "Business Update"
-    );
-    const saveNotificationAdmin = await createNotificationAdmin(
-      userId,
-      message1,
-      "Business Update"
-    );
 
-    await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+    const adminUsers = await User.find({ userType: "admin" });
+
+    for (const admin of adminUsers) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "business_updated",
+        title: "Business Updated",
+        message: `${user.name || "A user"} updated a business.`,
+        metadata: { businessId: updatedBusiness._id },
+      });
+      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+    }
+
+
+    const ownerId = updatedBusiness.userId;
+    if (ownerId && ownerId.toString() !== user._id.toString()) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: ownerId,
+        userType: "businessMan",
+        type: "business_updated",
+        title: "Your Business was Updated",
+        message: `${user.name || "An admin"} updated your business info.`,
+        metadata: { businessId: updatedBusiness._id },
+      });
+      io.to(`businessMan_${ownerId}`).emit("new_notification", notify);
+    }
+
 
     return res.status(200).json({
       success: true,
@@ -531,34 +575,49 @@ exports.deleteBusiness = async (req, res) => {
     }
     const { id } = req.params;
     const business = await Business.findById(id);
-    const message = `${req.user.name} has deleted his business.`;
-    createNotification(userId, message, "Business");
-
     if (!business) {
       return res
         .status(404)
         .json({ success: false, message: "Business not found" });
     }
 
-    // Delete related instrument and lesson documents
+
     await Instrument.deleteMany({ _id: { $in: business.instrumentInfo } });
     await LessonService.findByIdAndDelete(business.lessonServicePrice);
 
     await Business.findByIdAndDelete(id);
-    const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
-    const message2 = `You have updated a business: ${savedBusiness.businessInfo.name}`;
-    const saveNotification = await createNotification(
-      userId,
-      message2,
-      "Business Update"
-    );
-    const saveNotificationAdmin = await createNotificationAdmin(
-      userId,
-      message1,
-      "Business Update"
-    );
 
-    await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+    const adminUsers = await User.find({ userType: "admin" });
+
+    for (const admin of adminUsers) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "business_deleted",
+        title: "Business Deleted",
+        message: `${user.name} has deleted a business.`,
+
+      });
+
+      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+    }
+
+    const ownerId = business.userId;
+    if (ownerId && ownerId.toString() === user._id.toString()) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: ownerId,
+        userType: "businessMan",
+        type: "business_deleted",
+        title: "Your Business Was Deleted",
+        message: `You have deleted your business.`,
+
+      });
+
+      io.to(`businessMan_${ownerId}`).emit("new_notification", notify);
+    }
+
 
     return res
       .status(200)

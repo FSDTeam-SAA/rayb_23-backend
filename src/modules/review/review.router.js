@@ -32,7 +32,7 @@ router.put(
   updateReview
 );
 
-router.delete("/delete-Review/:id", deleteReview);
+router.delete("/delete-Review/:id", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), deleteReview);
 
 const reviewRouter = router;
 module.exports = reviewRouter;
