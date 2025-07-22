@@ -21,37 +21,6 @@ const businessHoursSchema = new Schema(
   { _id: false }
 );
 
-const serviceSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    category: {
-      type: String,
-      enum: ["repair", "lesson", "other"],
-      required: true,
-    },
-    pricingType: {
-      type: String,
-      enum: ["exact", "range", "hourly"],
-      required: true,
-    },
-    price: { type: Schema.Types.Mixed, required: true },
-    instrumentType: { type: String }, // Guitar, Ukulele etc.
-    instrumentFamily: {
-      type: String,
-      enum: [
-        "strings",
-        "woodwinds",
-        "brass",
-        "percussions",
-        "keyboard",
-        "others",
-      ],
-    },
-    name: { type: String, required: true },
-  },
-  { _id: false }
-);
-
 const musicLessonSchema = new Schema(
   {
     instrumentFamily: {
@@ -72,10 +41,9 @@ const musicLessonSchema = new Schema(
   { _id: false }
 );
 
-// Full Business schema
 const businessSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    user: { type: Schema.Types.ObjectId, ref: "User" },
     adminId: { type: Schema.Types.ObjectId, ref: "User" },
     businessInfo: {
       name: { type: String, required: true },
@@ -91,8 +59,12 @@ const businessSchema = new Schema(
       website: { type: String },
       description: { type: String, required: true },
     },
-
-    services: [serviceSchema],
+    services: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "ServiceOffered",
+      },
+    ],
     musicLessons: [musicLessonSchema],
     businessHours: [businessHoursSchema],
 
@@ -111,6 +83,11 @@ const businessSchema = new Schema(
         ref: "Picture",
       },
     ],
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
     isMusiclessons: { type: Boolean, default: true },
     isVerified: { type: Boolean, default: false },
     otp: { type: String, default: null },
