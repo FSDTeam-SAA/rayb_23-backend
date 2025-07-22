@@ -1,23 +1,23 @@
-const NotifyModel = require("../modules/notification/notification.model");
-const createNotification = async (userId, message, type) => {
-  const newNotification = new NotifyModel({
-    user: userId,
-    text: message,
-    type: type,
-  });
-  await newNotification.save();
-  return newNotification;
-};
+// const NotifyModel = require("../modules/notification/notification.model");
+// const createNotification = async (userId, message, type) => {
+//   const newNotification = new NotifyModel({
+//     user: userId,
+//     text: message,
+//     type: type,
+//   });
+//   await newNotification.save();
+//   return newNotification;
+// };
 
-console.log(createNotification);
+// console.log(createNotification);
 
-const createNotificationAdmin = async (userId, message, type) => {
-  const newNotification = new NotifyModel({
-    user: userId,
-    text: message,
-    type: type,
-  });
-  await newNotification.save();
-  return newNotification;
-};
-module.exports = { createNotification, createNotificationAdmin };
+// const createNotificationAdmin = async (userId, message, type) => {
+//   const newNotification = new NotifyModel({
+//     user: userId,
+//     text: message,
+//     type: type,
+//   });
+//   await newNotification.save();
+//   return newNotification;
+// };
+// module.exports = { createNotification, createNotificationAdmin };
