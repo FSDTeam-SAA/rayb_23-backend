@@ -190,6 +190,27 @@ const bussinessEmailVerify = async (req, res) => {
       req.body
     );
 
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const admins = await User.find({ userType: "admin" });
+
+    for (const admin of admins) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "email_verified",
+        title: "Business Email Verified",
+        message: `${user.name} has verified their business email.`,
+        metadata: { businessId },
+      });
+
+      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+    }
+
     return res.status(200).json({
       success: true,
       code: 200,

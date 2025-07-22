@@ -1,13 +1,9 @@
 const PictureModel = require("./picture.model");
 const User = require("../user/user.model");
 const BusinessModel = require("../business/business.model");
-const {
-  createNotification,
-  createNotificationAdmin,
-} = require("../../utils/createNotification");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
-const sendNotiFication = require("../../utils/sendNotification");
-const { default: status } = require("http-status");
+const Notification = require("../notification/notification.model");
+
 
 exports.uploadPicture = async (req, res) => {
   try {
@@ -56,20 +52,43 @@ exports.uploadPicture = async (req, res) => {
       $push: { reviewImage: picture._id },
     });
 
-    const message1 = `${user.name} has added a new picture as review`;
-    const message2 = `You have added a new picture as review`;
-    const saveNotification = await createNotification(
-      userID,
-      message2,
-      "Review Picture"
-    );
-    const saveNotificationAdmin = await createNotificationAdmin(
-      userID,
-      message1,
-      "Review Picture"
-    );
+   const business = await BusinessModel.findById(data.business);
 
-    await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+    if (business?.user) {
+      const businessMan = await Notification.create({
+        senderId: user._id,
+        receiverId: business.user._id,
+        userType: "businessMan",
+        type: "review_image_uploaded",
+        title: "New Review Image",
+        message: `${user.name} uploaded a new picture for your business.`,
+        metadata: {
+          businessId: data.business,
+          pictureId: picture._id,
+        },
+      });
+
+      io.to(`businessMan_${business.user._id}`).emit("new_notification", businessMan);
+    }
+
+    // ⏩ Notify all admins
+    const admins = await User.find({ userType: "admin" });
+    for (const admin of admins) {
+      const adminNotification = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "review_image_uploaded",
+        title: "New Picture Uploaded",
+        message: `${user.name} uploaded a new picture for business: ${business.name}`,
+        metadata: {
+          businessId: data.business,
+          pictureId: picture._id,
+        },
+      });
+
+      io.to(`admin_${admin._id}`).emit("new_notification", adminNotification);
+    }
 
     res.app.get("io").emit("new-picture", picture);
 
@@ -223,6 +242,7 @@ exports.getPictureById = async (req, res) => {
 //Update picture by ID
 exports.updatePictureById = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const { userId } = req.user;
     const user = await User.findById(userId);
     if (!user) {
@@ -256,6 +276,46 @@ exports.updatePictureById = async (req, res) => {
       });
     }
 
+    const business = updatedPicture.business;
+
+    
+    if (business?.user) {
+      const notifyBusinessOwner = await Notification.create({
+        senderId: user._id,
+        receiverId: business.user,
+        userType: "businessMan",
+        type: "review_image_updated",
+        title: "Review Image Updated",
+        message: `${user.name} updated a review image for your business.`,
+        metadata: {
+          businessId: business._id,
+          pictureId: updatedPicture._id,
+        },
+      });
+
+      io.to(`businessMan_${business.user._id}`).emit("new_notification", notifyBusinessOwner);
+    }
+
+    // Notify all Admins
+    const admins = await User.find({ userType: "admin" });
+    for (const admin of admins) {
+      const notifyAdmin = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "review_image_updated",
+        title: "Picture Updated",
+        message: `${user.name} updated a review image for business: ${business.businessInfo?.businessName || "N/A"}`,
+        metadata: {
+          businessId: business._id,
+          pictureId: updatedPicture._id,
+        },
+      });
+
+      io.to(`admin_${admin._id}`).emit("new_notification", notifyAdmin);
+    }
+
+
     return res.status(200).json({
       status: true,
       message: "Picture updated successfully",
@@ -273,6 +333,7 @@ exports.updatePictureById = async (req, res) => {
 // Delete picture by ID
 exports.deletedPicture = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const { userId } = req.user;
     const user = await User.findById(userId);
     if (!user) {
@@ -289,6 +350,46 @@ exports.deletedPicture = async (req, res) => {
         message: "Picture not found",
       });
     }
+
+    const business = deletedPicture.business;
+
+    // Notify Business Owner
+    if (business?.user) {
+      const notifyBusinessOwner = await Notification.create({
+        senderId: user._id,
+        receiverId: business.user,
+        userType: "businessMan",
+        type: "review_image_deleted",
+        title: "Review Image Deleted",
+        message: `${user.name} deleted a review image from your business.`,
+        metadata: {
+          businessId: business._id,
+          pictureId: deletedPicture._id,
+        },
+      });
+
+      io.to(`businessMan_${business.user._id}`).emit("new_notification", notifyBusinessOwner);
+    }
+
+    // Notify all Admins
+    const admins = await User.find({ userType: "admin" });
+    for (const admin of admins) {
+      const notifyAdmin = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "review_image_deleted",
+        title: "Picture Deleted",
+        message: `${user.name} deleted a review image from business: ${business.businessInfo?.businessName || "N/A"}`,
+        metadata: {
+          businessId: business._id,
+          pictureId: deletedPicture._id,
+        },
+      });
+
+      io.to(`admin_${admin._id}`).emit("new_notification", notifyAdmin);
+    }
+
     return res.status(200).json({
       status: true,
       message: "Picture deleted successfully",
