@@ -22,8 +22,26 @@ const createServiceOffered = async (email, payload) => {
   return serviceOffered;
 };
 
+const getMyServiceOffered = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const business = await Business.findOne({ user: user._id });
+  if (!business) {
+    throw new Error("Business not found for the user");
+  }
+
+  const services = await ServiceOffered.find({
+    businessId: business._id,
+  }).populate("userId", "name email");
+  return services;
+};
+
 const serviceOfferedService = {
   createServiceOffered,
+  getMyServiceOffered,
 };
 
 module.exports = serviceOfferedService;
