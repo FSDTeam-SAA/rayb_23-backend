@@ -292,17 +292,14 @@ exports.getBusinessById = async (req, res) => {
     const { businessId } = req.params;
 
     const business = await Business.findById(businessId)
-      .populate("services") 
+      .populate("services")
       .populate("musicLessons")
-      .populate("user", "name email") 
+      .populate("user", "name email")
       .populate("adminId", "name email")
-      .populate("review"); 
+      .populate("review");
 
     if (!business) {
-      return res.status(404).json({
-        success: false,
-        message: "Business not found",
-      });
+      throw new Error("Business not found");
     }
 
     return res.status(200).json({
