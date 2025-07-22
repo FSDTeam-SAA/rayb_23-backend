@@ -72,7 +72,6 @@ const musicLessonSchema = new Schema(
   { _id: false }
 );
 
-// Full Business schema
 const businessSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User" },

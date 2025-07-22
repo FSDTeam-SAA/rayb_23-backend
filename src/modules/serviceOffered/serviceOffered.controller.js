@@ -21,8 +21,28 @@ const createServiceOffered = async (req, res) => {
   }
 };
 
+const getMyServiceOffered = async (req, res) => {
+  try {
+    const { email } = req.user;
+    const result = await serviceOfferedService.getMyServiceOffered(email);
+
+    return res.status(200).json({
+      success: true,
+      message: "My services offered retrieved successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      error: error,
+    });
+  }
+};
+
 const serviceOfferedController = {
   createServiceOffered,
+  getMyServiceOffered,
 };
 
 module.exports = serviceOfferedController;

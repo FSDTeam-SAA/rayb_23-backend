@@ -11,5 +11,11 @@ router.post(
   serviceOfferedController.createServiceOffered
 );
 
+router.get(
+  "/my-services",
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  serviceOfferedController.getMyServiceOffered
+);
+
 const serviceOfferRouter = router;
 module.exports = serviceOfferRouter;
