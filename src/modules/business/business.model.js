@@ -35,7 +35,7 @@ const serviceSchema = new Schema(
       required: true,
     },
     price: { type: Schema.Types.Mixed, required: true },
-    instrumentType: { type: String }, // Guitar, Ukulele etc.
+    instrumentType: { type: String }, 
     instrumentFamily: {
       type: String,
       enum: [
@@ -75,7 +75,7 @@ const musicLessonSchema = new Schema(
 // Full Business schema
 const businessSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    user: { type: Schema.Types.ObjectId, ref: "User" },
     adminId: { type: Schema.Types.ObjectId, ref: "User" },
     businessInfo: {
       name: { type: String, required: true },

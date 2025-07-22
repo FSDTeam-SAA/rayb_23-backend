@@ -1,5 +1,4 @@
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
-const { Instrument } = require("../instrument/instrument.model");
 const { LessonService } = require("../lessonService/lessonService.model");
 const User = require("../user/user.model");
 const fs = require("fs");
@@ -22,7 +21,7 @@ exports.createBusiness = async (req, res) => {
       throw new Error("User not found");
     }
 
-    const ownerField = userType === "admin" ? "adminId" : "userId";
+    const ownerField = userType === "admin" ? "adminId" : "user";
     req.body[ownerField] = user._id;
 
     let image = [];
@@ -408,162 +407,162 @@ exports.getDashboardData = async (req, res) => {
   }
 };
 
-exports.updateBusiness = async (req, res) => {
-  try {
-    const io = req.app.get("io");
-    const { email: userEmail, userId } = req.user;
-    const user = await User.findOne({ email: userEmail });
+// exports.updateBusiness = async (req, res) => {
+//   try {
+//     const io = req.app.get("io");
+//     const { email: userEmail, userId } = req.user;
+//     const user = await User.findOne({ email: userEmail });
 
-    if (!user) {
-      return res.status(400).json({ status: false, message: "User not found" });
-    }
+//     if (!user) {
+//       return res.status(400).json({ status: false, message: "User not found" });
+//     }
 
-    const { id } = req.params;
-    if (!id) {
-      return res
-        .status(400)
-        .json({ status: false, message: "Business ID is required" });
-    }
+//     const { id } = req.params;
+//     if (!id) {
+//       return res
+//         .status(400)
+//         .json({ status: false, message: "Business ID is required" });
+//     }
 
-    if (!req.body.data) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing 'data' field in form-data",
-      });
-    }
+//     if (!req.body.data) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Missing 'data' field in form-data",
+//       });
+//     }
 
-    const data = JSON.parse(req.body.data);
+//     const data = JSON.parse(req.body.data);
 
-    // ✅ Optional image upload
-    let uploadedImages;
-    if (req.files && req.files.length > 0) {
-      uploadedImages = await Promise.all(
-        req.files.map(async (file) => {
-          const imageName = `business/${Date.now()}_${file.originalname}`;
-          const { secure_url } = await sendImageToCloudinary(
-            imageName,
-            file.path
-          );
-          fs.unlinkSync(file.path);
-          return secure_url;
-        })
-      );
-    }
+//     // ✅ Optional image upload
+//     let uploadedImages;
+//     if (req.files && req.files.length > 0) {
+//       uploadedImages = await Promise.all(
+//         req.files.map(async (file) => {
+//           const imageName = `business/${Date.now()}_${file.originalname}`;
+//           const { secure_url } = await sendImageToCloudinary(
+//             imageName,
+//             file.path
+//           );
+//           fs.unlinkSync(file.path);
+//           return secure_url;
+//         })
+//       );
+//     }
 
-    // ✅ Save new instrumentInfo if provided
-    let instrumentIds = [];
-    if (data.instrumentInfo && Array.isArray(data.instrumentInfo)) {
-      const savedInstruments = await Instrument.insertMany(data.instrumentInfo);
-      instrumentIds = savedInstruments.map((inst) => inst._id);
-    }
+//     // ✅ Save new instrumentInfo if provided
+//     let instrumentIds = [];
+//     if (data.instrumentInfo && Array.isArray(data.instrumentInfo)) {
+//       const savedInstruments = await Instrument.insertMany(data.instrumentInfo);
+//       instrumentIds = savedInstruments.map((inst) => inst._id);
+//     }
 
-    // ✅ Save new lessonServicePrice if provided
-    let savedLessonServiceId = null;
-    if (data.lessonServicePrice) {
-      const lessonService = new LessonService(data.lessonServicePrice);
-      const savedLessonService = await lessonService.save();
-      savedLessonServiceId = savedLessonService._id;
-    }
+//     // ✅ Save new lessonServicePrice if provided
+//     let savedLessonServiceId = null;
+//     if (data.lessonServicePrice) {
+//       const lessonService = new LessonService(data.lessonServicePrice);
+//       const savedLessonService = await lessonService.save();
+//       savedLessonServiceId = savedLessonService._id;
+//     }
 
-    // ✅ Prepare update payload
-    const updatePayload = {
-      businessInfo: {
-        ...data.businessInfo,
-        ...(uploadedImages && { image: uploadedImages }),
-      },
-      businessHours: data.businessHours || [],
-    };
+//     // ✅ Prepare update payload
+//     const updatePayload = {
+//       businessInfo: {
+//         ...data.businessInfo,
+//         ...(uploadedImages && { image: uploadedImages }),
+//       },
+//       businessHours: data.businessHours || [],
+//     };
 
-    if ("status" in data) updatePayload.status = data.status;
-    if (instrumentIds.length) updatePayload.instrumentInfo = instrumentIds;
-    if (savedLessonServiceId)
-      updatePayload.lessonServicePrice = savedLessonServiceId;
+//     if ("status" in data) updatePayload.status = data.status;
+//     if (instrumentIds.length) updatePayload.instrumentInfo = instrumentIds;
+//     if (savedLessonServiceId)
+//       updatePayload.lessonServicePrice = savedLessonServiceId;
 
-    const updatedBusiness = await Business.findByIdAndUpdate(
-      id,
-      updatePayload,
-      {
-        new: true,
-      }
-    );
-    const message = `${data.businessInfo.name}: business has been updated`;
-    createNotification(userId, message, "Business");
-    if (!updatedBusiness) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Business not found" });
-    }
+//     const updatedBusiness = await Business.findByIdAndUpdate(
+//       id,
+//       updatePayload,
+//       {
+//         new: true,
+//       }
+//     );
+//     const message = `${data.businessInfo.name}: business has been updated`;
+//     createNotification(userId, message, "Business");
+//     if (!updatedBusiness) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Business not found" });
+//     }
 
-    const savedBusiness = await new Business(updatedBusiness).save();
-    const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
-    const message2 = `You have updated a business: ${savedBusiness.businessInfo.name}`;
-    const saveNotification = await createNotification(
-      userId,
-      message2,
-      "Business Update"
-    );
-    const saveNotificationAdmin = await createNotificationAdmin(
-      userId,
-      message1,
-      "Business Update"
-    );
+//     const savedBusiness = await new Business(updatedBusiness).save();
+//     const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
+//     const message2 = `You have updated a business: ${savedBusiness.businessInfo.name}`;
+//     const saveNotification = await createNotification(
+//       userId,
+//       message2,
+//       "Business Update"
+//     );
+//     const saveNotificationAdmin = await createNotificationAdmin(
+//       userId,
+//       message1,
+//       "Business Update"
+//     );
 
-    await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+//     await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
 
-    return res.status(200).json({
-      success: true,
-      message: "Business updated successfully",
-      data: updatedBusiness,
-    });
-  } catch (error) {
-    console.error("Update business error:", error);
-    return res.status(500).json({ error: error.message });
-  }
-};
+//     return res.status(200).json({
+//       success: true,
+//       message: "Business updated successfully",
+//       data: updatedBusiness,
+//     });
+//   } catch (error) {
+//     console.error("Update business error:", error);
+//     return res.status(500).json({ error: error.message });
+//   }
+// };
 
-exports.deleteBusiness = async (req, res) => {
-  try {
-    const io = req.app.get("io");
-    const { userId } = req.user;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(400).json({ status: false, message: "User not found" });
-    }
-    const { id } = req.params;
-    const business = await Business.findById(id);
-    const message = `${req.user.name} has deleted his business.`;
-    createNotification(userId, message, "Business");
+// exports.deleteBusiness = async (req, res) => {
+//   try {
+//     const io = req.app.get("io");
+//     const { userId } = req.user;
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(400).json({ status: false, message: "User not found" });
+//     }
+//     const { id } = req.params;
+//     const business = await Business.findById(id);
+//     const message = `${req.user.name} has deleted his business.`;
+//     createNotification(userId, message, "Business");
 
-    if (!business) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Business not found" });
-    }
+//     if (!business) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Business not found" });
+//     }
 
-    // Delete related instrument and lesson documents
-    await Instrument.deleteMany({ _id: { $in: business.instrumentInfo } });
-    await LessonService.findByIdAndDelete(business.lessonServicePrice);
+//     // Delete related instrument and lesson documents
+//     await Instrument.deleteMany({ _id: { $in: business.instrumentInfo } });
+//     await LessonService.findByIdAndDelete(business.lessonServicePrice);
 
-    await Business.findByIdAndDelete(id);
-    const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
-    const message2 = `You have updated a business: ${savedBusiness.businessInfo.name}`;
-    const saveNotification = await createNotification(
-      userId,
-      message2,
-      "Business Update"
-    );
-    const saveNotificationAdmin = await createNotificationAdmin(
-      userId,
-      message1,
-      "Business Update"
-    );
+//     await Business.findByIdAndDelete(id);
+//     const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
+//     const message2 = `You have updated a business: ${savedBusiness.businessInfo.name}`;
+//     const saveNotification = await createNotification(
+//       userId,
+//       message2,
+//       "Business Update"
+//     );
+//     const saveNotificationAdmin = await createNotificationAdmin(
+//       userId,
+//       message1,
+//       "Business Update"
+//     );
 
-    await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+//     await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
 
-    return res
-      .status(200)
-      .json({ success: true, message: "Business deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+//     return res
+//       .status(200)
+//       .json({ success: true, message: "Business deleted successfully" });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
