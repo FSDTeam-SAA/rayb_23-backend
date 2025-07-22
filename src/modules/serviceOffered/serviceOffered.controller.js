@@ -40,9 +40,34 @@ const getMyServiceOffered = async (req, res) => {
   }
 };
 
+const addServicePricing = async (req, res) => {
+  try {
+    const { email } = req.user;
+    const { serviceOfferedId } = req.params;
+    const result = await serviceOfferedService.addServicePricing(
+      email,
+      req.body,
+      serviceOfferedId
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Service pricing added successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      error: error,
+    });
+  }
+};
+
 const serviceOfferedController = {
   createServiceOffered,
   getMyServiceOffered,
+  addServicePricing,
 };
 
 module.exports = serviceOfferedController;
