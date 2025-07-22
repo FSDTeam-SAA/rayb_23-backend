@@ -66,6 +66,23 @@ exports.createBusiness = async (req, res) => {
       $push: { businesses: newBusiness._id },
     });
 
+    const business = await Business.findById(result._id);
+    const userAdmin = await User.find({ userType: "admin" });
+
+    for (const admin of userAdmin) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "business_created",
+        title: "New Business Submission",
+        message: `${user.name} has submitted a new business for approval .`,
+        metadata: { businessId: result._id },
+      });
+
+      // Emit to admin socket room
+      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+    }
 
     return res.status(201).json({
       success: true,
