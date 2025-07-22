@@ -7,6 +7,7 @@ const {
   getBusinessesByUser,
   deleteBusiness,
   getDashboardData,
+  getMyApprovedBusinesses,
 } = require("./business.controller");
 const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
@@ -48,6 +49,12 @@ router.get(
   "/dashboard",
   // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   getDashboardData
+);
+
+router.get(
+  "/my-approved-business",
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  getMyApprovedBusinesses
 );
 
 router.get(

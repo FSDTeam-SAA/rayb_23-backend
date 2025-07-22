@@ -391,6 +391,34 @@ exports.getBusinessesByUser = async (req, res) => {
   }
 };
 
+exports.getMyApprovedBusinesses = async (req, res) => {
+  try {
+    const { email } = req.user;
+    console.log("Fetching approved businesses for user:", email);
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+    const businesses = await Business.find({
+      user: user._id,
+      status: "approved",
+    });
+    if (!businesses) {
+      return res.status(404).json({
+        success: false,
+        message: "No businesses found for this user",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Your businesses fetched successfully",
+      data: businesses,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 exports.getDashboardData = async (req, res) => {
   try {
     const { range = "day" } = req.query;
