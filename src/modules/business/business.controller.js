@@ -11,21 +11,41 @@ const Business = require("./business.model");
 const ReviewModel = require("../review/review.model");
 const PictureModel = require("../picture/picture.model");
 const ClaimBussiness = require("../claimBussiness/claimBussiness.model");
+const ServiceOffered = require("../serviceOffered/serviceOffered.model");
 
 exports.createBusiness = async (req, res) => {
   try {
     const { email, userType } = req.user;
+    const { services: servicesIds, businessInfo, ...otherFields } = req.body; 
     const files = req.files;
+
+    // if (
+    //   !servicesIds ||
+    //   !Array.isArray(servicesIds) ||
+    //   servicesIds.length === 0
+    // ) {
+    //   return res
+    //     .status(400)
+    //     .json({ success: false, error: "servicesIds array is required" });
+    // }
+
     const user = await User.findOne({ email });
     if (!user) {
-      throw new Error("User not found");
+      return res.status(404).json({ success: false, error: "User not found" });
     }
 
     const ownerField = userType === "admin" ? "adminId" : "user";
-    req.body[ownerField] = user._id;
 
+    // Verify all serviceOffered IDs exist
+    const services = await ServiceOffered.find({ _id: { $in: servicesIds } });
+    if (services.length !== servicesIds.length) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Some services not found" });
+    }
+
+    // Upload images if provided
     let image = [];
-
     if (files && Array.isArray(files) && files.length > 0) {
       image = await Promise.all(
         files.map(async (file) => {
@@ -36,31 +56,39 @@ exports.createBusiness = async (req, res) => {
       );
     }
 
-    const result = await Business.create({
-      ...req.body,
-      businessInfo: {
-        ...req.body.businessInfo,
-        image,
-      },
+    // Merge images into businessInfo
+    const newBusinessInfo = {
+      ...businessInfo,
+      ...(image.length > 0 ? { image } : {}),
+    };
+
+    // Create business document with all other fields and services array
+    const newBusiness = await Business.create({
+      ...otherFields,
+      [ownerField]: user._id,
+      services: servicesIds,
+      businessInfo: newBusinessInfo,
     });
 
+    // Push business ref to user.businesses array (optional)
     await User.findByIdAndUpdate(user._id, {
-      $push: {
-        businesses: result._id,
-      },
+      $push: { businesses: newBusiness._id },
     });
 
-    const business = await Business.findById(result._id);
+    // Populate refs for response
+    const populatedBusiness = await Business.findById(newBusiness._id)
+      .populate("user", "name email")
+      .populate("adminId", "name email")
+      .populate("services");
 
-    //? Create notification for business creation............
-
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Business created successfully",
-      data: business,
+      data: populatedBusiness,
     });
   } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
+    console.error("Create business error:", error);
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
 

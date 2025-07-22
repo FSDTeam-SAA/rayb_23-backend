@@ -17,5 +17,11 @@ router.get(
   serviceOfferedController.getMyServiceOffered
 );
 
+router.patch(
+  "/add-pricing/:serviceOfferedId",
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  serviceOfferedController.addServicePricing
+);
+
 const serviceOfferRouter = router;
 module.exports = serviceOfferRouter;
