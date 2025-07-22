@@ -64,7 +64,7 @@ exports.createBusiness = async (req, res) => {
         userType: "admin",
         type: "business_created",
         title: "New Business Submission",
-        message: `${user.name} has submitted a new business for approval.`,
+        message: `${user.name} has submitted a new business for approval .`,
         metadata: { businessId: result._id },
       });
 
