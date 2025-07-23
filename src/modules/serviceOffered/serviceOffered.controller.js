@@ -18,7 +18,9 @@ const createServiceOffered = async (req, res) => {
         userType: "admin",
         type: "service_offered_created",
         title: "New Service Offered Created",
-        message: `${user.name} created a new service offered: "${result.name || ''}"`,
+        message: `${user.name} created a new service offered: "${
+          result.name || ""
+        }"`,
         metadata: { serviceOfferedId: result._id },
       });
 
@@ -77,7 +79,9 @@ const addServicePricing = async (req, res) => {
         userType: "admin",
         type: "service_pricing_added",
         title: "New Pricing Added to Service",
-        message: `${user.name} added new pricing to a service: "${result.serviceName || ''}"`,
+        message: `${user.name} added new pricing to a service: "${
+          result.serviceName || ""
+        }"`,
         metadata: { serviceOfferedId, pricingId: result._id },
       });
 
@@ -97,10 +101,35 @@ const addServicePricing = async (req, res) => {
   }
 };
 
+const updateServiceOffered = async (req, res) => {
+  try {
+    const { serviceOfferedId } = req.params;
+    const { email } = req.user;
+    const result = await serviceOfferedService.updateServiceOffered(
+      email,
+      serviceOfferedId,
+      req.body
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Service offered updated successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      error: error,
+    });
+  }
+};
+
 const serviceOfferedController = {
   createServiceOffered,
   getMyServiceOffered,
   addServicePricing,
+  updateServiceOffered,
 };
 
 module.exports = serviceOfferedController;
