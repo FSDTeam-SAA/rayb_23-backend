@@ -2,11 +2,11 @@ const express = require("express");
 const {
   createBusiness,
   getAllBusinesses,
-  getBusinessById,
   getBusinessesByUser,
   getDashboardData,
   getMyApprovedBusinesses,
   getBusinessmanDashboardData,
+  getAllBusinessesByAdmin,
 } = require("./business.controller");
 const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
@@ -64,7 +64,7 @@ router.get(
 router.get(
   "/:businessId",
   // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  getBusinessById
+  getAllBusinessesByAdmin
 );
 
 

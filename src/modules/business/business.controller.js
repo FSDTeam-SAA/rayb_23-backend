@@ -477,7 +477,6 @@ exports.getDashboardData = async (req, res) => {
   }
 };
 
-
 exports.getBusinessmanDashboardData = async (req, res) => {
   try {
     const { range = "day" } = req.query;
@@ -488,8 +487,12 @@ exports.getBusinessmanDashboardData = async (req, res) => {
     }
 
     // Step 1: Find all businesses owned by the user
-    const businesses = await Business.find({ user: userId }).select("_id businessInfo.name");
-    const savedBusiness = await SavedBusinessModel.find({ user: userId }).select("_id savedBusiness businessInfo.name");
+    const businesses = await Business.find({ user: userId }).select(
+      "_id businessInfo.name"
+    );
+    const savedBusiness = await SavedBusinessModel.find({
+      user: userId,
+    }).select("_id savedBusiness businessInfo.name");
     const businessIds = businesses.map((b) => b._id);
     const savedBusinessIds = savedBusiness.map((b) => b.savedBusiness);
     console.log(savedBusinessIds);
@@ -497,45 +500,40 @@ exports.getBusinessmanDashboardData = async (req, res) => {
     const startDate = getTimeRange(range);
 
     const queryWithDate = { $gte: startDate };
-    const [
-      totalReviews,
-      totalPhotos,
-      totalSaves,
-      recentReviews,
-    ] = await Promise.all([
-      // Only reviews of my businesses
-      ReviewModel.countDocuments({
-        business: { $in: businessIds },
-        createdAt: queryWithDate,
-      }),
+    const [totalReviews, totalPhotos, totalSaves, recentReviews] =
+      await Promise.all([
+        // Only reviews of my businesses
+        ReviewModel.countDocuments({
+          business: { $in: businessIds },
+          createdAt: queryWithDate,
+        }),
 
-      ReviewModel.countDocuments({
-        business: { $in: businessIds },
-        createdAt: queryWithDate,
-        reviewImage: { $exists: true, $ne: [] },
-      }),
-      // Only photos for my businesses
-      // PictureModel.countDocuments({
-      //   business: { $in: businessIds },
-      //   createdAt: queryWithDate,
-      // }),
+        ReviewModel.countDocuments({
+          business: { $in: businessIds },
+          createdAt: queryWithDate,
+          reviewImage: { $exists: true, $ne: [] },
+        }),
+        // Only photos for my businesses
+        // PictureModel.countDocuments({
+        //   business: { $in: businessIds },
+        //   createdAt: queryWithDate,
+        // }),
 
-      
-      SavedBusinessModel.countDocuments({
-        savedBusiness: { $in: savedBusinessIds },
-        user: userId,
-        createdAt: queryWithDate,
-      }),
-      // Fetch latest reviews for my businesses
-      ReviewModel.find({
-        business: { $in: businessIds },
-        createdAt: queryWithDate,
-      })
-        .populate("user", "name profilePhoto")
-        .populate("business", "businessInfo.name")
-        .sort({ createdAt: -1 })
-        .limit(5),
-    ]);
+        SavedBusinessModel.countDocuments({
+          savedBusiness: { $in: savedBusinessIds },
+          user: userId,
+          createdAt: queryWithDate,
+        }),
+        // Fetch latest reviews for my businesses
+        ReviewModel.find({
+          business: { $in: businessIds },
+          createdAt: queryWithDate,
+        })
+          .populate("user", "name profilePhoto")
+          .populate("business", "businessInfo.name")
+          .sort({ createdAt: -1 })
+          .limit(5),
+      ]);
 
     return res.status(200).json({
       success: true,
@@ -566,3 +564,119 @@ exports.getBusinessmanDashboardData = async (req, res) => {
   }
 };
 
+exports.getAllBusinessesByAdmin = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      businessType,
+      time = "all",
+      sortBy = "latest",
+    } = req.query;
+
+    const pageNumber = Math.max(1, parseInt(page));
+    const pageSize = Math.max(1, parseInt(limit));
+
+    const filter = {};
+    const sortOption = {};
+
+    if (
+      businessType &&
+      ["pending", "approved", "rejected"].includes(businessType.toLowerCase())
+    ) {
+      filter.status = businessType.toLowerCase();
+    }
+
+    if (time && ["last-7", "last-30"].includes(time)) {
+      const now = new Date();
+      let fromDate = new Date();
+
+      if (time === "last-7") {
+        fromDate.setDate(now.getDate() - 7);
+      } else if (time === "last-30") {
+        fromDate.setDate(now.getDate() - 30);
+      }
+
+      filter.createdAt = { $gte: fromDate };
+    }
+
+    let businessesQuery = Business.find(filter)
+      .select("businessInfo user status createdAt")
+      .populate("user", "name email");
+
+    if (["latest", "oldest"].includes(sortBy)) {
+      sortOption.createdAt = sortBy === "latest" ? -1 : 1;
+    } else if (sortBy === "A-Z") {
+      sortOption["businessInfo.name"] = 1;
+      businessesQuery = businessesQuery.collation({
+        locale: "en",
+        strength: 2,
+      });
+    } else if (sortBy === "Z-A") {
+      sortOption["businessInfo.name"] = -1;
+      businessesQuery = businessesQuery.collation({
+        locale: "en",
+        strength: 2,
+      });
+    }
+
+    const totalCount = await Business.countDocuments(filter);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    if (sortBy === "status") {
+      const allBusinesses = await businessesQuery;
+
+      const statusOrder = { pending: 1, approved: 2, rejected: 3 };
+
+      const sortedBusinesses = allBusinesses.sort((a, b) => {
+        const statusCompare = statusOrder[a.status] - statusOrder[b.status];
+        if (statusCompare !== 0) return statusCompare;
+
+        return a.businessInfo.name.localeCompare(b.businessInfo.name, "en", {
+          sensitivity: "base",
+        });
+      });
+
+      const paginated = sortedBusinesses.slice(
+        (pageNumber - 1) * pageSize,
+        pageNumber * pageSize
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Businesses fetched successfully",
+        data: paginated,
+        pagination: {
+          page: pageNumber,
+          limit: pageSize,
+          totalPages,
+          totalCount,
+        },
+      });
+    }
+
+    const businesses = await businessesQuery
+      .sort(sortOption)
+      .skip((pageNumber - 1) * pageSize)
+      .limit(pageSize);
+
+    return res.status(200).json({
+      success: true,
+      message: "Businesses fetched successfully",
+      data: businesses,
+      pagination: {
+        page: pageNumber,
+        limit: pageSize,
+        totalPages,
+        totalCount,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      error,
+    });
+  }
+};
