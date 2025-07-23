@@ -46,7 +46,6 @@ router.put(
         });
       }
     }
-    // If no `data`, req.body remains an empty object or unchanged
     next();
   },
   userController.updateUserProfile
@@ -63,6 +62,8 @@ router.put(
   auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.deletedUserAccount
 );
+
+router.put("/add-support", userController.addSupport);
 
 const userRouter = router;
 module.exports = userRouter;

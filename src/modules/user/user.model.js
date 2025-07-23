@@ -66,7 +66,7 @@ const userModel = new Schema(
       type: String,
       default: null,
     },
-    businessId: {    // fuckery is here.........
+    businessId: {
       type: Schema.Types.ObjectId,
       ref: "Business",
       default: null,

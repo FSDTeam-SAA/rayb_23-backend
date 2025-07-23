@@ -52,7 +52,6 @@ const businessSchema = new Schema(
       },
     ],
     businessHours: [businessHoursSchema],
-
     buyInstruments: { type: Boolean, default: false },
     sellInstruments: { type: Boolean, default: false },
     offerMusicLessons: { type: Boolean, default: false },
@@ -73,6 +72,8 @@ const businessSchema = new Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    longitude: { type: Number },
+    latitude: { type: Number },
     isMusiclessons: { type: Boolean, default: true },
     isVerified: { type: Boolean, default: false },
     otp: { type: String, default: null },
