@@ -245,6 +245,29 @@ const deletedUserAccount = async (userId) => {
   return result;
 };
 
+const addSupport = async (payload) => {
+  const { email, support } = payload;
+  if (!email || !support)
+    throw new Error("Email and support message are required");
+
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  const updatedUser = await User.findByIdAndUpdate(
+    {
+      _id: user._id,
+    },
+    {
+      $set: { support },
+    },
+    {
+      new: true,
+    }
+  ).select("name email support");
+
+  return updatedUser;
+};
+
 const userService = {
   createNewAccountInDB,
   verifyUserEmail,
@@ -254,6 +277,7 @@ const userService = {
   updateUserProfile,
   deactiveAccount,
   deletedUserAccount,
+  addSupport,
 };
 
 module.exports = userService;
