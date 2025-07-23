@@ -117,7 +117,6 @@ exports.createReview = async (req, res) => {
 exports.getReviewsByAdmin = async (req, res) => {
   try {
     const { userId } = req.user;
-    console.log(req.user);
     const user = await User.findById(userId);
     if (!user || user.userType !== "businessMan") {
       return res.status(403).json({
@@ -297,7 +296,7 @@ exports.updateReview = async (req, res) => {
   }
 };
 
-exports.toggleReview= async (req, res)=>{
+exports.toggleReview = async (req, res) => {
   try {
     const { email: userEmail } = req.user;
     const user = await User.findOne({ email: userEmail });
@@ -336,6 +335,92 @@ exports.toggleReview= async (req, res)=>{
     return res.status(500).json({ status: false, error: error.message });
   }
 }
+
+exports.reportReview = async (req, res) => {
+  try {
+    const io = req.app.get("io");
+    const { email } = req.user;
+    const { id } = req.params;
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({
+        status: false,
+        message: "Report message is required",
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+
+    const review = await ReviewModel.findById(id);
+    if (!review) {
+      return res.status(404).json({ status: false, message: "Review not found" });
+    }
+
+    // Prevent self-reporting
+    if (String(review.user) === String(user._id)) {
+      return res.status(403).json({
+        status: false,
+        message: "You cannot report your own review",
+      });
+    }
+
+    const business = await Business.findById(review.business);
+    if (!business) {
+      return res.status(404).json({ status: false, message: "Business not found" });
+    }
+
+    // Prevent business owner from reporting review on own business
+    if (String(business.user) === String(user._id)) {
+      return res.status(403).json({
+        status: false,
+        message: "You cannot report a review on your own business",
+      });
+    }
+
+    // Update review with report
+    review.report = {
+      isReport: true,
+      message,
+    };
+    await review.save();
+
+    
+    const adminUsers = await User.find({ userType: "admin" });
+    for (const admin of adminUsers) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "review_reported",
+        title: "Review Reported",
+        message: `${user.name || "A user"} reported a review.`,
+        metadata: {
+          businessId: business?._id,
+          reviewId: review._id,
+        },
+      });
+      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Review reported successfully and notifications sent",
+      data: review,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+
 exports.deleteReview = async (req, res) => {
   try {
     const io = req.app.get("io");
@@ -354,7 +439,7 @@ exports.deleteReview = async (req, res) => {
       });
     }
 
-    const review = await ReviewModel.findByIdAndDelete(id); 
+    const review = await ReviewModel.findByIdAndDelete(id);
     if (!review) {
       return res.status(404).json({
         status: false,
@@ -363,7 +448,7 @@ exports.deleteReview = async (req, res) => {
     }
 
     const adminUsers = await User.find({ userType: "admin" });
-    const business = await Business.findById(review.business); 
+    const business = await Business.findById(review.business);
     const ownerId = business?.user;
 
     for (const admin of adminUsers) {
@@ -379,7 +464,7 @@ exports.deleteReview = async (req, res) => {
       io.to(`admin_${admin._id}`).emit("new_notification", notify);
     }
 
-   
+
     if (ownerId) {
       const notify = await Notification.create({
         senderId: user._id,

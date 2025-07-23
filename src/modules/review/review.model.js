@@ -29,7 +29,14 @@ const reviewSchema = new mongoose.Schema(
         default: false,
       },
       reportMessage: {
-        type: String,
+        isReport:{
+          type:Boolean,
+          enum: [true, false],
+          default:false
+        },
+        message: {
+          type:String,
+        }
       },
     },
     replay: {
