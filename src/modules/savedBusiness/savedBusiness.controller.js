@@ -96,24 +96,22 @@ exports.getSavedBusinessesByUser = async (req, res) => {
       throw new Error("User not found");
     }
 
-    // if (!userId) {
-    //   return res.status(401).json({ message: "Unauthorized user" });
-    // }
 
     const savedBusinesses = await SavedBusinessModel.find({ user: userId })
-      .populate({
-        path: "savedBusiness",
-        populate: [
-          { path: "instrumentInfo" },
-          { path: "lessonServicePrice" },
-          {
-            path: "review",
-            match: { status: "approved" },
-            populate: { path: "user", select: "name email" },
-          },
-          { path: "user", select: "name email" },
-        ],
-      })
+      // .populate({
+      //   path: "savedBusiness",
+      //   populate: [
+      //     { path: "instrumentInfo" },
+      //     { path: "lessonServicePrice" },
+      //     {
+      //       path: "review",
+      //       match: { status: "approved" },
+      //       populate: { path: "user", select: "name email" },
+      //     },
+      //     { path: "user", select: "name email" },
+      //   ],
+      // })
+      .populate("savedBusiness")
       .populate("user", "name email");
 
     if (savedBusinesses.length === 0) {

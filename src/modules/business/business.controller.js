@@ -9,6 +9,8 @@ const ClaimBussiness = require("../claimBussiness/claimBussiness.model");
 const ServiceOffered = require("../serviceOffered/serviceOffered.model");
 const { default: mongoose } = require("mongoose");
 const MusicLesson = require("../musicLesson/musicLesson.model");
+const getTimeRange = require("../../utils/getTimeRange");
+const SavedBusinessModel = require("../savedBusiness/SavedBusiness.model");
 
 exports.createBusiness = async (req, res) => {
   try {
@@ -475,6 +477,156 @@ exports.getDashboardData = async (req, res) => {
   }
 };
 
+
+
+exports.getBusinessmanDashboardData = async (req, res) => {
+  try {
+    const { range = "day" } = req.query;
+    const { userId } = req.user;
+
+    if (req.user.userType !== "businessMan") {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    // Step 1: Find all businesses owned by the user
+    const businesses = await Business.find({ user: userId }).select("_id businessInfo.name");
+    const savedBusiness = await SavedBusinessModel.find({ user: userId }).select("_id savedBusiness businessInfo.name");
+    const businessIds = businesses.map((b) => b._id);
+    const savedBusinessIds = savedBusiness.map((b) => b.savedBusiness);
+    console.log(savedBusinessIds);
+
+    const startDate = getTimeRange(range);
+
+    const queryWithDate = { $gte: startDate };
+    const [
+      totalReviews,
+      totalPhotos,
+      totalSaves,
+      recentReviews,
+    ] = await Promise.all([
+      // Only reviews of my businesses
+      ReviewModel.countDocuments({
+        business: { $in: businessIds },
+        createdAt: queryWithDate,
+      }),
+
+      ReviewModel.countDocuments({
+        business: { $in: businessIds },
+        createdAt: queryWithDate,
+        reviewImage: { $exists: true, $ne: [] },
+      }),
+      // Only photos for my businesses
+      // PictureModel.countDocuments({
+      //   business: { $in: businessIds },
+      //   createdAt: queryWithDate,
+      // }),
+
+      
+      SavedBusinessModel.countDocuments({
+        savedBusiness: { $in: savedBusinessIds },
+        user: userId,
+        createdAt: queryWithDate,
+      }),
+      // Fetch latest reviews for my businesses
+      ReviewModel.find({
+        business: { $in: businessIds },
+        createdAt: queryWithDate,
+      })
+        .populate("user", "name profilePhoto")
+        .populate("business", "businessInfo.name")
+        .sort({ createdAt: -1 })
+        .limit(5),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: `Dashboard data (${range}) for businessman`,
+      data: {
+        reviews: totalReviews,
+        photos: totalPhotos,
+        saves: totalSaves,
+        latestReviews: recentReviews.map((r) => ({
+          id: r._id,
+          rating: r.rating,
+          comment: r.comment,
+          date: r.createdAt,
+          user: {
+            name: r.user?.name,
+            profilePhoto: r.user?.profilePhoto || null,
+          },
+          business: {
+            id: r.business?._id,
+            name: r.business?.businessInfo?.name || "N/A",
+          },
+        })),
+      },
+    });
+  } catch (error) {
+    console.error("Dashboard Error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+
+// exports.getBusinessDetails = async (req, res) => {
+//   try {
+//     const { businessId } = req.params;
+//     const business = await Business.findById(businessId).populate(
+//       "user",
+//       "name email"
+//     );
+//     if (!business) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Business not found",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Business details fetched successfully",
+//       data: business,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
+// exports.updateBusiness = async (req, res) => {
+//   try {
+//     const io = req.app.get("io");
+//     const { email: userEmail, userId } = req.user;
+//     const user = await User.findOne({ email: userEmail });
+
+//     if (!user) {
+//       return res.status(400).json({ status: false, message: "User not found" });
+//     }
+
+//     // ✅ Save new lessonServicePrice if provided
+//     let savedLessonServiceId = null;
+//     if (data.lessonServicePrice) {
+//       const lessonService = new LessonService(data.lessonServicePrice);
+//       const savedLessonService = await lessonService.save();
+//       savedLessonServiceId = savedLessonService._id;
+//     }
+
+//     const savedBusiness = await new Business(updatedBusiness).save();
+//     const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
+//     const message2 = `You have updated a business: ${savedBusiness.businessInfo.name}`;
+//     const saveNotification = await createNotification(
+//       userId,
+//       message2,
+//       "Business Update"
+//     );
+//     const saveNotificationAdmin = await createNotificationAdmin(
+//       userId,
+//       message1,
+//       "Business Update"
+//     );
+
+//     await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+=======
 
 
 
