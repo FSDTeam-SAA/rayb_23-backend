@@ -3,6 +3,7 @@ const User = require("../user/user.model");
 const BusinessModel = require("../business/business.model");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const Notification = require("../notification/notification.model");
+const getTimeRange = require("../../utils/getTimeRange");
 
 
 exports.uploadPicture = async (req, res) => {
@@ -105,34 +106,73 @@ exports.uploadPicture = async (req, res) => {
     });
   }
 };
+ 
 
-// Get all pictures
 exports.getAllPicturesAdmin = async (req, res) => {
   try {
     const { userId } = req.user;
     const user = await User.findById(userId);
-    if (user.userType !== "admin") {
-      return res.status(403).json({
-        status: false,
-        message: "You are not authorized to access this resource",
-      });
+
+    // if (!user || user.userType !== "admin") {
+    //   return res.status(403).json({
+    //     status: false,
+    //     message: "You are not authorized to access this resource",
+    //   });
+    // }
+
+    
+    const photoType = req.query.photoType || "all"; 
+    const sortBy = req.query.sortBy || "desc"; 
+    const nameSort = req.query.nameSort || "all"; 
+    const timeRange = req.query.timeRange || "all"; 
+
+
+    const query = {};
+    if (photoType !== "all") {
+      query.status = photoType;
     }
-    const pictures = await PictureModel.find()
+
+    
+    const dateRange = getTimeRange(timeRange); 
+    Object.assign(query, dateRange);
+
+  
+    let pictures = await PictureModel.find(query)
       .populate("user", "name email")
       .populate("business", "businessInfo");
-    if (!pictures || pictures.length === 0) {
-      return res.status(404).json({
-        status: false,
-        message: "No pictures found",
+
+
+  
+    if (nameSort === "az") {
+      pictures.sort((a, b) => {
+        const nameA = a.business?.businessInfo?.name?.toLowerCase() || "";
+        const nameB = b.business?.businessInfo?.name?.toLowerCase() || "";
+        return nameA.localeCompare(nameB);
+      });
+    } else if (nameSort === "za") {
+      pictures.sort((a, b) => {
+        const nameA = a.business?.businessInfo?.name?.toLowerCase() || "";
+        const nameB = b.business?.businessInfo?.name?.toLowerCase() || "";
+        return nameB.localeCompare(nameA);
       });
     }
+
+    // 🟡 Sort by createdAt
+    if (sortBy === "asc") {
+      pictures.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else {
+      pictures.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    
     return res.status(200).json({
       status: true,
       message: "Pictures fetched successfully",
+      total: pictures.length,
       data: pictures,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "Internal server error",
       error: error.message,
@@ -140,7 +180,7 @@ exports.getAllPicturesAdmin = async (req, res) => {
   }
 };
 
-// get all Pictures by user
+
 
 exports.getAllPicturesByUser = async (req, res) => {
   try {
@@ -176,7 +216,7 @@ exports.getAllPicturesByUser = async (req, res) => {
   }
 };
 
-//git picture by business id
+
 exports.getPictureByBusinessId = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -212,7 +252,7 @@ exports.getPictureByBusinessId = async (req, res) => {
   }
 };
 
-// Get picture by ID
+
 exports.getPictureById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -239,7 +279,7 @@ exports.getPictureById = async (req, res) => {
   }
 };
 
-//Update picture by ID
+
 exports.updatePictureById = async (req, res) => {
   try {
     const io = req.app.get("io");
@@ -373,7 +413,6 @@ exports.updatePictureStatusByAdmin = async (req, res) => {
 };
 
 
-// Delete picture by ID
 exports.deletedPicture = async (req, res) => {
   try {
     const io = req.app.get("io");
