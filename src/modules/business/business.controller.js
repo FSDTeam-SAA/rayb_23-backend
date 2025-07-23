@@ -680,3 +680,39 @@ exports.getAllBusinessesByAdmin = async (req, res) => {
     });
   }
 };
+
+exports.toggleBusinessStatus = async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const { status } = req.body;
+
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status. Must be 'approved' or 'rejected'.",
+      });
+    }
+
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res.status(404).json({
+        success: false,
+        message: "Business not found.",
+      });
+    }
+
+    business.status = status;
+    await business.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Business status updated to ${status}`,
+      data: business,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
