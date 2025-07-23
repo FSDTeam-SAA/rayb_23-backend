@@ -19,7 +19,7 @@ router.post(
   createReview
 );
 
-router.get("/", getReviewsByAdmin);
+router.get("/", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), getReviewsByAdmin);
 
 router.get(
   "/my-review",
