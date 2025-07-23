@@ -65,5 +65,11 @@ router.put(
 
 router.put("/add-support", userController.addSupport);
 
+router.get(
+  "/:userId",
+  // auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
+  userController.getSingleUser
+);
+
 const userRouter = router;
 module.exports = userRouter;

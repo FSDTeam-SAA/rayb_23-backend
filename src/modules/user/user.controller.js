@@ -155,6 +155,21 @@ const addSupport = async (req, res) => {
   }
 };
 
+const getSingleUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await userService.getSingleUser(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "User retrieved successfully",
+      data: user,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 const userController = {
   createNewAccount,
   verifyEmail,
@@ -165,6 +180,7 @@ const userController = {
   deactiveAccount,
   deletedUserAccount,
   addSupport,
+  getSingleUser,
 };
 
 module.exports = userController;

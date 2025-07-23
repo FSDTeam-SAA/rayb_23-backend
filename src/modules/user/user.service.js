@@ -268,6 +268,15 @@ const addSupport = async (payload) => {
   return updatedUser;
 };
 
+const getSingleUser = async (userId) => {
+  const user = await User.findById(userId).select(
+    "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires -__v"
+  );
+  if (!user) throw new Error("User not found");
+
+  return user;
+};
+
 const userService = {
   createNewAccountInDB,
   verifyUserEmail,
@@ -278,6 +287,7 @@ const userService = {
   deactiveAccount,
   deletedUserAccount,
   addSupport,
+  getSingleUser,
 };
 
 module.exports = userService;
