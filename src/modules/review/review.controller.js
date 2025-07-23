@@ -245,6 +245,45 @@ exports.updateReview = async (req, res) => {
   }
 };
 
+exports.toggleReview= async (req, res)=>{
+  try {
+    const { email: userEmail } = req.user;
+    const user = await User.findOne({ email: userEmail });
+    if (user.userType !== "admin") {
+      return res.status(403).json({ status: false, message: "Access denied" });
+    }
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!id || !status) {
+      return res.status(400).json({
+        status: false,
+        message: "Review ID and status are required",
+      });
+    }
+
+    const updatedReview = await ReviewModel.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+
+    if (!updatedReview) {
+      return res.status(404).json({
+        status: false,
+        message: "Review not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Review status updated successfully",
+      data: updatedReview,
+    });
+  } catch (error) {
+    return res.status(500).json({ status: false, error: error.message });
+  }
+}
 exports.deleteReview = async (req, res) => {
   try {
     const io = req.app.get("io");
@@ -310,3 +349,4 @@ exports.deleteReview = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
