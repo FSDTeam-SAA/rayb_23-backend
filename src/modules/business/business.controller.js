@@ -112,7 +112,7 @@ exports.createBusiness = async (req, res) => {
       .populate("musicLessons")
       .populate("review");
 
- // Notify all Admins
+    // Notify all Admins
     const admins = await User.find({ userType: "admin" });
     for (const admin of admins) {
       const adminNotification = await Notification.create({
@@ -121,7 +121,9 @@ exports.createBusiness = async (req, res) => {
         userType: "admin",
         type: "business_create",
         title: "New Business Submitted",
-        message: `${user.name} submitted a new business: ${businessInfo?.name || "Unnamed"}`,
+        message: `${user.name} submitted a new business: ${
+          businessInfo?.name || "Unnamed"
+        }`,
         metadata: {
           businessId: newBusiness._id,
         },
@@ -138,7 +140,9 @@ exports.createBusiness = async (req, res) => {
         userType: "user",
         type: "business_create_confirmation",
         title: "Business Submitted",
-        message: `Your business '${businessInfo?.name || "Unnamed"}' was created successfully and is waiting for approval.`,
+        message: `Your business '${
+          businessInfo?.name || "Unnamed"
+        }' was created successfully and is waiting for approval.`,
         metadata: {
           businessId: newBusiness._id,
         },
@@ -146,7 +150,6 @@ exports.createBusiness = async (req, res) => {
 
       io.to(`user_${user._id}`).emit("new_notification", userNotification);
     }
-
 
     return res.status(201).json({
       success: true,
@@ -157,6 +160,7 @@ exports.createBusiness = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+
 exports.getAllBusinesses = async (req, res) => {
   try {
     const {
@@ -351,7 +355,6 @@ exports.getBusinessById = async (req, res) => {
   }
 };
 
-//get user
 exports.getBusinessesByUser = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -472,60 +475,6 @@ exports.getDashboardData = async (req, res) => {
   }
 };
 
-// exports.getBusinessDetails = async (req, res) => {
-//   try {
-//     const { businessId } = req.params;
-//     const business = await Business.findById(businessId).populate(
-//       "user",
-//       "name email"
-//     );
-//     if (!business) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Business not found",
-//       });
-//     }
 
-//     return res.status(200).json({
-//       success: true,
-//       message: "Business details fetched successfully",
-//       data: business,
-//     });
-//   } catch (error) {
-//     return res.status(500).json({ success: false, error: error.message });
-//   }
-// };
 
-// exports.updateBusiness = async (req, res) => {
-//   try {
-//     const io = req.app.get("io");
-//     const { email: userEmail, userId } = req.user;
-//     const user = await User.findOne({ email: userEmail });
 
-//     if (!user) {
-//       return res.status(400).json({ status: false, message: "User not found" });
-//     }
-
-//     // ✅ Save new lessonServicePrice if provided
-//     let savedLessonServiceId = null;
-//     if (data.lessonServicePrice) {
-//       const lessonService = new LessonService(data.lessonServicePrice);
-//       const savedLessonService = await lessonService.save();
-//       savedLessonServiceId = savedLessonService._id;
-//     }
-
-//     const savedBusiness = await new Business(updatedBusiness).save();
-//     const message1 = `${user.name} has updated a business: ${savedBusiness.businessInfo.name}`;
-//     const message2 = `You have updated a business: ${savedBusiness.businessInfo.name}`;
-//     const saveNotification = await createNotification(
-//       userId,
-//       message2,
-//       "Business Update"
-//     );
-//     const saveNotificationAdmin = await createNotificationAdmin(
-//       userId,
-//       message1,
-//       "Business Update"
-//     );
-
-//     await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
