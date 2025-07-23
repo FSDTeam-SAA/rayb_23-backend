@@ -112,6 +112,42 @@ exports.createBusiness = async (req, res) => {
       .populate("musicLessons")
       .populate("review");
 
+ // Notify all Admins
+    const admins = await User.find({ userType: "admin" });
+    for (const admin of admins) {
+      const adminNotification = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "business_create",
+        title: "New Business Submitted",
+        message: `${user.name} submitted a new business: ${businessInfo?.name || "Unnamed"}`,
+        metadata: {
+          businessId: newBusiness._id,
+        },
+      });
+
+      io.to(`admin_${admin._id}`).emit("new_notification", adminNotification);
+    }
+
+    //  Notify user (if not admin)
+    if (userType !== "admin") {
+      const userNotification = await Notification.create({
+        senderId: user._id,
+        receiverId: user._id,
+        userType: "user",
+        type: "business_create_confirmation",
+        title: "Business Submitted",
+        message: `Your business '${businessInfo?.name || "Unnamed"}' was created successfully and is waiting for approval.`,
+        metadata: {
+          businessId: newBusiness._id,
+        },
+      });
+
+      io.to(`user_${user._id}`).emit("new_notification", userNotification);
+    }
+
+
     return res.status(201).json({
       success: true,
       message: "Business created successfully",
