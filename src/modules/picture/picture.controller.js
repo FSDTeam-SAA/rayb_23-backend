@@ -330,6 +330,49 @@ exports.updatePictureById = async (req, res) => {
   }
 };
 
+exports.updatePictureStatusByAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Check for valid status
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({
+        status: false,
+        message: "Status must be 'approved' or 'rejected'",
+      });
+    }
+
+    // Update picture status
+    const updatedPicture = await PictureModel.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+
+    if (!updatedPicture) {
+      return res.status(404).json({
+        status: false,
+        message: "Picture not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: `Picture status updated to '${status}'`,
+      data: updatedPicture,
+    });
+  } catch (error) {
+    console.error("Status update error:", error.message);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+
 // Delete picture by ID
 exports.deletedPicture = async (req, res) => {
   try {
