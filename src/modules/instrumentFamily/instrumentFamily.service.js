@@ -10,9 +10,35 @@ const getAllInstrument = async () => {
   return result;
 };
 
+const updateInstrument = async (instrumentId, payload) => {
+  const instrument = await InstrumentFamilyModel.findById(instrumentId);
+  if (!instrument) {
+    throw new Error("Instrument not found");
+  }
+
+  const result = await InstrumentFamilyModel.findByIdAndUpdate(
+    instrumentId,
+    payload,
+    { new: true }
+  );
+  return result;
+};
+
+const deleteInstrument = async (instrumentId) => {
+  const instrument = await InstrumentFamilyModel.findById(instrumentId);
+  if (!instrument) {
+    throw new Error("Instrument not found");
+  }
+
+  const result = await InstrumentFamilyModel.findByIdAndDelete(instrumentId);
+  return result;
+};
+
 const instrumentService = {
   createInstrument,
   getAllInstrument,
+  updateInstrument,
+  deleteInstrument,
 };
 
 module.exports = instrumentService;

@@ -123,7 +123,9 @@ exports.createBusiness = async (req, res) => {
         userType: "admin",
         type: "business_create",
         title: "New Business Submitted",
-        message: `${user.name} submitted a new business: ${businessInfo?.name || "Unnamed"}`,
+        message: `${user.name} submitted a new business: ${
+          businessInfo?.name || "Unnamed"
+        }`,
         metadata: {
           businessId: newBusiness._id,
         },
@@ -140,7 +142,9 @@ exports.createBusiness = async (req, res) => {
         userType: "user",
         type: "business_create_confirmation",
         title: "Business Submitted",
-        message: `Your business '${businessInfo?.name || "Unnamed"}' was created successfully and is waiting for approval.`,
+        message: `Your business '${
+          businessInfo?.name || "Unnamed"
+        }' was created successfully and is waiting for approval.`,
         metadata: {
           businessId: newBusiness._id,
         },
@@ -148,7 +152,6 @@ exports.createBusiness = async (req, res) => {
 
       io.to(`user_${user._id}`).emit("new_notification", userNotification);
     }
-
 
     return res.status(201).json({
       success: true,
@@ -159,6 +162,7 @@ exports.createBusiness = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+
 exports.getAllBusinesses = async (req, res) => {
   try {
     const {
@@ -353,7 +357,6 @@ exports.getBusinessById = async (req, res) => {
   }
 };
 
-//get user
 exports.getBusinessesByUser = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -473,6 +476,7 @@ exports.getDashboardData = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 
 exports.getBusinessmanDashboardData = async (req, res) => {
@@ -622,3 +626,7 @@ exports.getBusinessmanDashboardData = async (req, res) => {
 //     );
 
 //     await sendNotiFication(io, req, saveNotification, saveNotificationAdmin);
+=======
+
+
+

@@ -7,6 +7,7 @@ const router = Router();
 router.post("/create", instrumentController.createInstrument);
 
 router.get("/", instrumentController.getAllInstrument);
+router.put("/:instrumentId", instrumentController.updateInstrument);
 
 const instrumentFamilyRouter = router;
 module.exports = instrumentFamilyRouter;
