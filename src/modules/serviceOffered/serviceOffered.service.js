@@ -67,10 +67,21 @@ const addServicePricing = async (email, payload, serviceOfferedId) => {
   return serviceOffered;
 };
 
+const updateServiceOffered = async (email, serviceOfferedId, payload) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  const serviceOffered = await ServiceOffered.findById(serviceOfferedId);
+  if (!serviceOffered) throw new Error("Service Offered not found");
+
+  // logic add later .................
+};
+
 const serviceOfferedService = {
   createServiceOffered,
   getMyServiceOffered,
   addServicePricing,
+  updateServiceOffered,
 };
 
 module.exports = serviceOfferedService;
