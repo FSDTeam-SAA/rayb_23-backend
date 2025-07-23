@@ -5,6 +5,7 @@ const {
   getMyReviews,
   updateReview,
   deleteReview,
+  toggleReview,
 } = require("./review.controller");
 const { upload } = require("../../utils/cloudnary");
 const auth = require("../../middleware/auth");
@@ -18,7 +19,7 @@ router.post(
   createReview
 );
 
-router.get("/", getReviewsByAdmin);
+router.get("/", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), getReviewsByAdmin);
 
 router.get(
   "/my-review",
@@ -32,6 +33,11 @@ router.put(
   updateReview
 );
 
+router.put(
+  "/update-review/:id",
+  auth(USER_ROLE.admin),
+  toggleReview
+);
 router.delete("/delete-Review/:id", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), deleteReview);
 
 const reviewRouter = router;
