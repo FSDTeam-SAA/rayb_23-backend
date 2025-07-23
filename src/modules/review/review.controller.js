@@ -356,6 +356,7 @@ exports.reportReview = async (req, res) => {
     }
 
     const review = await ReviewModel.findById(id);
+    console.log(review.business);
     if (!review) {
       return res.status(404).json({ status: false, message: "Review not found" });
     }
@@ -369,6 +370,7 @@ exports.reportReview = async (req, res) => {
     }
 
     const business = await Business.findById(review.business);
+    console.log(business);
     if (!business) {
       return res.status(404).json({ status: false, message: "Business not found" });
     }
