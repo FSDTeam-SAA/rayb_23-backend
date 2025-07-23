@@ -16,7 +16,14 @@ exports.createBusiness = async (req, res) => {
   try {
     const io = req.app.get("io");
     const { email, userType } = req.user;
-    const { services, businessInfo, businessHours, ...rest } = req.body;
+    const {
+      services,
+      businessInfo,
+      businessHours,
+      longitude,
+      latitude,
+      ...rest
+    } = req.body;
     const files = req.files;
 
     // find user
@@ -100,9 +107,11 @@ exports.createBusiness = async (req, res) => {
       businessInfo: newBusinessInfo,
       musicLessons: validMusicLessonIds,
       businessHours: businessHours || [],
+      longitude,
+      latitude,
     });
 
-    // optionally, link business to user
+    //! optionally, link business to user.............
     await User.findByIdAndUpdate(user._id, {
       $push: { businesses: newBusiness._id },
     });
