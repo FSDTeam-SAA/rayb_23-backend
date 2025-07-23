@@ -268,6 +268,28 @@ const addSupport = async (payload) => {
   return updatedUser;
 };
 
+const getSingleUser = async (userId) => {
+  const user = await User.findById(userId).select(
+    "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires -__v"
+  );
+  if (!user) throw new Error("User not found");
+
+  return user;
+};
+
+const toggleUserStatus = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  user.isActive = !user.isActive;
+
+  await user.save();
+
+  return await User.findById(userId).select(
+    "name email imageLink userType isActive businessId createdAt updatedAt"
+  );
+};
+
 const userService = {
   createNewAccountInDB,
   verifyUserEmail,
@@ -278,6 +300,8 @@ const userService = {
   deactiveAccount,
   deletedUserAccount,
   addSupport,
+  getSingleUser,
+  toggleUserStatus,
 };
 
 module.exports = userService;
