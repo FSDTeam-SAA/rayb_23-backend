@@ -3,9 +3,7 @@ const {
   createBusiness,
   getAllBusinesses,
   getBusinessById,
-  updateBusiness,
   getBusinessesByUser,
-  deleteBusiness,
   getDashboardData,
   getMyApprovedBusinesses,
 } = require("./business.controller");
@@ -63,18 +61,7 @@ router.get(
   getBusinessById
 );
 
-// router.put(
-//   "/my-add-business/:id",
-//   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-//   upload.array("image", 5),
-//   updateBusiness
-// );
 
-// router.delete(
-//   "/delete-business/:id",
-//   auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.bussiness),
-//   deleteBusiness
-// );
 
 const businessRouter = router;
 module.exports = businessRouter;
