@@ -170,6 +170,21 @@ const getSingleUser = async (req, res) => {
   }
 };
 
+const toggleUserStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await userService.toggleUserStatus(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "User status toggled successfully",
+      data: user,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 const userController = {
   createNewAccount,
   verifyEmail,
@@ -181,6 +196,7 @@ const userController = {
   deletedUserAccount,
   addSupport,
   getSingleUser,
+  toggleUserStatus,
 };
 
 module.exports = userController;
