@@ -4,7 +4,6 @@ const BusinessModel = require("../business/business.model");
 const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const Notification = require("../notification/notification.model");
 
-
 exports.uploadPicture = async (req, res) => {
   try {
     const io = req.app.get("io");
@@ -52,7 +51,7 @@ exports.uploadPicture = async (req, res) => {
       $push: { reviewImage: picture._id },
     });
 
-   const business = await BusinessModel.findById(data.business);
+    const business = await BusinessModel.findById(data.business);
 
     if (business?.user) {
       const businessMan = await Notification.create({
@@ -68,7 +67,10 @@ exports.uploadPicture = async (req, res) => {
         },
       });
 
-      io.to(`businessMan_${business.user._id}`).emit("new_notification", businessMan);
+      io.to(`businessMan_${business.user._id}`).emit(
+        "new_notification",
+        businessMan
+      );
     }
 
     // ⏩ Notify all admins
@@ -111,12 +113,7 @@ exports.getAllPicturesAdmin = async (req, res) => {
   try {
     const { userId } = req.user;
     const user = await User.findById(userId);
-    if (user.userType !== "admin") {
-      return res.status(403).json({
-        status: false,
-        message: "You are not authorized to access this resource",
-      });
-    }
+
     const pictures = await PictureModel.find()
       .populate("user", "name email")
       .populate("business", "businessInfo");
@@ -278,7 +275,6 @@ exports.updatePictureById = async (req, res) => {
 
     const business = updatedPicture.business;
 
-    
     if (business?.user) {
       const notifyBusinessOwner = await Notification.create({
         senderId: user._id,
@@ -293,7 +289,10 @@ exports.updatePictureById = async (req, res) => {
         },
       });
 
-      io.to(`businessMan_${business.user._id}`).emit("new_notification", notifyBusinessOwner);
+      io.to(`businessMan_${business.user._id}`).emit(
+        "new_notification",
+        notifyBusinessOwner
+      );
     }
 
     // Notify all Admins
@@ -305,7 +304,9 @@ exports.updatePictureById = async (req, res) => {
         userType: "admin",
         type: "review_image_updated",
         title: "Picture Updated",
-        message: `${user.name} updated a review image for business: ${business.businessInfo?.businessName || "N/A"}`,
+        message: `${user.name} updated a review image for business: ${
+          business.businessInfo?.businessName || "N/A"
+        }`,
         metadata: {
           businessId: business._id,
           pictureId: updatedPicture._id,
@@ -314,7 +315,6 @@ exports.updatePictureById = async (req, res) => {
 
       io.to(`admin_${admin._id}`).emit("new_notification", notifyAdmin);
     }
-
 
     return res.status(200).json({
       status: true,
@@ -372,7 +372,6 @@ exports.updatePictureStatusByAdmin = async (req, res) => {
   }
 };
 
-
 // Delete picture by ID
 exports.deletedPicture = async (req, res) => {
   try {
@@ -411,7 +410,10 @@ exports.deletedPicture = async (req, res) => {
         },
       });
 
-      io.to(`businessMan_${business.user._id}`).emit("new_notification", notifyBusinessOwner);
+      io.to(`businessMan_${business.user._id}`).emit(
+        "new_notification",
+        notifyBusinessOwner
+      );
     }
 
     // Notify all Admins
@@ -423,7 +425,9 @@ exports.deletedPicture = async (req, res) => {
         userType: "admin",
         type: "review_image_deleted",
         title: "Picture Deleted",
-        message: `${user.name} deleted a review image from business: ${business.businessInfo?.businessName || "N/A"}`,
+        message: `${user.name} deleted a review image from business: ${
+          business.businessInfo?.businessName || "N/A"
+        }`,
         metadata: {
           businessId: business._id,
           pictureId: deletedPicture._id,
@@ -443,6 +447,33 @@ exports.deletedPicture = async (req, res) => {
       status: false,
       message: "Internal server error",
       error: error.message,
+    });
+  }
+};
+
+exports.togglePictureStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const picture = await PictureModel.findById(id);
+    if (!picture) {
+      return res.status(404).json({
+        status: false,
+        message: "Picture not found",
+      });
+    }
+    picture.status = status;
+    await picture.save();
+    return res.status(200).json({
+      status: true,
+      message: "Picture status updated successfully",
+      data: picture,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: error.message,
+      error,
     });
   }
 };

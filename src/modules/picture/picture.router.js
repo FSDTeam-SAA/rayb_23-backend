@@ -13,6 +13,8 @@ router.get("/get-picture/:id", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER
 router.put("/update-picture/:id", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), upload.array("image", 5), updatePictureById);
 router.put("/update-picture/:id", auth(USER_ROLE.admin), updatePictureStatusByAdmin);
 router.delete("/delete-picture/:id", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), deletedPicture);
+router.put("/toggle-status/:id", updatePictureStatusByAdmin);
+
 
 const pictureRouter = router;
 module.exports= pictureRouter;
