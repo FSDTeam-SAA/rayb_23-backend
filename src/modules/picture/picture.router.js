@@ -6,14 +6,14 @@ const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
 
 router.post("/upload-image", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),upload.array("image", 5), uploadPicture)
-router.get("/get-all-pictures", auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.businessMan), getAllPicturesAdmin);
+router.get("/get-all-pictures", auth(USER_ROLE.admin), getAllPicturesAdmin);
 router.get("/get-all-pictures-by-user", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), getAllPicturesByUser);
 router.get("/get-all-pictures-by-business/:id", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), getPictureByBusinessId);
 router.get("/get-picture/:id", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), getPictureById);
 router.put("/update-picture/:id", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), upload.array("image", 5), updatePictureById);
 router.put("/update-picture/:id", auth(USER_ROLE.admin), updatePictureStatusByAdmin);
 router.delete("/delete-picture/:id", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), deletedPicture);
-router.put("/toggle-status/:id", updatePictureStatusByAdmin);
+router.put("/toggle-status/:id",auth(USER_ROLE.admin), updatePictureStatusByAdmin);
 
 
 const pictureRouter = router;
