@@ -515,6 +515,27 @@ exports.togglePictureStatus = async (req, res) => {
     }
     picture.status = status;
     await picture.save();
+
+
+    // Send notification to uploader
+    if (picture.user) {
+      const notify = await Notification.create({
+        senderId: req.user.userId, // Admin/moderator ID
+        receiverId: picture.user._id,
+        userType: "user", // picture uploader is regular user
+        type: "picture_status_update",
+        title: "Picture Status Changed",
+        message: `Your uploaded picture's status has been updated to "${status}".`,
+        metadata: {
+          pictureId: picture._id,
+          newStatus: status,
+        },
+      });
+
+      io.to(`user_${picture.user._id}`).emit("new_notification", notify);
+    }
+
+    
     return res.status(200).json({
       status: true,
       message: "Picture status updated successfully",
