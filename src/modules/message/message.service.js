@@ -12,8 +12,6 @@ const sendMessage = async (payload, file, io) => {
 
   const receiverUser = await User.findById(receiverId);
   if (!receiverUser) throw new Error("Receiver not found");
-  console.log("receiverUser", receiverUser);
-  console.log("senderUser", senderUser);
 
   if (file) {
     const imageName = `${Date.now()}-${file.originalname}`;
@@ -22,7 +20,7 @@ const sendMessage = async (payload, file, io) => {
     payload.image = secure_url;
   }
 
-  const newMessage = await message.create({
+  const createdMessage = await message.create({
     ...payload,
     senderId,
     receiverId,
@@ -30,11 +28,23 @@ const sendMessage = async (payload, file, io) => {
     chat,
   });
 
+  const newMessage = await message
+    .findById(createdMessage._id)
+    .populate({
+      path: "senderId",
+      select: "name email imageLink",
+    })
+    .populate({
+      path: "receiverId",
+      select: "name email imageLink",
+    });
+
   io.to(chat.toString()).emit("message", newMessage);
   await Chat.findByIdAndUpdate(chat, { lastMessage: newMessage._id });
 
   return newMessage;
 };
+
 
 const getMessages = async (chatId) => {
   const chat = await Chat.findById(chatId);
