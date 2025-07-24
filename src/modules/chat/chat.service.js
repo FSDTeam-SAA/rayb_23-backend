@@ -41,21 +41,17 @@ const getChat = async () => {
       path: "bussinessId",
       select: "businessInfo",
     })
-    .populate("lastMessage ");
+    .populate("lastMessage");
 
   return result;
 };
 
 const getMyChat = async (userId) => {
-  // console.log("userId", userId);
-
-  // Make sure we have a valid user
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
-  console.log("user", user);
-
   // Find chats for this user
   const result = await Chat.find({ userId: user._id })
+    .sort({ updatedAt: -1 })
     .populate({
       path: "userId",
       select: "name email imageLink",
