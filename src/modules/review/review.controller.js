@@ -5,6 +5,7 @@ const { sendImageToCloudinary } = require("../../utils/cloudnary"); // assume yo
 const fs = require("fs");
 const ReviewModel = require("./review.model");
 const Notification = require("../notification/notification.model");
+const getTimeRange = require("../../utils/getTimeRange");
 
 
 
@@ -115,29 +116,79 @@ exports.createReview = async (req, res) => {
 
 exports.getReviewsByAdmin = async (req, res) => {
   try {
+    const { userId } = req.user;
+    const user = await User.findById(userId);
+    if (!user || user.userType !== "businessMan") {
+      return res.status(403).json({
+        status: false,
+        message: "You are not authorized to access this resource",
+      });
+    }
+
+    // Query Parameters
+    const reviewType = req.query.reviewType || "all"; // approved | pending | rejected | all
+    const nameSort = req.query.nameSort || "all"; // az | za | all
+    const sortBy = req.query.sortBy || "desc"; // asc | desc
+    const timeRange = req.query.timeRange || "all"; // 7d | 30d | all
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const totalReviews = await Review.countDocuments();
 
-    const reviews = await Review.find()
-      .populate("business")
-      .populate("user")
-      .skip(skip)
-      .limit(limit);
+    // Build query
+    const query = {};
+
+    if (reviewType !== "all") {
+      query.status = reviewType;
+    }
+
+    // Apply time range
+    const dateFilter = getTimeRange(timeRange);
+    Object.assign(query, dateFilter);
+
+    // Initial fetch
+    let reviews = await Review.find(query)
+      .populate("business", "businessInfo")
+      .populate("user", "name email")
+      .lean();
+
+    // Sort by business name
+    if (nameSort === "az") {
+      reviews.sort((a, b) => {
+        const nameA = a.business?.businessInfo?.name?.toLowerCase() || "";
+        const nameB = b.business?.businessInfo?.name?.toLowerCase() || "";
+        return nameA.localeCompare(nameB);
+      });
+    } else if (nameSort === "za") {
+      reviews.sort((a, b) => {
+        const nameA = a.business?.businessInfo?.name?.toLowerCase() || "";
+        const nameB = b.business?.businessInfo?.name?.toLowerCase() || "";
+        return nameB.localeCompare(nameA);
+      });
+    }
+
+    // Sort by createdAt
+    if (sortBy === "asc") {
+      reviews.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else {
+      reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    const totalItems = reviews.length;
+    const paginatedReviews = reviews.slice(skip, skip + limit);
 
     return res.status(200).json({
       status: true,
-      message: "Review fetched successfully",
+      message: "Reviews fetched successfully",
       currentPage: page,
-      totalPages: Math.ceil(totalReviews / limit),
-      totalItems: totalReviews,
-      data: reviews,
+      totalPages: Math.ceil(totalItems / limit),
+      totalItems,
+      data: paginatedReviews,
     });
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
-      message: "Server error",
+      message: "Internal server error",
       error: err.message,
     });
   }
@@ -245,6 +296,133 @@ exports.updateReview = async (req, res) => {
   }
 };
 
+exports.toggleReview = async (req, res) => {
+  try {
+    const { email: userEmail } = req.user;
+    const user = await User.findOne({ email: userEmail });
+    if (user.userType !== "admin") {
+      return res.status(403).json({ status: false, message: "Access denied" });
+    }
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!id || !status) {
+      return res.status(400).json({
+        status: false,
+        message: "Review ID and status are required",
+      });
+    }
+
+    const updatedReview = await ReviewModel.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+
+    if (!updatedReview) {
+      return res.status(404).json({
+        status: false,
+        message: "Review not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Review status updated successfully",
+      data: updatedReview,
+    });
+  } catch (error) {
+    return res.status(500).json({ status: false, error: error.message });
+  }
+}
+
+exports.reportReview = async (req, res) => {
+  try {
+    const io = req.app.get("io");
+    const { email } = req.user;
+    const { id } = req.params;
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({
+        status: false,
+        message: "Report message is required",
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+
+    const review = await ReviewModel.findById(id);
+    console.log(review.business);
+    if (!review) {
+      return res.status(404).json({ status: false, message: "Review not found" });
+    }
+
+    // Prevent self-reporting
+    if (String(review.user) === String(user._id)) {
+      return res.status(403).json({
+        status: false,
+        message: "You cannot report your own review",
+      });
+    }
+
+    const business = await Business.findById(review.business);
+    console.log(business);
+    if (!business) {
+      return res.status(404).json({ status: false, message: "Business not found" });
+    }
+
+    // Prevent business owner from reporting review on own business
+    if (String(business.user) === String(user._id)) {
+      return res.status(403).json({
+        status: false,
+        message: "You cannot report a review on your own business",
+      });
+    }
+
+    // Update review with report
+    review.report = {
+      isReport: true,
+      message,
+    };
+    await review.save();
+
+    
+    const adminUsers = await User.find({ userType: "admin" });
+    for (const admin of adminUsers) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "review_reported",
+        title: "Review Reported",
+        message: `${user.name || "A user"} reported a review.`,
+        metadata: {
+          businessId: business?._id,
+          reviewId: review._id,
+        },
+      });
+      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Review reported successfully and notifications sent",
+      data: review,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+
 exports.deleteReview = async (req, res) => {
   try {
     const io = req.app.get("io");
@@ -263,7 +441,7 @@ exports.deleteReview = async (req, res) => {
       });
     }
 
-    const review = await ReviewModel.findByIdAndDelete(id); 
+    const review = await ReviewModel.findByIdAndDelete(id);
     if (!review) {
       return res.status(404).json({
         status: false,
@@ -272,7 +450,7 @@ exports.deleteReview = async (req, res) => {
     }
 
     const adminUsers = await User.find({ userType: "admin" });
-    const business = await Business.findById(review.business); 
+    const business = await Business.findById(review.business);
     const ownerId = business?.user;
 
     for (const admin of adminUsers) {
@@ -288,7 +466,7 @@ exports.deleteReview = async (req, res) => {
       io.to(`admin_${admin._id}`).emit("new_notification", notify);
     }
 
-   
+
     if (ownerId) {
       const notify = await Notification.create({
         senderId: user._id,
@@ -310,3 +488,4 @@ exports.deleteReview = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
