@@ -374,57 +374,6 @@ exports.updatePictureById = async (req, res) => {
   }
 };
 
-exports.updatePictureStatusByAdmin = async (req, res) => {
-  try {
-    const { userId } = req.user;
-    const user = await User.findById(userId);
-    if (user?.userType !== "admin" ){
-      return res.status(403).json({
-        status:false,
-        message: "access denied."
-      })
-    }
-    const { id } = req.params;
-    const { status } = req.body;
-
-    // Check for valid status
-    if (!["approved", "rejected"].includes(status)) {
-      return res.status(400).json({
-        status: false,
-        message: "Status must be 'approved' or 'rejected'",
-      });
-    }
-
-    // Update picture status
-    const updatedPicture = await PictureModel.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
-
-    if (!updatedPicture) {
-      return res.status(404).json({
-        status: false,
-        message: "Picture not found",
-      });
-    }
-
-    return res.status(200).json({
-      status: true,
-      message: `Picture status updated to '${status}'`,
-      data: updatedPicture,
-    });
-  } catch (error) {
-    console.error("Status update error:", error.message);
-    return res.status(500).json({
-      status: false,
-      message: "Internal server error",
-      error: error.message,
-    });
-  }
-};
-
-
 exports.deletedPicture = async (req, res) => {
   try {
     const io = req.app.get("io");
@@ -504,6 +453,16 @@ exports.deletedPicture = async (req, res) => {
 
 exports.togglePictureStatus = async (req, res) => {
   try {
+    const io = req.app.get("io");
+    const { userId } = req.user;
+    const user = await User.findById(userId);
+
+    // if (user?.userType !== "admin" ){
+    //   return res.status(403).json({
+    //     status:false,
+    //     message: "access denied."
+    //   })
+    // }
     const { id } = req.params;
     const { status } = req.body;
     const picture = await PictureModel.findById(id);
@@ -535,7 +494,7 @@ exports.togglePictureStatus = async (req, res) => {
       io.to(`user_${picture.user._id}`).emit("new_notification", notify);
     }
 
-    
+
     return res.status(200).json({
       status: true,
       message: "Picture status updated successfully",
