@@ -521,7 +521,7 @@ exports.togglePictureStatus = async (req, res) => {
     if (picture.user) {
       const notify = await Notification.create({
         senderId: req.user.userId, // Admin/moderator ID
-        receiverId: picture.user._id,
+        receiverId: picture.user,
         userType: "user", // picture uploader is regular user
         type: "picture_status_update",
         title: "Picture Status Changed",
