@@ -41,7 +41,7 @@ router.put(
 );
 router.put(
   "/report/:id",
-  auth(USER_ROLE.admin, USER_ROLE.businessMan),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   reportReview
 );
 
