@@ -108,27 +108,25 @@ exports.uploadPicture = async (req, res) => {
     });
   }
 };
- 
+
 
 exports.getAllPicturesAdmin = async (req, res) => {
   try {
     const { userId } = req.user;
     const user = await User.findById(userId);
 
+    if (!user || user.userType !== "admin") {
+      return res.status(403).json({
+        status: false,
+        message: "You are not authorized to access this resource",
+      });
+    }
 
-    const pictures = await PictureModel.find()
-    // if (!user || user.userType !== "admin") {
-    //   return res.status(403).json({
-    //     status: false,
-    //     message: "You are not authorized to access this resource",
-    //   });
-    // }
 
-    
-    const photoType = req.query.photoType || "all"; 
-    const sortBy = req.query.sortBy || "desc"; 
-    const nameSort = req.query.nameSort || "all"; 
-    const timeRange = req.query.timeRange || "all"; 
+    const photoType = req.query.photoType || "all";
+    const sortBy = req.query.sortBy || "desc";
+    const nameSort = req.query.nameSort || "all";
+    const timeRange = req.query.timeRange || "all";
 
 
     const query = {};
@@ -136,17 +134,17 @@ exports.getAllPicturesAdmin = async (req, res) => {
       query.status = photoType;
     }
 
-    
-    const dateRange = getTimeRange(timeRange); 
+
+    const dateRange = getTimeRange(timeRange);
     Object.assign(query, dateRange);
 
-  
+
     let pictures = await PictureModel.find(query)
       .populate("user", "name email")
       .populate("business", "businessInfo");
 
 
-  
+
     if (nameSort === "az") {
       pictures.sort((a, b) => {
         const nameA = a.business?.businessInfo?.name?.toLowerCase() || "";
@@ -168,7 +166,7 @@ exports.getAllPicturesAdmin = async (req, res) => {
       pictures.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
-    
+
     return res.status(200).json({
       status: true,
       message: "Pictures fetched successfully",
@@ -351,9 +349,8 @@ exports.updatePictureById = async (req, res) => {
         userType: "admin",
         type: "review_image_updated",
         title: "Picture Updated",
-        message: `${user.name} updated a review image for business: ${
-          business.businessInfo?.businessName || "N/A"
-        }`,
+        message: `${user.name} updated a review image for business: ${business.businessInfo?.businessName || "N/A"
+          }`,
         metadata: {
           businessId: business._id,
           pictureId: updatedPicture._id,
@@ -379,6 +376,14 @@ exports.updatePictureById = async (req, res) => {
 
 exports.updatePictureStatusByAdmin = async (req, res) => {
   try {
+    const { userId } = req.user;
+    const user = await User.findById(userId);
+    if (user?.userType !== "admin" ){
+      return res.status(403).json({
+        status:false,
+        message: "access denied."
+      })
+    }
     const { id } = req.params;
     const { status } = req.body;
 
@@ -472,9 +477,8 @@ exports.deletedPicture = async (req, res) => {
         userType: "admin",
         type: "review_image_deleted",
         title: "Picture Deleted",
-        message: `${user.name} deleted a review image from business: ${
-          business.businessInfo?.businessName || "N/A"
-        }`,
+        message: `${user.name} deleted a review image from business: ${business.businessInfo?.businessName || "N/A"
+          }`,
         metadata: {
           businessId: business._id,
           pictureId: deletedPicture._id,
