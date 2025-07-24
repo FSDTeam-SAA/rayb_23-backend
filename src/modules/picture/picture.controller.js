@@ -457,12 +457,12 @@ exports.togglePictureStatus = async (req, res) => {
     const { userId } = req.user;
     const user = await User.findById(userId);
 
-    // if (user?.userType !== "admin" ){
-    //   return res.status(403).json({
-    //     status:false,
-    //     message: "access denied."
-    //   })
-    // }
+    if (user?.userType !== "admin" ){
+      return res.status(403).json({
+        status:false,
+        message: "access denied."
+      })
+    }
     const { id } = req.params;
     const { status } = req.body;
     const picture = await PictureModel.findById(id);
