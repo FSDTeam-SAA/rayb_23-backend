@@ -7,8 +7,6 @@ const ReviewModel = require("./review.model");
 const Notification = require("../notification/notification.model");
 const getTimeRange = require("../../utils/getTimeRange");
 
-
-
 exports.createReview = async (req, res) => {
   try {
     const io = req.app.get("io");
@@ -65,7 +63,6 @@ exports.createReview = async (req, res) => {
 
     const businessData = await Business.findById(business);
 
-
     const adminUsers = await User.find({ userType: "admin" });
 
     for (const admin of adminUsers) {
@@ -98,7 +95,6 @@ exports.createReview = async (req, res) => {
       io.to(`businessMan_${ownerId}`).emit("new_notification", notify);
     }
 
-
     return res.status(201).json({
       status: true,
       message: "Review created successfully",
@@ -118,11 +114,15 @@ exports.getReviewsByAdmin = async (req, res) => {
   try {
     const { userId } = req.user;
     const user = await User.findById(userId);
-    if (!user || user.userType !== "businessMan") {
-      return res.status(403).json({
-        status: false,
-        message: "You are not authorized to access this resource",
-      });
+    // if (!user || user.userType !== "businessMan") {
+    //   return res.status(403).json({
+    //     status: false,
+    //     message: "You are not authorized to access this resource",
+    //   });
+    // }
+
+    if (!user) {
+      throw new Error("User not found");
     }
 
     // Query Parameters
@@ -257,7 +257,6 @@ exports.updateReview = async (req, res) => {
     const business = await Business.findById(result.business);
     const ownerId = business?.user;
 
-
     for (const admin of adminUsers) {
       const notify = await Notification.create({
         senderId: user._id,
@@ -266,11 +265,10 @@ exports.updateReview = async (req, res) => {
         type: "review_updated",
         title: "Review Updated",
         message: `${user.name || "A user"} updated a review.`,
-        metadata: { businessId: business?._id, reviewId: result._id }
+        metadata: { businessId: business?._id, reviewId: result._id },
       });
       io.to(`admin_${admin._id}`).emit("new_notification", notify);
     }
-
 
     if (ownerId) {
       const notify = await Notification.create({
@@ -279,12 +277,13 @@ exports.updateReview = async (req, res) => {
         userType: "businessMan",
         type: "review_updated",
         title: "A Review Was Updated",
-        message: `${user.name || "A user"} updated their review on your business.`,
-        metadata: { businessId: business._id, reviewId: result._id }
+        message: `${
+          user.name || "A user"
+        } updated their review on your business.`,
+        metadata: { businessId: business._id, reviewId: result._id },
       });
       io.to(`businessMan_${ownerId}`).emit("new_notification", notify);
     }
-
 
     return res.json({
       status: true,
@@ -334,7 +333,7 @@ exports.toggleReview = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ status: false, error: error.message });
   }
-}
+};
 
 exports.reportReview = async (req, res) => {
   try {
@@ -358,7 +357,9 @@ exports.reportReview = async (req, res) => {
     const review = await ReviewModel.findById(id);
     console.log(review.business);
     if (!review) {
-      return res.status(404).json({ status: false, message: "Review not found" });
+      return res
+        .status(404)
+        .json({ status: false, message: "Review not found" });
     }
 
     // Prevent self-reporting
@@ -372,7 +373,9 @@ exports.reportReview = async (req, res) => {
     const business = await Business.findById(review.business);
     console.log(business);
     if (!business) {
-      return res.status(404).json({ status: false, message: "Business not found" });
+      return res
+        .status(404)
+        .json({ status: false, message: "Business not found" });
     }
 
     // Prevent business owner from reporting review on own business
@@ -390,7 +393,6 @@ exports.reportReview = async (req, res) => {
     };
     await review.save();
 
-    
     const adminUsers = await User.find({ userType: "admin" });
     for (const admin of adminUsers) {
       const notify = await Notification.create({
@@ -421,7 +423,6 @@ exports.reportReview = async (req, res) => {
     });
   }
 };
-
 
 exports.deleteReview = async (req, res) => {
   try {
@@ -466,7 +467,6 @@ exports.deleteReview = async (req, res) => {
       io.to(`admin_${admin._id}`).emit("new_notification", notify);
     }
 
-
     if (ownerId) {
       const notify = await Notification.create({
         senderId: user._id,
@@ -474,7 +474,9 @@ exports.deleteReview = async (req, res) => {
         userType: "businessMan",
         type: "review_deleted",
         title: "A Review Was Deleted",
-        message: `${user.name || "A user"} deleted their review on your business.`,
+        message: `${
+          user.name || "A user"
+        } deleted their review on your business.`,
         metadata: { businessId: business._id, reviewId: review._id },
       });
       io.to(`businessMan_${ownerId}`).emit("new_notification", notify);
@@ -488,4 +490,3 @@ exports.deleteReview = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
