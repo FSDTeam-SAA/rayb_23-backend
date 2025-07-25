@@ -1,5 +1,6 @@
 const { Schema, model } = require("mongoose");
 
+// Business hours schema
 const businessHoursSchema = new Schema(
   {
     day: {
@@ -17,6 +18,40 @@ const businessHoursSchema = new Schema(
     open: { type: String },
     close: { type: String },
     closed: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
+// Service schema matching frontend flat service objects
+const serviceSchema = new Schema(
+  {
+    serviceName: { type: String, required: true },
+    pricingType: {
+      type: String,
+      enum: ["exact", "range", "hourly"],
+      required: true,
+    },
+    price: { type: String, default: "" },
+    minPrice: { type: String, default: "" },
+    maxPrice: { type: String, default: "" },
+    instrumentName: { type: String, required: true },
+    instrumentFamily: { type: String, required: true },
+  },
+  { _id: false }
+);
+
+const musicLessonSchema = new Schema(
+  {
+    newInstrumentName: { type: String, required: true },
+    pricingType: {
+      type: String,
+      enum: ["exact", "range", "hourly"],
+      required: true,
+    },
+    price: { type: String, default: "" },
+    minPrice: { type: String, default: "" },
+    maxPrice: { type: String, default: "" },
+    selectedInstrumentsGroupMusic: { type: String, required: true },
   },
   { _id: false }
 );
@@ -39,18 +74,8 @@ const businessSchema = new Schema(
       website: { type: String },
       description: { type: String, required: true },
     },
-    services: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "ServiceOffered",
-      },
-    ],
-    musicLessons: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "MusicLesson",
-      },
-    ],
+    services: [serviceSchema],
+    musicLessons: [musicLessonSchema],
     businessHours: [businessHoursSchema],
     buyInstruments: { type: Boolean, default: false },
     sellInstruments: { type: Boolean, default: false },
@@ -74,7 +99,6 @@ const businessSchema = new Schema(
     },
     longitude: { type: Number },
     latitude: { type: Number },
-    isMusiclessons: { type: Boolean, default: true },
     isVerified: { type: Boolean, default: false },
     otp: { type: String, default: null },
     otpExpires: { type: Date, default: null },
