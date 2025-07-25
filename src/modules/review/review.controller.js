@@ -490,3 +490,23 @@ exports.deleteReview = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.getReviewsByBusiness = async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Business not found" });
+    }
+
+    const reviews = await ReviewModel.find({ business: businessId }).populate({
+      path: "user",
+      select: "name email imageLink",
+    });
+    return res.status(200).json({ success: true, data: reviews });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
