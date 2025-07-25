@@ -490,3 +490,15 @@ exports.deleteReview = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.getReviewsByBusiness = async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const reviews = await ReviewModel.find({ business: businessId }).populate(
+      "user"
+    );
+    return res.status(200).json({ success: true, data: reviews });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

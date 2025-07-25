@@ -14,7 +14,6 @@ const router = express.Router();
 const USER_ROLE = require("../user/user.constant");
 const auth = require("../../middleware/auth");
 
-// Create new business
 router.post(
   "/create",
   upload.array("image", 5),
@@ -37,7 +36,7 @@ router.post(
 
 router.get("/", getAllBusinesses);
 
-// router.get("/all", getAllBusinessesAdmin);
+router.get("/all", getAllBusinessesByAdmin);
 
 router.get(
   "/my-add-business",
@@ -63,11 +62,11 @@ router.get(
   getBusinessmanDashboardData
 );
 
-router.get(
-  "/:businessId",
-  // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  getAllBusinessesByAdmin
-);
+// router.get(
+//   "/:businessId",
+//   // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+//   getAllBusinessesByAdmin
+// );
 
 router.put(
   "/toggle/:businessId",

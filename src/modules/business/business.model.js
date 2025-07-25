@@ -1,6 +1,5 @@
 const { Schema, model } = require("mongoose");
 
-// Business hours schema
 const businessHoursSchema = new Schema(
   {
     day: {
@@ -22,7 +21,6 @@ const businessHoursSchema = new Schema(
   { _id: false }
 );
 
-// Service schema matching frontend flat service objects
 const serviceSchema = new Schema(
   {
     serviceName: { type: String, required: true },

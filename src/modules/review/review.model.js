@@ -11,12 +11,10 @@ const reviewSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
-
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-
     business: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Business",
