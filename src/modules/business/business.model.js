@@ -14,16 +14,18 @@ const businessHoursSchema = new Schema(
         "sunday",
       ],
     },
-    open: { type: String },
-    close: { type: String },
-    closed: { type: Boolean, default: false },
+    startTime: { type: String },
+    startMeridiem: { type: String },
+    endTime: { type: String },
+    endMeridiem: { type: String },
+    enabled: { type: Boolean, default: false },
   },
   { _id: false }
 );
 
 const serviceSchema = new Schema(
   {
-    serviceName: { type: String, required: true },
+    newInstrumentName: { type: String, required: true },
     pricingType: {
       type: String,
       enum: ["exact", "range", "hourly"],
@@ -32,7 +34,7 @@ const serviceSchema = new Schema(
     price: { type: String, default: "" },
     minPrice: { type: String, default: "" },
     maxPrice: { type: String, default: "" },
-    instrumentName: { type: String, required: true },
+    selectedInstrumentsGroup: { type: String, required: true },
     instrumentFamily: { type: String, required: true },
   },
   { _id: false }
