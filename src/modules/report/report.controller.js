@@ -49,10 +49,46 @@ const getMyReports = async (req, res) => {
   }
 };
 
+const getSingleReport = async (req, res) => {
+  try {
+    const { reportId } = req.params;
+    const result = await reportService.getSingleReport(reportId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Report get successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.message, error });
+  }
+};
+
+const toggleReport = async (req, res) => {
+  try {
+    const { reportId } = req.params;
+    const result = await reportService.toggleReport(reportId, req.body);
+
+    return res.status(200).json({
+      success: true,
+      message: "Report toggled successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.message, error });
+  }
+};
+
 const reportController = {
   addReport,
   getAllReports,
   getMyReports,
+  getSingleReport,
+  toggleReport,
 };
 
 module.exports = reportController;

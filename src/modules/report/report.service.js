@@ -38,10 +38,29 @@ const getMyReports = async (email) => {
   return result;
 };
 
+const getSingleReport = async (reportId) => {
+  const result = await Report.findById(reportId)
+    .populate("userId", "name email")
+    .populate("businessId", "businessInfo");
+  return result;
+};
+
+const toggleReport = async (reportId, payload) => {
+  const { status } = payload;
+  const result = await Report.findByIdAndUpdate(
+    reportId,
+    { status },
+    { new: true }
+  );
+  return result;
+};
+
 const reportService = {
   addReport,
   getAllReports,
   getMyReports,
+  getSingleReport,
+  toggleReport,
 };
 
 module.exports = reportService;
