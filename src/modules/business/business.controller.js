@@ -53,7 +53,6 @@ exports.createBusiness = async (req, res) => {
       latitude,
     });
 
-
     // After business creation
     const adminUsers = await User.find({ userType: "admin" });
     const io = req.app.get("io");
@@ -67,7 +66,7 @@ exports.createBusiness = async (req, res) => {
         type: "new_business_submitted",
         title: "New Business Submitted",
         message: `${user.name || "A user"} submitted a new business.`,
-        metadata: { businessId: business._id }
+        metadata: { businessId: business._id },
       });
       io.to(`admin_${admin._id}`).emit("new_notification", notify);
     }
@@ -80,7 +79,7 @@ exports.createBusiness = async (req, res) => {
       type: "business_submission",
       title: "Business Created",
       message: `You have successfully created a business.`,
-      metadata: { businessId: business._id }
+      metadata: { businessId: business._id },
     });
     io.to(`${userType}_${user._id}`).emit("new_notification", notifyUser);
 
@@ -650,7 +649,9 @@ exports.toggleBusinessStatus = async (req, res) => {
           userType,
           type: "business_approved",
           title: "Business Approved",
-          message: `Your business "${business.businessInfo?.name || "Business"}" has been approved.`,
+          message: `Your business "${
+            business.businessInfo?.name || "Business"
+          }" has been approved.`,
           metadata: {
             businessId: business._id,
           },
@@ -659,7 +660,6 @@ exports.toggleBusinessStatus = async (req, res) => {
         io.to(`${userType}_${owner._id}`).emit("new_notification", notify);
       }
     }
-
 
     return res.status(200).json({
       success: true,
@@ -677,6 +677,7 @@ exports.toggleBusinessStatus = async (req, res) => {
 exports.updateBusiness = async (req, res) => {
   try {
     const { businessId } = req.params;
+    const files = req.files;
 
     const business = await Business.findById(businessId);
     if (!business) {
@@ -686,9 +687,33 @@ exports.updateBusiness = async (req, res) => {
       });
     }
 
+    let image = [];
+    if (files && Array.isArray(files) && files.length > 0) {
+      image = await Promise.all(
+        files.map(async (file) => {
+          const imageName = `business/${Date.now()}_${file.originalname}`;
+          const result = await sendImageToCloudinary(imageName, file.path);
+          return result.secure_url;
+        })
+      );
+    }
+
+    // Prepare update payload
+    const updatePayload = { ...req.body };
+
+    // Append new images to existing ones instead of replacing
+    if (image.length > 0) {
+      if (!updatePayload.businessInfo) {
+        updatePayload.businessInfo = {};
+      }
+
+      const existingImages = business.businessInfo?.image || [];
+      updatePayload.businessInfo.image = [...existingImages, ...image];
+    }
+
     const updatedBusiness = await Business.findByIdAndUpdate(
       businessId,
-      req.body,
+      { $set: updatePayload },
       { new: true }
     );
 
@@ -705,3 +730,4 @@ exports.updateBusiness = async (req, res) => {
     });
   }
 };
+
