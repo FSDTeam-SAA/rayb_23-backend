@@ -100,6 +100,7 @@ const businessSchema = new Schema(
     longitude: { type: Number },
     latitude: { type: Number },
     isVerified: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: false },
     otp: { type: String, default: null },
     otpExpires: { type: Date, default: null },
     isMailVerified: {
