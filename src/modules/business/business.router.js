@@ -8,6 +8,7 @@ const {
   getBusinessmanDashboardData,
   getAllBusinessesByAdmin,
   toggleBusinessStatus,
+  getBusinessById,
 } = require("./business.controller");
 const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
@@ -62,11 +63,11 @@ router.get(
   getBusinessmanDashboardData
 );
 
-// router.get(
-//   "/:businessId",
-//   // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-//   getAllBusinessesByAdmin
-// );
+router.get(
+  "/:businessId",
+  // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  getBusinessById
+);
 
 router.put(
   "/toggle/:businessId",

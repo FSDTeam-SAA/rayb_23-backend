@@ -73,6 +73,7 @@ const businessSchema = new Schema(
       email: { type: String },
       website: { type: String },
       description: { type: String, required: true },
+      postalCode: { type: String },
     },
     services: [serviceSchema],
     musicLessons: [musicLessonSchema],

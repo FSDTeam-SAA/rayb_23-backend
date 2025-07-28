@@ -673,3 +673,35 @@ exports.toggleBusinessStatus = async (req, res) => {
     });
   }
 };
+
+exports.updateBusiness = async (req, res) => {
+  try {
+    const { businessId } = req.params;
+
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res.status(404).json({
+        success: false,
+        message: "Business not found.",
+      });
+    }
+
+    const updatedBusiness = await Business.findByIdAndUpdate(
+      businessId,
+      req.body,
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Business updated successfully",
+      data: updatedBusiness,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      error,
+    });
+  }
+};
