@@ -11,5 +11,11 @@ router.post(
   reportController.addReport
 );
 
+router.get(
+  "/",
+  //   auth(USER_ROLE.user, USER_ROLE.businessMan, USER_ROLE.admin),
+  reportController.getAllReports
+);
+
 const reportRouter = router;
 module.exports = reportRouter;

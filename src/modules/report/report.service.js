@@ -19,8 +19,16 @@ const addReport = async (payload, email) => {
   return result;
 };
 
+const getAllReports = async () => {
+  const result = await Report.find({})
+    .populate("userId", "name email")
+    .populate("businessId", "businessInfo");
+  return result;
+};
+
 const reportService = {
   addReport,
+  getAllReports,
 };
 
 module.exports = reportService;
