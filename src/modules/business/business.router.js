@@ -9,6 +9,7 @@ const {
   getAllBusinessesByAdmin,
   toggleBusinessStatus,
   getBusinessById,
+  updateBusiness,
 } = require("./business.controller");
 const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
@@ -73,6 +74,26 @@ router.put(
   "/toggle/:businessId",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   toggleBusinessStatus
+);
+
+router.patch(
+  "/update/:businessId",
+  upload.array("image", 5),
+  (req, res, next) => {
+    if (req.body?.data) {
+      try {
+        req.body = JSON.parse(req.body.data);
+      } catch (err) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid JSON format in 'data' field",
+        });
+      }
+    }
+    next();
+  },
+  // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  updateBusiness
 );
 
 const businessRouter = router;
