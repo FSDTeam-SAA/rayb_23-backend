@@ -26,9 +26,22 @@ const getAllReports = async () => {
   return result;
 };
 
+const getMyReports = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  if (!user.isActive) throw new Error("User is not active");
+
+  const result = await Report.find({ userId: user._id })
+    .populate("userId", "name email")
+    .populate("businessId", "businessInfo");
+  return result;
+};
+
 const reportService = {
   addReport,
   getAllReports,
+  getMyReports,
 };
 
 module.exports = reportService;
