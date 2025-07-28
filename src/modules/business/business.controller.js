@@ -53,6 +53,37 @@ exports.createBusiness = async (req, res) => {
       latitude,
     });
 
+
+    // After business creation
+    const adminUsers = await User.find({ userType: "admin" });
+    const io = req.app.get("io");
+
+    // Notify Admins
+    for (const admin of adminUsers) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "new_business_submitted",
+        title: "New Business Submitted",
+        message: `${user.name || "A user"} submitted a new business.`,
+        metadata: { businessId: business._id }
+      });
+      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+    }
+
+    // Notify Business Owner (User)
+    const notifyUser = await Notification.create({
+      senderId: user._id,
+      receiverId: user._id,
+      userType: userType,
+      type: "business_submission",
+      title: "Business Created",
+      message: `You have successfully created a business.`,
+      metadata: { businessId: business._id }
+    });
+    io.to(`${userType}_${user._id}`).emit("new_notification", notifyUser);
+
     return res.status(201).json({
       success: true,
       message: "Business created successfully",
@@ -583,6 +614,7 @@ exports.getAllBusinessesByAdmin = async (req, res) => {
 
 exports.toggleBusinessStatus = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const { businessId } = req.params;
     const { status } = req.body;
 
@@ -603,6 +635,31 @@ exports.toggleBusinessStatus = async (req, res) => {
 
     business.status = status;
     await business.save();
+
+    // Get the business owner
+    const ownerId = business.user || business.adminId;
+    const userType = business.user ? "user" : "admin"; // just in case
+
+    // Send notification to business owner only if status is approved
+    if (status === "approved" && ownerId) {
+      const owner = await User.findById(ownerId);
+      if (owner) {
+        const notify = await Notification.create({
+          senderId: null, // admin system
+          receiverId: owner._id,
+          userType,
+          type: "business_approved",
+          title: "Business Approved",
+          message: `Your business "${business.businessInfo?.name || "Business"}" has been approved.`,
+          metadata: {
+            businessId: business._id,
+          },
+        });
+
+        io.to(`${userType}_${owner._id}`).emit("new_notification", notify);
+      }
+    }
+
 
     return res.status(200).json({
       success: true,
