@@ -93,169 +93,485 @@ exports.createBusiness = async (req, res) => {
   }
 };
 
+// exports.getAllBusinesses = async (req, res) => {
+//   try {
+//     const {
+//       instrumentFamily,
+//       selectInstrument,
+//       serviceName,
+//       offer,
+//       priceMin,
+//       priceMax,
+//       priceSort,
+//       openNow,
+//       sortByCreatedAt,
+//       buyInstruments,
+//       sellInstruments,
+//       offerMusicLessons,
+//       musicInstrumentGroup, // selectedInstrumentsGroupMusic
+//       musicServiceName, // newInstrumentName in musicLessons
+//       page = 1,
+//       limit = 10,
+//     } = req.query;
+
+//     const pageNumber = Math.max(1, parseInt(page));
+//     const pageSize = Math.max(1, parseInt(limit));
+
+//     const query = {};
+
+//     // Offer type filters
+//     if (buyInstruments === "true") query.buyInstruments = true;
+//     if (sellInstruments === "true") query.sellInstruments = true;
+//     if (offerMusicLessons === "true") query.offerMusicLessons = true;
+
+//     // Music lesson filters
+//     if (musicInstrumentGroup || musicServiceName) {
+//       query.musicLessons = { $elemMatch: {} };
+//       if (musicInstrumentGroup)
+//         query.musicLessons.$elemMatch.selectedInstrumentsGroupMusic =
+//           musicInstrumentGroup;
+//       if (musicServiceName)
+//         query.musicLessons.$elemMatch.newInstrumentName = musicServiceName;
+//     }
+
+//     // Services filter
+//     const serviceFilters = {};
+
+//     if (instrumentFamily) serviceFilters.instrumentFamily = instrumentFamily;
+//     if (selectInstrument) serviceFilters.instrumentType = selectInstrument;
+//     if (serviceName) serviceFilters.name = serviceName;
+//     if (offer) serviceFilters.category = offer;
+
+//     if (priceMin || priceMax) {
+//       serviceFilters.$or = [
+//         {
+//           pricingType: "exact",
+//           price: {},
+//         },
+//         {
+//           pricingType: "range",
+//           price: {},
+//         },
+//       ];
+
+//       if (priceMin) {
+//         serviceFilters.$or[0].price.$gte = Number(priceMin);
+//         serviceFilters.$or[1].price.min = { $gte: Number(priceMin) };
+//       }
+//       if (priceMax) {
+//         serviceFilters.$or[0].price.$lte = Number(priceMax);
+//         serviceFilters.$or[1].price.max = { $lte: Number(priceMax) };
+//       }
+//     }
+
+//     if (Object.keys(serviceFilters).length > 0) {
+//       query.services = { $elemMatch: serviceFilters };
+//     }
+
+//     // Open now filter
+//     if (openNow === "true") {
+//       const now = new Date();
+//       const daysOfWeek = [
+//         "sunday",
+//         "monday",
+//         "tuesday",
+//         "wednesday",
+//         "thursday",
+//         "friday",
+//         "saturday",
+//       ];
+//       const currentDay = daysOfWeek[now.getDay()];
+//       const currentTime = now.toTimeString().slice(0, 5);
+
+//       query.businessHours = {
+//         $elemMatch: {
+//           day: currentDay,
+//           enabled: true,
+//           startTime: { $lte: currentTime },
+//           endTime: { $gte: currentTime },
+//         },
+//       };
+//     }
+
+//     // Sort options
+//     const sortObj = {};
+//     if (sortByCreatedAt) {
+//       sortObj.createdAt = sortByCreatedAt.toLowerCase() === "asc" ? 1 : -1;
+//     }
+
+//     // Get total count (before skip/limit)
+//     const totalCount = await Business.countDocuments(query);
+//     const totalPages = Math.ceil(totalCount / pageSize);
+
+//     // Query businesses with pagination & sort
+//     let businesses = await Business.find(query)
+//       .sort(sortObj)
+//       .skip((pageNumber - 1) * pageSize)
+//       .limit(pageSize);
+
+//     // Re-filter on price (complex nested service filter)
+//     if (priceMin || priceMax) {
+//       businesses = businesses.filter((business) =>
+//         business.services.some((service) => {
+//           if (service.pricingType === "exact") {
+//             if (priceMin && service.price < Number(priceMin)) return false;
+//             if (priceMax && service.price > Number(priceMax)) return false;
+//             return true;
+//           } else if (service.pricingType === "range") {
+//             if (priceMin && service.price.min < Number(priceMin)) return false;
+//             if (priceMax && service.price.max > Number(priceMax)) return false;
+//             return true;
+//           }
+//           return false;
+//         })
+//       );
+//     }
+
+//     // Sort by price range if requested
+//     if (priceSort === "lowToHigh") {
+//       businesses.sort((a, b) => {
+//         const aMin = Math.min(
+//           ...a.services.map((s) =>
+//             s.pricingType === "exact"
+//               ? s.price
+//               : s.price.min ?? Number.MAX_SAFE_INTEGER
+//           )
+//         );
+//         const bMin = Math.min(
+//           ...b.services.map((s) =>
+//             s.pricingType === "exact"
+//               ? s.price
+//               : s.price.min ?? Number.MAX_SAFE_INTEGER
+//           )
+//         );
+//         return aMin - bMin;
+//       });
+//     } else if (priceSort === "highToLow") {
+//       businesses.sort((a, b) => {
+//         const aMax = Math.max(
+//           ...a.services.map((s) =>
+//             s.pricingType === "exact" ? s.price : s.price.max ?? 0
+//           )
+//         );
+//         const bMax = Math.max(
+//           ...b.services.map((s) =>
+//             s.pricingType === "exact" ? s.price : s.price.max ?? 0
+//           )
+//         );
+//         return bMax - aMax;
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Businesses fetched successfully",
+//       data: businesses,
+//       pagination: {
+//         page: pageNumber,
+//         limit: pageSize,
+//         totalPages,
+//         totalCount,
+//       },
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(400).json({ success: false, error: error.message });
+//   }
+// };
+
 exports.getAllBusinesses = async (req, res) => {
   try {
     const {
+      search,
       instrumentFamily,
-      selectInstrument,
-      serviceName,
-      offer, // corresponds to category in services
-      priceMin,
-      priceMax,
-      priceSort, // "lowToHigh", "highToLow"
-      openNow, // "true"
-      sortByCreatedAt, // "asc" | "desc"
-      page = 1,
-      limit = 10,
+      selectedInstrumentsGroup,
+      newInstrumentName,
+      minPrice,
+      maxPrice,
+      buyInstruments,
+      sellInstruments,
+      offerMusicLessons,
+      sort,
+      openNow,
+      postalCode,
+      page = 1, // Default to page 1
+      limit = 10, // Default to 10 items per page
     } = req.query;
 
-    const pageNumber = Math.max(1, parseInt(page));
-    const pageSize = Math.max(1, parseInt(limit));
+    // Convert page and limit to numbers
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    const skip = (pageNumber - 1) * limitNumber;
 
-    const query = {};
+    // Base query
+    let query = {};
 
-    // Services filter
-    const serviceFilters = {};
-
-    if (instrumentFamily) serviceFilters.instrumentFamily = instrumentFamily;
-    if (selectInstrument) serviceFilters.instrumentType = selectInstrument;
-    if (serviceName) serviceFilters.name = serviceName;
-    if (offer) serviceFilters.category = offer;
-
-    if (priceMin || priceMax) {
-      serviceFilters.$or = [
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { "businessInfo.name": { $regex: search, $options: "i" } },
+        { "services.newInstrumentName": { $regex: search, $options: "i" } },
+        { "musicLessons.newInstrumentName": { $regex: search, $options: "i" } },
         {
-          pricingType: "exact",
-          price: {},
+          "services.selectedInstrumentsGroup": {
+            $regex: search,
+            $options: "i",
+          },
         },
         {
-          pricingType: "range",
-          price: {},
+          "musicLessons.selectedInstrumentsGroupMusic": {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        { "businessInfo.address": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Filter by postal code
+    if (postalCode) {
+      query["businessInfo.address"] = { $regex: postalCode, $options: "i" };
+    }
+
+    // Filter by instrument family
+    if (instrumentFamily) {
+      query["services.instrumentFamily"] = instrumentFamily;
+    }
+
+    // Filter by selected instruments group
+    if (selectedInstrumentsGroup) {
+      query.$or = [
+        { "services.selectedInstrumentsGroup": selectedInstrumentsGroup },
+        {
+          "musicLessons.selectedInstrumentsGroupMusic":
+            selectedInstrumentsGroup,
         },
       ];
-
-      if (priceMin) {
-        serviceFilters.$or[0].price.$gte = Number(priceMin);
-        serviceFilters.$or[1].price.min = { $gte: Number(priceMin) };
-      }
-      if (priceMax) {
-        serviceFilters.$or[0].price.$lte = Number(priceMax);
-        serviceFilters.$or[1].price.max = { $lte: Number(priceMax) };
-      }
     }
 
-    if (Object.keys(serviceFilters).length > 0) {
-      query.services = { $elemMatch: serviceFilters };
+    // Filter by new instrument name
+    if (newInstrumentName) {
+      query.$or = [
+        { "services.newInstrumentName": newInstrumentName },
+        { "musicLessons.newInstrumentName": newInstrumentName },
+      ];
     }
 
-    // Open now filter
+    // Price range filter
+    if (minPrice || maxPrice) {
+      const priceQuery = {
+        $or: [
+          // For exact pricing
+          {
+            $or: [
+              {
+                "services.price": {
+                  $gte: minPrice || 0,
+                  $lte: maxPrice || Number.MAX_SAFE_INTEGER,
+                },
+              },
+              {
+                "musicLessons.price": {
+                  $gte: minPrice || 0,
+                  $lte: maxPrice || Number.MAX_SAFE_INTEGER,
+                },
+              },
+            ],
+          },
+          // For range pricing
+          {
+            $or: [
+              {
+                $and: [
+                  { "services.minPrice": { $gte: minPrice || 0 } },
+                  {
+                    "services.maxPrice": {
+                      $lte: maxPrice || Number.MAX_SAFE_INTEGER,
+                    },
+                  },
+                ],
+              },
+              {
+                $and: [
+                  { "musicLessons.minPrice": { $gte: minPrice || 0 } },
+                  {
+                    "musicLessons.maxPrice": {
+                      $lte: maxPrice || Number.MAX_SAFE_INTEGER,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+      query.$and = query.$and ? [...query.$and, priceQuery] : [priceQuery];
+    }
+
+    // Filter by offers
+    if (buyInstruments === "true") query.buyInstruments = true;
+    if (sellInstruments === "true") query.sellInstruments = true;
+    if (offerMusicLessons === "true") query.offerMusicLessons = true;
+
+    // First get total count for pagination info
+    const totalCount = await Business.countDocuments(query);
+
+    // Find businesses with the query and pagination
+    let businessesQuery = Business.find(query)
+      .populate("user", "name email")
+      .skip(skip)
+      .limit(limitNumber);
+
+    // Open now filter (after initial query since it requires date/time calculation)
     if (openNow === "true") {
       const now = new Date();
-      const daysOfWeek = [
-        "sunday",
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-      ];
-      const currentDay = daysOfWeek[now.getDay()];
-      const currentTime = now.toTimeString().slice(0, 5);
+      const currentDay = now
+        .toLocaleString("en-us", { weekday: "long" })
+        .toLowerCase();
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
 
-      query.businessHours = {
-        $elemMatch: {
-          day: currentDay,
-          closed: false,
-          open: { $lte: currentTime },
-          close: { $gte: currentTime },
+      // We need to apply this filter after the initial query due to time calculations
+      let businesses = await businessesQuery;
+
+      businesses = businesses.filter((business) => {
+        const todayHours = business.businessHours.find(
+          (h) => h.day.toLowerCase() === currentDay
+        );
+        if (!todayHours || !todayHours.enabled) return false;
+
+        // Convert business hours to 24-hour format for comparison
+        const openHour =
+          todayHours.startMeridiem === "PM" && todayHours.startTime !== "12:00"
+            ? parseInt(todayHours.startTime.split(":")[0]) + 12
+            : parseInt(todayHours.startTime.split(":")[0]);
+        const openMinute = parseInt(todayHours.startTime.split(":")[1]);
+
+        const closeHour =
+          todayHours.endMeridiem === "PM" && todayHours.endTime !== "12:00"
+            ? parseInt(todayHours.endTime.split(":")[0]) + 12
+            : parseInt(todayHours.endTime.split(":")[0]);
+        const closeMinute = parseInt(todayHours.endTime.split(":")[1]);
+
+        return (
+          (currentHours > openHour ||
+            (currentHours === openHour && currentMinutes >= openMinute)) &&
+          (currentHours < closeHour ||
+            (currentHours === closeHour && currentMinutes <= closeMinute))
+        );
+      });
+
+      // Reapply pagination after openNow filter
+      const startIndex = skip;
+      const endIndex = skip + limitNumber;
+      const paginatedBusinesses = businesses.slice(startIndex, endIndex);
+
+      // Sorting after openNow filter
+      if (sort) {
+        paginatedBusinesses.sort((a, b) => {
+          const getMinPrice = (business) => {
+            const servicePrices = business.services.map((s) =>
+              s.pricingType === "range"
+                ? parseInt(s.minPrice || 0)
+                : parseInt(s.price || 0)
+            );
+            const lessonPrices = business.musicLessons.map((l) =>
+              l.pricingType === "range"
+                ? parseInt(l.minPrice || 0)
+                : parseInt(l.price || 0)
+            );
+            const allPrices = [...servicePrices, ...lessonPrices].filter(
+              (p) => !isNaN(p)
+            );
+            return allPrices.length > 0 ? Math.min(...allPrices) : 0;
+          };
+
+          const aPrice = getMinPrice(a);
+          const bPrice = getMinPrice(b);
+
+          if (sort === "high-to-low") return bPrice - aPrice;
+          if (sort === "low-to-high") return aPrice - bPrice;
+          return 0;
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Businesses fetched successfully",
+        data: paginatedBusinesses,
+        pagination: {
+          total: businesses.length, // Total after openNow filter
+          page: pageNumber,
+          limit: limitNumber,
+          totalPages: Math.ceil(businesses.length / limitNumber),
         },
-      };
-    }
-
-    // Sort options
-    const sortObj = {};
-    if (sortByCreatedAt) {
-      sortObj.createdAt = sortByCreatedAt.toLowerCase() === "asc" ? 1 : -1;
-    }
-
-    // Get total count (before skip/limit)
-    const totalCount = await Business.countDocuments(query);
-    const totalPages = Math.ceil(totalCount / pageSize);
-
-    // Query businesses with pagination & sort
-    let businesses = await Business.find(query)
-      .sort(sortObj)
-      .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize);
-
-    // Re-filter on price (nested & complex case) after DB query if needed
-    if (priceMin || priceMax) {
-      businesses = businesses.filter((business) =>
-        business.services.some((service) => {
-          if (service.pricingType === "exact") {
-            if (priceMin && service.price < Number(priceMin)) return false;
-            if (priceMax && service.price > Number(priceMax)) return false;
-            return true;
-          } else if (service.pricingType === "range") {
-            if (priceMin && service.price.min < Number(priceMin)) return false;
-            if (priceMax && service.price.max > Number(priceMax)) return false;
-            return true;
-          }
-          return false;
-        })
-      );
-    }
-
-    // Sort by price lowToHigh / highToLow
-    if (priceSort === "lowToHigh") {
-      businesses.sort((a, b) => {
-        const aMin = Math.min(
-          ...a.services.map((s) =>
-            s.pricingType === "exact"
-              ? s.price
-              : s.price.min ?? Number.MAX_SAFE_INTEGER
-          )
-        );
-        const bMin = Math.min(
-          ...b.services.map((s) =>
-            s.pricingType === "exact"
-              ? s.price
-              : s.price.min ?? Number.MAX_SAFE_INTEGER
-          )
-        );
-        return aMin - bMin;
-      });
-    } else if (priceSort === "highToLow") {
-      businesses.sort((a, b) => {
-        const aMax = Math.max(
-          ...a.services.map((s) =>
-            s.pricingType === "exact" ? s.price : s.price.max ?? 0
-          )
-        );
-        const bMax = Math.max(
-          ...b.services.map((s) =>
-            s.pricingType === "exact" ? s.price : s.price.max ?? 0
-          )
-        );
-        return bMax - aMax;
       });
     }
+
+    // Sorting for non-openNow queries
+    if (sort) {
+      businessesQuery = businessesQuery.lean(); // Convert to plain JS object for sorting
+
+      const businesses = await businessesQuery;
+
+      businesses.sort((a, b) => {
+        const getMinPrice = (business) => {
+          const servicePrices = business.services.map((s) =>
+            s.pricingType === "range"
+              ? parseInt(s.minPrice || 0)
+              : parseInt(s.price || 0)
+          );
+          const lessonPrices = business.musicLessons.map((l) =>
+            l.pricingType === "range"
+              ? parseInt(l.minPrice || 0)
+              : parseInt(l.price || 0)
+          );
+          const allPrices = [...servicePrices, ...lessonPrices].filter(
+            (p) => !isNaN(p)
+          );
+          return allPrices.length > 0 ? Math.min(...allPrices) : 0;
+        };
+
+        const aPrice = getMinPrice(a);
+        const bPrice = getMinPrice(b);
+
+        if (sort === "high-to-low") return bPrice - aPrice;
+        if (sort === "low-to-high") return aPrice - bPrice;
+        return 0;
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Businesses fetched successfully",
+        data: businesses,
+        pagination: {
+          total: totalCount,
+          page: pageNumber,
+          limit: limitNumber,
+          totalPages: Math.ceil(totalCount / limitNumber),
+        },
+      });
+    }
+
+    // Regular query without openNow or sorting
+    const businesses = await businessesQuery;
 
     return res.status(200).json({
       success: true,
       message: "Businesses fetched successfully",
       data: businesses,
       pagination: {
+        total: totalCount,
         page: pageNumber,
-        limit: pageSize,
-        totalPages,
-        totalCount,
+        limit: limitNumber,
+        totalPages: Math.ceil(totalCount / limitNumber),
       },
     });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({ success: false, error: error.message });
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
@@ -768,11 +1084,9 @@ exports.removedImage = async (req, res) => {
       });
     }
 
-    // Remove image at index in local variable
     const updatedImages = [...business.businessInfo.image];
     updatedImages.splice(index, 1);
 
-    // Update only the image array in DB without full validation
     const updatedBusiness = await Business.findByIdAndUpdate(
       businessId,
       { $set: { "businessInfo.image": updatedImages } },
