@@ -14,6 +14,7 @@ const instrumentAndServiceRouter = require("../modules/instrumentAndService/inst
 const serviceOfferRouter = require("../modules/serviceOffered/serviceOffered.router");
 const musicLesson = require("../modules/musicLesson/musicLesson.router");
 const notificationRouter = require("../modules/notification/notification.router");
+const reportRouter = require("../modules/report/report.router");
 // const instrumentNameRouter = require("../modules/instrumentName/instrumentName.router");
 
 const router = Router();
@@ -80,6 +81,10 @@ const moduleRouter = [
   {
     path: "/music-lesson",
     router: musicLesson,
+  },
+  {
+    path: "/report",
+    router: reportRouter,
   },
 ];
 

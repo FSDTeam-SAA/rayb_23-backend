@@ -1,7 +1,15 @@
+const reportService = require("./report.service");
+
 const addReport = async (req, res) => {
   try {
-    
+    const { email } = req.user;
 
+    const result = await reportService.addReport(req.body, email);
+    return res.status(200).json({
+      success: true,
+      message: "Report added successfully",
+      data: result,
+    });
   } catch (error) {
     return res
       .status(400)
