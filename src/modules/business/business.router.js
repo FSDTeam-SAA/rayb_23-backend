@@ -10,6 +10,7 @@ const {
   toggleBusinessStatus,
   getBusinessById,
   updateBusiness,
+  removedImage,
 } = require("./business.controller");
 const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
@@ -95,6 +96,8 @@ router.patch(
   // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   updateBusiness
 );
+
+router.delete("/:businessId/image/:imageIndex", removedImage);
 
 const businessRouter = router;
 module.exports = businessRouter;

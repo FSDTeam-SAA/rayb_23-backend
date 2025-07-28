@@ -731,3 +731,64 @@ exports.updateBusiness = async (req, res) => {
   }
 };
 
+exports.removedImage = async (req, res) => {
+  try {
+    const { businessId, imageIndex } = req.params;
+    const index = parseInt(imageIndex, 10);
+
+    if (isNaN(index)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid image index",
+      });
+    }
+
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res.status(404).json({
+        success: false,
+        message: "Business not found.",
+      });
+    }
+
+    if (
+      !business.businessInfo.image ||
+      business.businessInfo.image.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "No images to remove",
+      });
+    }
+
+    if (index < 0 || index >= business.businessInfo.image.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Image index out of range",
+      });
+    }
+
+    // Remove image at index in local variable
+    const updatedImages = [...business.businessInfo.image];
+    updatedImages.splice(index, 1);
+
+    // Update only the image array in DB without full validation
+    const updatedBusiness = await Business.findByIdAndUpdate(
+      businessId,
+      { $set: { "businessInfo.image": updatedImages } },
+      { new: true, runValidators: false }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Image removed successfully",
+      data: updatedBusiness,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      error,
+    });
+  }
+};
