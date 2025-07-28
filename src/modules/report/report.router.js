@@ -23,5 +23,17 @@ router.get(
   reportController.getMyReports
 );
 
+router.get(
+  "/:reportId",
+  //   auth(USER_ROLE.user, USER_ROLE.businessMan, USER_ROLE.admin),
+  reportController.getSingleReport
+);
+
+router.put(
+  "/:reportId",
+//   auth(USER_ROLE.user, USER_ROLE.businessMan, USER_ROLE.admin),
+  reportController.toggleReport
+);
+
 const reportRouter = router;
 module.exports = reportRouter;
