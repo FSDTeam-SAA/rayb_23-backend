@@ -925,7 +925,7 @@ exports.getEveryInstrumentService = async (req, res) => {
   try {
     const allBusinesses = await Business.find({}, "services");
 
-    const groupedServices = {}; // Structure: { instrumentFamily: { group: [services] } }
+    const groupedServices = {};
 
     allBusinesses.forEach((business) => {
       if (Array.isArray(business.services)) {
@@ -942,7 +942,13 @@ exports.getEveryInstrumentService = async (req, res) => {
             groupedServices[family][group] = [];
           }
 
-          groupedServices[family][group].push(service);
+          // Only push selected fields
+          groupedServices[family][group].push({
+            newInstrumentName: service.newInstrumentName,
+            pricingType: service.pricingType,
+            selectedInstrumentsGroup: service.selectedInstrumentsGroup,
+            instrumentFamily: service.instrumentFamily,
+          });
         });
       }
     });
