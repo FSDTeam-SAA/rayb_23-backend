@@ -109,7 +109,7 @@ exports.getAllBusinesses = async (req, res) => {
       openNow,
       postalCode,
       page = 1, // Default to page 1
-      limit = 10, // Default to 10 items per page
+      limit = 40, // Default to 10 items per page
     } = req.query;
 
     // Convert page and limit to numbers
@@ -918,5 +918,40 @@ exports.removedImage = async (req, res) => {
       message: error.message,
       error,
     });
+  }
+};
+
+exports.getEveryInstrumentService = async (req, res) => {
+  try {
+    const allBusinesses = await Business.find({}, "services");
+
+    const groupedServices = {}; // Structure: { instrumentFamily: { group: [services] } }
+
+    allBusinesses.forEach((business) => {
+      if (Array.isArray(business.services)) {
+        business.services.forEach((service) => {
+          const family = service.instrumentFamily?.toLowerCase() || "unknown";
+          const group =
+            service.selectedInstrumentsGroup?.toLowerCase() || "unknown";
+
+          if (!groupedServices[family]) {
+            groupedServices[family] = {};
+          }
+
+          if (!groupedServices[family][group]) {
+            groupedServices[family][group] = [];
+          }
+
+          groupedServices[family][group].push(service);
+        });
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: groupedServices,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
   }
 };

@@ -11,6 +11,7 @@ const {
   getBusinessById,
   updateBusiness,
   removedImage,
+  getEveryInstrumentService,
 } = require("./business.controller");
 const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
@@ -64,6 +65,8 @@ router.get(
   auth(USER_ROLE.businessMan),
   getBusinessmanDashboardData
 );
+
+router.get("/services", getEveryInstrumentService);
 
 router.get(
   "/:businessId",
