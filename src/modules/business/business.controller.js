@@ -68,7 +68,7 @@ exports.createBusiness = async (req, res) => {
         message: `${user.name || "A user"} submitted a new business.`,
         metadata: { businessId: business._id },
       });
-      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+      io.to(`${admin._id}`).emit("new_notification", notify);
     }
 
     // Notify Business Owner (User)
@@ -81,7 +81,7 @@ exports.createBusiness = async (req, res) => {
       message: `You have successfully created a business.`,
       metadata: { businessId: business._id },
     });
-    io.to(`${userType}_${user._id}`).emit("new_notification", notifyUser);
+    io.to(`${user._id}`).emit("new_notification", notifyUser);
 
     return res.status(201).json({
       success: true,
