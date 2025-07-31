@@ -894,6 +894,8 @@ exports.removedImage = async (req, res) => {
   try {
     const { businessId, imageIndex } = req.params;
     const index = parseInt(imageIndex, 10);
+    const { user, userType } = req.user;
+    const io = req.app.get("io")
 
     if (isNaN(index)) {
       return res.status(400).json({
@@ -936,8 +938,35 @@ exports.removedImage = async (req, res) => {
       { new: true, runValidators: false }
     );
 
+    const adminUsers = await User.find({ userType: "admin" });
 
-    
+    for (const admin of adminUsers) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "business_image_removed",
+        title: "Image Removed from Business",
+        message: `${user.name || "A user"} removed an image from their business.`,
+        metadata: { businessId: business._id },
+      });
+
+      io.to(`${admin._id}`).emit("new_notification", notify);
+    }
+
+    // Notify Business Owner
+    const notifyUser = await Notification.create({
+      senderId: user._id,
+      receiverId: user._id,
+      userType: userType,
+      type: "image_removed",
+      title: "Business Image Removed",
+      message: "You have successfully removed an image from your business.",
+      metadata: { businessId: business._id },
+    });
+
+    io.to(`${user._id}`).emit("new_notification", notifyUser);
+
     return res.status(200).json({
       success: true,
       message: "Image removed successfully",

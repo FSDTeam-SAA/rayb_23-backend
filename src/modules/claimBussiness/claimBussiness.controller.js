@@ -27,7 +27,7 @@ const documentVerification = async (req, res) => {
       message: `Your claim business documents have been successfully verified. Waiting for admin approval.`,
       metadata: { claimBusinessId },
     });
-    io.to(`user_${user._id}`).emit("new_notification", notifyUser);
+    io.to(`${user._id}`).emit("new_notification", notifyUser);
 
     const admins = await User.find({ userType: "admin" });
 
@@ -42,7 +42,7 @@ const documentVerification = async (req, res) => {
         metadata: { claimBusinessId },
       });
 
-      io.to(`admin_${admin._id}`).emit("new_notification", notifyAdmin);
+      io.to(`${admin._id}`).emit("new_notification", notifyAdmin);
     }
     return res.status(200).json({
       success: true,
@@ -144,7 +144,7 @@ const toggleClaimBussinessStatus = async (req, res) => {
         metadata: { claimBusinessId },
       });
 
-      io.to(`user_${user._id}`).emit("new_notification", notify);
+      io.to(`${user._id}`).emit("new_notification", notify);
     }
 
 
@@ -208,7 +208,7 @@ const bussinessEmailVerify = async (req, res) => {
         metadata: { businessId },
       });
 
-      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+      io.to(`${admin._id}`).emit("new_notification", notify);
     }
 
     return res.status(200).json({
