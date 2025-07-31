@@ -76,7 +76,7 @@ exports.createReview = async (req, res) => {
         metadata: { businessId: business },
       });
 
-      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+      io.to(`${admin._id}`).emit("new_notification", notify);
     }
 
     if (businessData?.user) {
@@ -92,7 +92,7 @@ exports.createReview = async (req, res) => {
         metadata: { businessId: business, reviewId: review._id },
       });
 
-      io.to(`businessMan_${ownerId}`).emit("new_notification", notify);
+      io.to(`${ownerId}`).emit("new_notification", notify);
     }
 
     return res.status(201).json({
@@ -267,7 +267,7 @@ exports.updateReview = async (req, res) => {
         message: `${user.name || "A user"} updated a review.`,
         metadata: { businessId: business?._id, reviewId: result._id },
       });
-      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+      io.to(`${admin._id}`).emit("new_notification", notify);
     }
 
     if (ownerId) {
@@ -277,12 +277,11 @@ exports.updateReview = async (req, res) => {
         userType: "businessMan",
         type: "review_updated",
         title: "A Review Was Updated",
-        message: `${
-          user.name || "A user"
-        } updated their review on your business.`,
+        message: `${user.name || "A user"
+          } updated their review on your business.`,
         metadata: { businessId: business._id, reviewId: result._id },
       });
-      io.to(`businessMan_${ownerId}`).emit("new_notification", notify);
+      io.to(`${ownerId}`).emit("new_notification", notify);
     }
 
     return res.json({
@@ -299,6 +298,9 @@ exports.toggleReview = async (req, res) => {
   try {
     const { email: userEmail } = req.user;
     const user = await User.findOne({ email: userEmail });
+
+    const io = req.app.get("io");
+
     if (user.userType !== "admin") {
       return res.status(403).json({ status: false, message: "Access denied" });
     }
@@ -310,6 +312,23 @@ exports.toggleReview = async (req, res) => {
         status: false,
         message: "Review ID and status are required",
       });
+    }
+    const business = await Business.findById(result.business);
+    const ownerId = business?.user;
+    if (ownerId) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: ownerId,
+        userType: "businessMan",
+        type: "review_updated",
+        title: "A Review Was Updated",
+        message: 
+        status === "approved"
+          ? "Your review has been approved by the admin."
+          : "Your review has been rejected by the admin.",
+        metadata: { businessId: business._id, reviewId: result._id },
+      });
+      io.to(`${ownerId}`).emit("new_notification", notify);
     }
 
     const updatedReview = await ReviewModel.findByIdAndUpdate(
@@ -324,6 +343,8 @@ exports.toggleReview = async (req, res) => {
         message: "Review not found",
       });
     }
+
+
 
     return res.status(200).json({
       status: true,
@@ -407,7 +428,7 @@ exports.reportReview = async (req, res) => {
           reviewId: review._id,
         },
       });
-      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+      io.to(`${admin._id}`).emit("new_notification", notify);
     }
 
     return res.status(200).json({
@@ -464,7 +485,7 @@ exports.deleteReview = async (req, res) => {
         message: `${user.name || "A user"} deleted a review.`,
         metadata: { businessId: business?._id, reviewId: review._id },
       });
-      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+      io.to(`${admin._id}`).emit("new_notification", notify);
     }
 
     if (ownerId) {
@@ -474,12 +495,11 @@ exports.deleteReview = async (req, res) => {
         userType: "businessMan",
         type: "review_deleted",
         title: "A Review Was Deleted",
-        message: `${
-          user.name || "A user"
-        } deleted their review on your business.`,
+        message: `${user.name || "A user"
+          } deleted their review on your business.`,
         metadata: { businessId: business._id, reviewId: review._id },
       });
-      io.to(`businessMan_${ownerId}`).emit("new_notification", notify);
+      io.to(`${ownerId}`).emit("new_notification", notify);
     }
 
     return res.status(200).json({

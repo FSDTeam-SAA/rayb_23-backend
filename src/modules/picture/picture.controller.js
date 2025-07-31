@@ -68,7 +68,7 @@ exports.uploadPicture = async (req, res) => {
         },
       });
 
-      io.to(`businessMan_${business.user._id}`).emit(
+      io.to(`${business.user._id}`).emit(
         "new_notification",
         businessMan
       );
@@ -90,7 +90,7 @@ exports.uploadPicture = async (req, res) => {
         },
       });
 
-      io.to(`admin_${admin._id}`).emit("new_notification", adminNotification);
+      io.to(`${admin._id}`).emit("new_notification", adminNotification);
     }
 
     res.app.get("io").emit("new-picture", picture);
@@ -334,7 +334,7 @@ exports.updatePictureById = async (req, res) => {
         },
       });
 
-      io.to(`businessMan_${business.user._id}`).emit(
+      io.to(`${business.user._id}`).emit(
         "new_notification",
         notifyBusinessOwner
       );
@@ -357,7 +357,7 @@ exports.updatePictureById = async (req, res) => {
         },
       });
 
-      io.to(`admin_${admin._id}`).emit("new_notification", notifyAdmin);
+      io.to(`${admin._id}`).emit("new_notification", notifyAdmin);
     }
 
     return res.status(200).json({
@@ -411,7 +411,7 @@ exports.deletedPicture = async (req, res) => {
         },
       });
 
-      io.to(`businessMan_${business.user._id}`).emit(
+      io.to(`${business.user._id}`).emit(
         "new_notification",
         notifyBusinessOwner
       );
@@ -434,7 +434,7 @@ exports.deletedPicture = async (req, res) => {
         },
       });
 
-      io.to(`admin_${admin._id}`).emit("new_notification", notifyAdmin);
+      io.to(`${admin._id}`).emit("new_notification", notifyAdmin);
     }
 
     return res.status(200).json({
@@ -491,7 +491,7 @@ exports.togglePictureStatus = async (req, res) => {
         },
       });
 
-      io.to(`user_${picture.user._id}`).emit("new_notification", notify);
+      io.to(`${picture.user._id}`).emit("new_notification", notify);
     }
 
 

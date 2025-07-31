@@ -56,7 +56,7 @@ exports.createSavedBusiness = async (req, res) => {
         metadata: { businessId: businessId },
       });
 
-      io.to(`user_${businessOwner._id}`).emit("new_notification", notifyOwner);
+      io.to(`${businessOwner._id}`).emit("new_notification", notifyOwner);
     }
 
    
@@ -72,7 +72,7 @@ exports.createSavedBusiness = async (req, res) => {
         metadata: { businessId: businessId },
       });
 
-      io.to(`admin_${admin._id}`).emit("new_notification", notifyAdmin);
+      io.to(`${admin._id}`).emit("new_notification", notifyAdmin);
     }
 
 
