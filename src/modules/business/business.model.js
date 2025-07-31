@@ -81,6 +81,7 @@ const businessSchema = new Schema(
     buyInstruments: { type: Boolean, default: false },
     sellInstruments: { type: Boolean, default: false },
     offerMusicLessons: { type: Boolean, default: false },
+    rentInstruments: { type: Boolean, default: false },
     review: [
       {
         type: Schema.Types.ObjectId,
