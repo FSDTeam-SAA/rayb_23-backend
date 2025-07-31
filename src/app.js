@@ -36,11 +36,11 @@ io.on("connection", (socket) => {
   console.log("a user connected");
 
   socket.on("joinChat", (chatId) => {
-    socket.join(chatId.toString());
+    socket.join(chatId);
     console.log("user joined chatId", chatId);
   });
   socket.on("joinNotification", (userId) => {
-    socket.join(userId.toString());
+    socket.join(userId);
     console.log("user joined userId", userId);
   });
 

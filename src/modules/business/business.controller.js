@@ -779,15 +779,14 @@ exports.toggleBusinessStatus = async (req, res) => {
           userType,
           type: "business_approved",
           title: "Business Approved",
-          message: `Your business "${
-            business.businessInfo?.name || "Business"
-          }" has been approved.`,
+          message: `Your business "${business.businessInfo?.name || "Business"
+            }" has been approved.`,
           metadata: {
             businessId: business._id,
           },
         });
 
-        io.to(`${userType}_${owner._id}`).emit("new_notification", notify);
+        io.to(`${owner._id}`).emit("new_notification", notify);
       }
     }
 
@@ -808,6 +807,7 @@ exports.updateBusiness = async (req, res) => {
   try {
     const { businessId } = req.params;
     const files = req.files;
+    const { user, userType } = req.user;
 
     const business = await Business.findById(businessId);
     if (!business) {
@@ -846,6 +846,35 @@ exports.updateBusiness = async (req, res) => {
       { $set: updatePayload },
       { new: true }
     );
+
+    const adminUsers = await User.find({ userType: "admin" });
+    const io = req.app.get("io");
+
+    // Notify Admins
+    for (const admin of adminUsers) {
+      const notify = await Notification.create({
+        senderId: user._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "new_business_updated",
+        title: "Business Updated",
+        message: `${user.name || "A user"} updated a business.`,
+        metadata: { businessId: business._id },
+      });
+      io.to(`${admin._id}`).emit("new_notification", notify);
+    }
+
+    // Notify Business Owner
+    const notifyUser = await Notification.create({
+      senderId: user._id,
+      receiverId: user._id,
+      userType: userType,
+      type: "business_update",
+      title: "Business Updated",
+      message: `You have successfully updated your business.`,
+      metadata: { businessId: business._id },
+    });
+    io.to(`${user._id}`).emit("new_notification", notifyUser);
 
     return res.status(200).json({
       success: true,
@@ -907,6 +936,8 @@ exports.removedImage = async (req, res) => {
       { new: true, runValidators: false }
     );
 
+
+    
     return res.status(200).json({
       success: true,
       message: "Image removed successfully",
