@@ -32,6 +32,7 @@ const createNewAccount = async (req, res) => {
 const verifyEmail = async (req, res) => {
   try {
     const { email } = req.user;
+
     const result = await userService.verifyUserEmail(req.body, email);
     return res.status(200).json({
       success: true,

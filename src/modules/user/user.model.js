@@ -60,7 +60,7 @@ const userModel = new Schema(
     },
     toFactorAuth: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     support: {
       type: String,

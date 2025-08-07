@@ -102,8 +102,33 @@ const verifyUserEmail = async (payload, email) => {
   ).select(
     "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires"
   );
-  return result;
+
+  const response = {
+    success: true,
+    message: "Email verified successfully",
+    data: result,
+  };
+
+  // ⏬ Add token only if 2FA is enabled
+  if (result.toFactorAuth) {
+    const JwtToken = {
+      userId: result._id,
+      email: result.email,
+      userType: result.userType,
+    };
+
+    const accessToken = createToken(
+      JwtToken,
+      config.JWT_SECRET,
+      config.JWT_EXPIRES_IN
+    );
+
+    response.accessToken = accessToken;
+  }
+
+  return response;
 };
+
 
 const resendOtpCode = async ({ email }) => {
   const existingUser = await User.findOne({ email });
