@@ -22,8 +22,8 @@ router.post(
 );
 
 router.get(
-  "/",
-  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  "/all",
+  auth(USER_ROLE.admin),
   getReviewsByAdmin
 );
 

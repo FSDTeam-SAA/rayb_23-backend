@@ -8,7 +8,8 @@ const getTimeRange = require("../../utils/getTimeRange");
 exports.uploadPicture = async (req, res) => {
   try {
     const io = req.app.get("io");
-    const { email: userEmail, userId: userID } = req.user;
+    const { email: userEmail, userId: userID,} = req.user;
+   
     const user = await User.findOne({ email: userEmail });
     if (!user) {
       return res.status(400).json({ status: false, message: "User not found" });
@@ -23,7 +24,6 @@ exports.uploadPicture = async (req, res) => {
       });
     }
     const data = JSON.parse(req.body.data);
-    console.log(data);
     if (!data.business) {
       return res
         .status(400)
@@ -57,18 +57,18 @@ exports.uploadPicture = async (req, res) => {
     if (business?.user) {
       const businessMan = await Notification.create({
         senderId: user._id,
-        receiverId: business.user._id,
+        receiverId: business.user,
         userType: "businessMan",
         type: "review_image_uploaded",
         title: "New Review Image",
-        message: `${user.name} uploaded a new picture for your business.`,
+        message: `${user.name||"A User"} uploaded a new picture for your business.`,
         metadata: {
           businessId: data.business,
           pictureId: picture._id,
         },
       });
 
-      io.to(`${business.user._id}`).emit(
+      io.to(`${business.user}`).emit(
         "new_notification",
         businessMan
       );
@@ -83,7 +83,7 @@ exports.uploadPicture = async (req, res) => {
         userType: "admin",
         type: "review_image_uploaded",
         title: "New Picture Uploaded",
-        message: `${user.name} uploaded a new picture for business: ${business.name}`,
+        message: `${user.name || "A User"} uploaded a new picture for business: ${business.name}`,
         metadata: {
           businessId: data.business,
           pictureId: picture._id,
