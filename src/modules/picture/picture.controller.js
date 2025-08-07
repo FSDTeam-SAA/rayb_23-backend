@@ -83,7 +83,9 @@ exports.uploadPicture = async (req, res) => {
         userType: "admin",
         type: "review_image_uploaded",
         title: "New Picture Uploaded",
-        message: `${user.name || "A User"} uploaded a new picture for business: ${business.businessInfo.name}`,
+        message: `${user.name || "A User"} uploaded a new picture for business: ${business.businessInfo.name
+          || ""
+        }`,
         metadata: {
           businessId: data.business,
           pictureId: picture._id,
