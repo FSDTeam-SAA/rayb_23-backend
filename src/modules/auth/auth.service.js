@@ -279,11 +279,53 @@ const toggleTwoFactorAuthentication = async (email) => {
 
   return {
     success: true,
-    message: `Two-factor authentication ${
-      user.toFactorAuth ? "enabled" : "disabled"
-    } successfully`,
+    message: `Two-factor authentication ${user.toFactorAuth ? "enabled" : "disabled"
+      } successfully`,
   };
 };
+
+const loginWithToken = async (payload) => {
+  const { token } = payload;
+
+  try {
+    // Decode and verify the token
+    const decoded = jwt.verify(token, config.JWT_SECRET);
+
+    // Make sure the decoded token is the expected shape
+    const email = decoded.email;
+
+    const isExistingUser = await User.findOne({ email });
+
+    if (!isExistingUser) throw new Error("User not found");
+
+    const JwtToken = {
+      userId: isExistingUser._id,
+      email: isExistingUser.email,
+      userType: isExistingUser.userType,
+    };
+
+    const accessToken = createToken(
+      JwtToken,
+      config.JWT_SECRET,
+      config.JWT_EXPIRES_IN
+    );
+
+    return (
+      {
+        userId: isExistingUser._id,
+        email: isExistingUser.email,
+        userType: isExistingUser.userType,
+        name: isExistingUser.name,
+        accessToken: accessToken
+      }
+    )
+
+    // Proceed with your logic
+  } catch (error) {
+    console.error("JWT Verification failed:", error);
+    throw new Error("Invalid token");
+  }
+}
 
 const authService = {
   loginUser,
@@ -293,6 +335,7 @@ const authService = {
   resetPassword,
   changePassword,
   toggleTwoFactorAuthentication,
+  loginWithToken
 };
 
 module.exports = authService;

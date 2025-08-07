@@ -6,6 +6,9 @@ const authController = require("./auth.controller");
 const router = Router();
 
 router.post("/login", authController.loginUser);
+
+router.post("/login-with-token", authController.loginWithToken);
+
 router.post("/refresh-token", authController.refreshToken);
 router.post("/forgot-password", authController.forgotPassword);
 
@@ -20,6 +23,8 @@ router.post(
   auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
   authController.resetPassword
 );
+
+
 
 router.post(
   "/change-password",

@@ -41,6 +41,28 @@ const loginUser = async (req, res) => {
   }
 };
 
+
+const loginWithToken = async (req, res) => {
+
+  console.log("Hello")
+  try {
+    const result = await authService.loginWithToken(req.body);
+
+    return res.status(200).json({
+      success: true,
+      message: "User logged in successfully",
+      data: result,
+    });
+
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      code: 400,
+      message: error.message,
+    });
+  }
+};
+
 const refreshToken = async (req, res) => {
   try {
     const { refreshToken } = req.cookies;
@@ -153,6 +175,7 @@ const authController = {
   resetPassword,
   changePassword,
   toggleTwoFactorAuthentication,
+  loginWithToken
 };
 
 module.exports = authController;
