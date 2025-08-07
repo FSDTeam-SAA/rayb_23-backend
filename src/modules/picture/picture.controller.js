@@ -74,7 +74,7 @@ exports.uploadPicture = async (req, res) => {
       );
     }
 
-    // ⏩ Notify all admins
+   
     const admins = await User.find({ userType: "admin" });
     for (const admin of admins) {
       const adminNotification = await Notification.create({
@@ -83,7 +83,7 @@ exports.uploadPicture = async (req, res) => {
         userType: "admin",
         type: "review_image_uploaded",
         title: "New Picture Uploaded",
-        message: `${user.name || "A User"} uploaded a new picture for business: ${business.name}`,
+        message: `${user.name || "A User"} uploaded a new picture for business: ${business.businessInfo.name}`,
         metadata: {
           businessId: data.business,
           pictureId: picture._id,
