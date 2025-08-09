@@ -311,6 +311,7 @@ exports.toggleReview = async (req, res) => {
     if (user.userType !== "admin") {
       return res.status(403).json({ status: false, message: "Access denied" });
     }
+
     const { id } = req.params;
     const { status } = req.body;
 
@@ -320,8 +321,17 @@ exports.toggleReview = async (req, res) => {
         message: "Review ID and status are required",
       });
     }
-    const business = await Business.findById(result.business);
+
+    // ✅ Get the review first
+    const review = await ReviewModel.findById(id);
+    if (!review) {
+      return res.status(404).json({ status: false, message: "Review not found" });
+    }
+
+    // ✅ Get the business from the review
+    const business = await Business.findById(review.business);
     const ownerId = business?.user;
+
     if (ownerId) {
       const notify = await Notification.create({
         senderId: user._id,
@@ -329,39 +339,33 @@ exports.toggleReview = async (req, res) => {
         userType: "businessMan",
         type: "review_updated",
         title: "A Review Was Updated",
-        message: 
-        status === "approved"
-          ? "Your review has been approved by the admin."
-          : "Your review has been rejected by the admin.",
-        metadata: { businessId: business._id, reviewId: result._id },
+        message:
+          status === "approved"
+            ? "Your review has been approved by the admin."
+            : "Your review has been rejected by the admin.",
+        metadata: { businessId: business._id, reviewId: review._id },
       });
       io.to(`${ownerId}`).emit("new_notification", notify);
     }
 
+    // ✅ Update after notification logic
     const updatedReview = await ReviewModel.findByIdAndUpdate(
       id,
       { status },
       { new: true }
     );
 
-    if (!updatedReview) {
-      return res.status(404).json({
-        status: false,
-        message: "Review not found",
-      });
-    }
-
-
-
     return res.status(200).json({
       status: true,
       message: "Review status updated successfully",
       data: updatedReview,
     });
+
   } catch (error) {
     return res.status(500).json({ status: false, error: error.message });
   }
 };
+
 
 exports.reportReview = async (req, res) => {
   try {
