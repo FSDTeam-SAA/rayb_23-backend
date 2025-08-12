@@ -164,7 +164,7 @@ const getAllUsersFromDb = async ({ userType, sortBy, time }) => {
   const filter = {};
 
   if (userType && ["user", "businessOwner" ,"businessMan"].includes(userType)) {
-    filter.role = userType;
+    filter.userType = userType;
   }
 
   if (sortBy === "deactivated") {
