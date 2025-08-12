@@ -163,7 +163,7 @@ const resendOtpCode = async ({ email }) => {
 const getAllUsersFromDb = async ({ userType, sortBy, time }) => {
   const filter = {};
 
-  if (userType && ["user", "businessOwner"].includes(userType)) {
+  if (userType && ["user", "businessOwner" ,"businessMan"].includes(userType)) {
     filter.role = userType;
   }
 
