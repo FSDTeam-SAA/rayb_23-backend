@@ -429,7 +429,7 @@ exports.getBusinessesByUser = async (req, res) => {
       });
     }
 
-    const businesses = await Business.find({ userId });
+    const businesses = await Business.find({ user:userId });
 
     return res.status(200).json({
       success: true,
