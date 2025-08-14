@@ -48,11 +48,12 @@ exports.uploadPicture = async (req, res) => {
     });
     const picture = await newPictures.save();
 
-    await BusinessModel.findByIdAndUpdate(data.business, {
+    await BusinessModel.findByIdAndUpdate({ _id: data.business }, {
       $push: { reviewImage: picture._id },
     });
 
-    const business = await BusinessModel.findById(data.business);
+    const business = await BusinessModel.findById({ _id: data.business });
+    console.log(business);
 
     if (business?.user) {
       const businessMan = await Notification.create({
