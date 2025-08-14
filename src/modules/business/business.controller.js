@@ -9,6 +9,7 @@ const getTimeRange = require("../../utils/getTimeRange");
 const SavedBusinessModel = require("../savedBusiness/SavedBusiness.model");
 const Notification = require("../notification/notification.model");
 
+
 exports.createBusiness = async (req, res) => {
   try {
     const { email, userType } = req.user;
@@ -420,8 +421,9 @@ exports.getBusinessById = async (req, res) => {
 exports.getBusinessesByUser = async (req, res) => {
   try {
     const { userId } = req.user;
-
+console.log(userId);
     const isExist = await User.findById({ _id: userId });
+    console.log(isExist);
     if (!isExist) {
       return res.status(404).json({
         status: false,
@@ -429,7 +431,9 @@ exports.getBusinessesByUser = async (req, res) => {
       });
     }
 
-    const businesses = await Business.find({ user:userId });
+const businesses = await Business.find({ user: userId });
+
+    console.log(businesses);
 
     return res.status(200).json({
       success: true,
