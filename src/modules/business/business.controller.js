@@ -1025,3 +1025,41 @@ exports.getEveryInstrumentService = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+
+
+
+exports.toggleBusinessActive = async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const { isActive } = req.body;
+
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid input. 'isActive' must be a boolean.",
+      });
+    }
+
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res.status(404).json({
+        success: false,
+        message: "Business not found.",
+      });
+    }
+
+    business.isActive = isActive;
+    await business.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Business ${isActive ? "activated" : "deactivated"} successfully.`,
+      data: business,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

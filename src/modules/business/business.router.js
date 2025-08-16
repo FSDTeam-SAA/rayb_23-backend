@@ -12,6 +12,7 @@ const {
   updateBusiness,
   removedImage,
   getEveryInstrumentService,
+  toggleBusinessActive,
 } = require("./business.controller");
 const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
@@ -78,6 +79,11 @@ router.put(
   "/toggle/:businessId",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   toggleBusinessStatus
+);
+router.put(
+  "/active/:businessId",
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  toggleBusinessActive
 );
 
 router.patch(
