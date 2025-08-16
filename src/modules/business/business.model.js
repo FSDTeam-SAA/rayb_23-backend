@@ -18,7 +18,7 @@ const businessHoursSchema = new Schema(
     startMeridiem: { type: String },
     endTime: { type: String },
     endMeridiem: { type: String },
-    enabled: { type: Boolean, default: false },
+    enabled: { type: Boolean, default: true},
   },
   { _id: false }
 );
