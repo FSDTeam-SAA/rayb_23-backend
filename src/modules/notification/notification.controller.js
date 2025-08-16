@@ -51,6 +51,21 @@ exports.getNotifications = async (req, res) => {
   }
 };
 
+exports.makeIgnore = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updated = await Notification.findByIdAndUpdate(id, { isIgnored: true }, { new: true });
+
+    return res.status(200).json({
+      status: true,
+      message: "Notification ignored",
+      updated,
+    });
+  } catch (error) {
+    res.status(500).json({ status: false, message: "Error", error: error.message });
+  }
+};
 
 exports.markAsRead = async (req, res) => {
   try {
@@ -67,7 +82,6 @@ exports.markAsRead = async (req, res) => {
     res.status(500).json({ status: false, message: "Error", error: error.message });
   }
 };
-
 
 exports.deleteNotification = async (req, res) => {
   try {
