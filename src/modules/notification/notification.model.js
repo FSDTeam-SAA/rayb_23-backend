@@ -16,10 +16,14 @@ const notificationSchema = new mongoose.Schema(
     title: String,
     message: String,
     isRead: { type: Boolean, default: false },
+    isIgnored: {
+      type: Boolean,
+      default: false,
+    },
     metadata: { type: Object }, // Optional for more info like businessId, reviewId, etc.
   },
   { timestamps: true }
 );
 
 const Notification = mongoose.model("Notification", notificationSchema);
-module.exports= Notification;
+module.exports = Notification;
