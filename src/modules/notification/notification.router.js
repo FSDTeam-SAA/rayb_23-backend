@@ -13,7 +13,7 @@ router.get(
   getNotifications
 );
 router.get(
-  "/",
+  "/all",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   getAllNotifications
 );
