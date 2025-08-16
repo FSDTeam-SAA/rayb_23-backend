@@ -36,9 +36,9 @@ exports.getNotifications = async (req, res) => {
     }
     let notify;
     if (userType === "admin") {
-      notify = await Notification.find().sort({ createdAt: -1 });
+      notify = await Notification.find({ isIgnored: false }).sort({ createdAt: -1 });
     } else {
-      notify = await Notification.find({ receiverId: userId, }).sort({ createdAt: -1 });
+      notify = await Notification.find({ receiverId: userId, isIgnored: false }).sort({ createdAt: -1 });
     }
 
     return res.status(200).json({
