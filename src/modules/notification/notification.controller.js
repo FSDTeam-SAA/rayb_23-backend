@@ -50,6 +50,29 @@ exports.getNotifications = async (req, res) => {
     res.status(500).json({ status: false, message: "Error", error: error.message });
   }
 };
+exports.getAllNotifications = async (req, res) => {
+  try {
+    const { userId, userType } = req.user;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+    let notify;
+    if (userType === "admin") {
+      notify = await Notification.find().sort({ createdAt: -1 });
+    } else {
+      notify = await Notification.find({ receiverId: userId}).sort({ createdAt: -1 });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Notifications fetched",
+      notify,
+    });
+  } catch (error) {
+    res.status(500).json({ status: false, message: "Error", error: error.message });
+  }
+};
 
 exports.makeIgnore = async (req, res) => {
   try {
