@@ -8,6 +8,7 @@ const {
   toggleReview,
   reportReview,
   getReviewsByBusiness,
+  getReviewsByGooglePlaceId,
 } = require("./review.controller");
 const { upload } = require("../../utils/cloudnary");
 const auth = require("../../middleware/auth");
@@ -26,6 +27,8 @@ router.get(
   auth(USER_ROLE.admin),
   getReviewsByAdmin
 );
+
+// router.get("/google-reviews", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), getReviewsByGooglePlaceId);
 
 router.get(
   "/my-review",

@@ -21,23 +21,16 @@ const reviewSchema = new mongoose.Schema(
       required: true,
     },
     report: {
-      isReport: {
+      isReported: {
         type: Boolean,
-        enum: [true, false],
         default: false,
       },
       reportMessage: {
-        isReport:{
-          type:Boolean,
-          enum: [true, false],
-          default:false
-        },
-        message: {
-          type:String,
-        }
+        type: String,
+        default: "",
       },
     },
-    replay: {
+    reply: { // Fixed typo: "replay" to "reply"
       type: String,
     },
     googlePlaceId: {

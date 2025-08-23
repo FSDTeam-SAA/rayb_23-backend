@@ -30,6 +30,31 @@ const getAllInstrument = async (req, res) => {
   }
 };
 
+const getInstrumentById = async (req, res) => {
+  try {
+    const { id } = req.params; // get id from request params
+    const result = await instrumentService.getInstrumentById(id);
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        code: 404,
+        message: "Instrument not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      code: 200,
+      message: "Instrument fetched successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+
 const updateInstrument = async (req, res) => {
   try {
     const { instrumentId } = req.params;
@@ -67,6 +92,7 @@ const deleteInstrument = async (req, res) => {
 const instrumentController = {
   createInstrument,
   getAllInstrument,
+  getInstrumentById,
   updateInstrument,
   deleteInstrument,
 };
