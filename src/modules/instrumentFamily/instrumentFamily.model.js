@@ -4,14 +4,6 @@ const instrumentFamilySchema = new mongoose.Schema(
   {
     instrumentFamily: {
       type: String,
-      enum: [
-        "Strings",
-        "Woodwinds",
-        "Brass",
-        "Percussions",
-        "Keyboard",
-        "Others",
-      ],
       require: true,
     },
     instrumentTypes: [
