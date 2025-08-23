@@ -8,7 +8,8 @@ const ClaimBussiness = require("../claimBussiness/claimBussiness.model");
 const getTimeRange = require("../../utils/getTimeRange");
 const SavedBusinessModel = require("../savedBusiness/SavedBusiness.model");
 const Notification = require("../notification/notification.model");
-
+const { GOOGLE_API_KEY } = require("../../config");
+const axios = require("axios");
 
 exports.createBusiness = async (req, res) => {
   try {
@@ -24,25 +25,26 @@ exports.createBusiness = async (req, res) => {
     } = req.body;
 
     const files = req.files;
-
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ success: false, error: "User not found" });
 
     const ownerField = userType === "admin" ? "adminId" : "user";
 
+    // ---------- Upload images ----------
     let image = [];
     if (files && Array.isArray(files) && files.length > 0) {
       image = await Promise.all(
         files.map(async (file) => {
           const imageName = `business/${Date.now()}_${file.originalname}`;
           const result = await sendImageToCloudinary(imageName, file.path);
+          // Clean up uploaded file
+          fs.unlinkSync(file.path);
           return result.secure_url;
         })
       );
     }
 
+    // ---------- Create Business First ----------
     const business = await Business.create({
       ...rest,
       [ownerField]: user._id,
@@ -54,11 +56,57 @@ exports.createBusiness = async (req, res) => {
       latitude,
     });
 
-    // After business creation
+    // ---------- Google Place API ----------
+    let placeReviews = [];
+    let placeId = null;
+
+    try {
+      // 1️⃣ Find placeId
+      const searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(
+        businessInfo.name + " " + businessInfo.address
+      )}&inputtype=textquery&fields=place_id&key=${GOOGLE_API_KEY}`;
+
+      const searchResponse = await axios.get(searchUrl);
+      const candidates = searchResponse.data.candidates;
+
+      if (candidates && candidates.length > 0) {
+        placeId = candidates[0].place_id;
+
+        // 2️⃣ Get place details (reviews)
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,reviews,formatted_address,geometry&key=${GOOGLE_API_KEY}`;
+        const detailsResponse = await axios.get(detailsUrl);
+        const placeDetails = detailsResponse.data.result;
+
+        if (placeDetails.reviews && placeDetails.reviews.length > 0) {
+          placeReviews = placeDetails.reviews
+            .slice(0, 5) // Limit to 5 reviews
+            .map((r) => ({
+              rating: r.rating,
+              feedback: r.text || "No feedback",
+              user: null, // Google reviews have no local user
+              business: business._id, // Link to the created business
+              googlePlaceId: placeId,
+              status: "approved", // Auto-approve Google reviews
+            }));
+        }
+      }
+    } catch (err) {
+      console.warn("Google Place fetch failed:", err.message);
+    }
+
+    // ---------- Save Google reviews in Review collection ----------
+    if (placeReviews.length > 0) {
+      const savedReviews = await ReviewModel.insertMany(placeReviews);
+
+      // Attach review IDs to business
+      business.review = savedReviews.map((r) => r._id);
+      await business.save();
+    }
+
+    // ---------- Notifications ----------
     const adminUsers = await User.find({ userType: "admin" });
     const io = req.app.get("io");
 
-    // Notify Admins
     for (const admin of adminUsers) {
       const notify = await Notification.create({
         senderId: user._id,
@@ -72,7 +120,6 @@ exports.createBusiness = async (req, res) => {
       io.to(`${admin._id}`).emit("new_notification", notify);
     }
 
-    // Notify Business Owner (User)
     const notifyUser = await Notification.create({
       senderId: user._id,
       receiverId: user._id,
@@ -90,6 +137,7 @@ exports.createBusiness = async (req, res) => {
       business,
     });
   } catch (error) {
+    console.error("Create Business Error:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -421,7 +469,7 @@ exports.getBusinessById = async (req, res) => {
 exports.getBusinessesByUser = async (req, res) => {
   try {
     const { userId } = req.user;
-console.log(userId);
+    console.log(userId);
     const isExist = await User.findById({ _id: userId });
     console.log(isExist);
     if (!isExist) {
@@ -431,7 +479,7 @@ console.log(userId);
       });
     }
 
-const businesses = await Business.find({ user: userId });
+    const businesses = await Business.find({ user: userId });
 
     console.log(businesses);
 

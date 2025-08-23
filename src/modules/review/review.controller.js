@@ -116,7 +116,7 @@ exports.getReviewsByAdmin = async (req, res) => {
     console.log(req.user)
     const { userId, userType } = req.user;
 
-    
+
     console.log("Authenticated User from Token:", req.user);
 
     if (userType !== "admin") {
@@ -126,7 +126,7 @@ exports.getReviewsByAdmin = async (req, res) => {
       });
     }
 
-   
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ status: false, message: "User not found" });
@@ -142,14 +142,14 @@ exports.getReviewsByAdmin = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    
+
     const query = {};
     if (reviewType !== "all") {
       query.status = reviewType;
     }
 
-    
-    const dateFilter = getTimeRange(timeRange); 
+
+    const dateFilter = getTimeRange(timeRange);
     Object.assign(query, dateFilter);
 
     let reviews = await Review.find(query)
@@ -541,3 +541,64 @@ exports.getReviewsByBusiness = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+// google Api
+
+// exports.getReviewsByGooglePlaceId = async (req, res) => {
+//   try {
+//     const { placeId } = req.params;
+//     const response = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${process.env.GOOGLE_MAPS_API_KEY}`);
+//     const reviews = response.data.result.reviews || [];
+//     return res.status(200).json({ success: true, data: reviews });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
+// exports.getReviewsByGoogleReviewId = async (req, res) => {
+//   try {
+//     const { reviewId } = req.params;
+//     const response = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?reviewid=${reviewId}&key=${process.env.GOOGLE_MAPS_API_KEY}`);
+//     const reviews = response.data.result.reviews || [];
+//     return res.status(200).json({ success: true, data: reviews });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
+
+
+//  exports.getReviewsByGooglePlaceId = async (req, res) =>{ try {
+//     const { query } = req.query; // example: "Eiffel Tower Paris"
+
+//     if (!query) {
+//       return res.status(400).json({ success: false, message: "Query is required" });
+//     }
+
+//     // 1️Step 1: Find placeId
+//     const searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(
+//       query
+//     )}&inputtype=textquery&fields=place_id,name,formatted_address&key=${GOOGLE_API_KEY}`;
+
+//     const searchResponse = await axios.get(searchUrl);
+//     const candidates = searchResponse.data.candidates;
+
+//     if (!candidates || candidates.length === 0) {
+//       return res.status(404).json({ success: false, message: "Place not found" });
+//     }
+
+//     const placeId = candidates[0].place_id;
+
+//     // 2️Step 2: Get place details (with reviews)
+//     const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,reviews,formatted_address,geometry&key=${GOOGLE_API_KEY}`;
+
+//     const detailsResponse = await axios.get(detailsUrl);
+//     const placeDetails = detailsResponse.data.result;
+
+   
+//   } catch (error) {
+//     console.error("Google API Error:", error.response?.data || error.message);
+//     res.status(500).json({ success: false, message: "Failed to fetch place reviews" });
+//   }
+// }

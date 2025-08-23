@@ -5,9 +5,10 @@ const router = Router();
 
 //only admin can create
 router.post("/create", instrumentController.createInstrument);
-
 router.get("/", instrumentController.getAllInstrument);
+router.get("/:id", instrumentController.getInstrumentById);
 router.put("/:instrumentId", instrumentController.updateInstrument);
+router.delete("/:instrumentId", instrumentController.deleteInstrument);
 
 const instrumentFamilyRouter = router;
 module.exports = instrumentFamilyRouter;

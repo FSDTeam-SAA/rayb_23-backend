@@ -10,6 +10,10 @@ const getAllInstrument = async () => {
   return result;
 };
 
+const getInstrumentById = async (id) => {
+  return await InstrumentFamilyModel.findById(id);
+};
+
 const updateInstrument = async (instrumentId, payload) => {
   const instrument = await InstrumentFamilyModel.findById(instrumentId);
   if (!instrument) {
@@ -37,6 +41,7 @@ const deleteInstrument = async (instrumentId) => {
 const instrumentService = {
   createInstrument,
   getAllInstrument,
+  getInstrumentById,
   updateInstrument,
   deleteInstrument,
 };

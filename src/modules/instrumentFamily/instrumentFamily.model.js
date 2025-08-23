@@ -20,10 +20,12 @@ const instrumentFamilySchema = new mongoose.Schema(
         required: true,
       },
     ],
-    serviceType: {
-      type: String,
-      required: true,
-    },
+    serviceType: [
+      {
+        type: String,
+        required: true,
+      }
+    ],
   },
   {
     timestamps: true,
