@@ -1,4 +1,4 @@
-const { Schema, model } = require("mongoose");
+const { Schema, model, default: mongoose } = require("mongoose");
 
 const businessHoursSchema = new Schema(
   {
@@ -18,7 +18,7 @@ const businessHoursSchema = new Schema(
     startMeridiem: { type: String },
     endTime: { type: String },
     endMeridiem: { type: String },
-    enabled: { type: Boolean, default: true},
+    enabled: { type: Boolean, default: true },
   },
   { _id: false }
 );
@@ -82,12 +82,7 @@ const businessSchema = new Schema(
     sellInstruments: { type: Boolean, default: false },
     offerMusicLessons: { type: Boolean, default: false },
     rentInstruments: { type: Boolean, default: false },
-    review: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Review",
-      },
-    ],
+    review: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
     reviewImage: [
       {
         type: Schema.Types.ObjectId,
