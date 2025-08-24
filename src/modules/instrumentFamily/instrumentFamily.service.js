@@ -5,10 +5,42 @@ const createInstrument = async (payload) => {
   return result;
 };
 
-const getAllInstrument = async () => {
-  const result = await InstrumentFamilyModel.find({}).lean().exec();
-  return result;
+const getAllInstrument = async ({ id, name }) => {
+
+  if (id) {
+    // Find the parent document that contains this nested type
+    const instrumentFamily = await InstrumentFamilyModel.findOne({
+      "instrumentTypes._id": id
+    }).lean().exec();
+
+    if (!instrumentFamily) return null;
+
+    // Convert _id to string for comparison
+    const typeObj = instrumentFamily.instrumentTypes.find(
+      t => t._id.toString() === id
+    );
+
+    return typeObj; 
+  }
+  
+  if (name) {
+    const instrumentFamily = await InstrumentFamilyModel.findOne({
+      "instrumentTypes.type": name
+    }).lean().exec();
+
+    if (!instrumentFamily) return null;
+
+    const typeObj = instrumentFamily.instrumentTypes.find(
+      t => t.type === name
+    );
+
+    return typeObj; 
+  }
+
+  const allInstruments = await InstrumentFamilyModel.find({}).lean().exec();
+  return allInstruments;
 };
+
 
 const getInstrumentById = async (id) => {
   return await InstrumentFamilyModel.findById(id);
