@@ -1,19 +1,100 @@
+const InstrumentFamilyModel = require("./instrumentFamily.model");
 const instrumentService = require("./instrumentFamily.service");
+
+// const createInstrument = async (req, res) => {
+//   try {
+//     const result = await instrumentService.createInstrument(req.body);
+//     const { instrumentFamily, instrumentTypes } = result
+
+//     const existInstrumentFamily = await instrumentService.getInstrumentFamilyByName(instrumentFamily);
+//     const existInstrumentTypes = await instrumentService.getInstrumentFamilyByName(instrumentTypes);
+//     const existInstrumentService = await instrumentService.getInstrumentFamilyByName(instrumentTypes);
+//     if (existInstrumentFamily || existInstrumentTypes || existInstrumentService) {
+//       return res.status(400).json({
+//         success: false,
+//         code: 409,
+//         message: "Already exist",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       code: 200,
+//       message: "Instrument created successfully",
+//       data: result,
+//     });
+//   } catch (error) {
+//     return res.status(400).json({ success: false, message: error.message });
+//   }
+// };
+
 
 const createInstrument = async (req, res) => {
   try {
-    const result = await instrumentService.createInstrument(req.body);
+    const { instrumentFamily, instrumentTypes } = req.body;
+    let family = await InstrumentFamilyModel.findOne({ instrumentFamily });
 
-    return res.status(200).json({
+    if (family) {
+      let updated = false;
+
+      for (const newType of instrumentTypes) {
+        const existingType = family.instrumentTypes.find(
+          (t) => t.type.toLowerCase() === newType.type.toLowerCase()
+        );
+
+        if (existingType) {
+          const newServices = newType.serviceType.filter(
+            (srv) => !existingType.serviceType.includes(srv)
+          );
+          if (newServices.length) {
+            existingType.serviceType.push(...newServices);
+            updated = true;
+          }
+        } else {
+          family.instrumentTypes.push(newType);
+          updated = true;
+        }
+      }
+
+      if (!updated) {
+        return res.status(409).json({
+          success: false,
+          code: 409,
+          message: "Already exists",
+        });
+      }
+
+      await family.save();
+      return res.status(200).json({
+        success: true,
+        code: 200,
+        message: "Updated successfully",
+        data: family,
+      });
+    }
+
+    const newFamily = await InstrumentFamilyModel.create({
+      instrumentFamily,
+      instrumentTypes,
+    });
+
+    return res.status(201).json({
       success: true,
-      code: 200,
-      message: "Instrument created successfully",
-      data: result,
+      code: 201,
+      message: "Created successfully",
+      data: newFamily,
     });
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+    return res.status(500).json({
+      success: false,
+      code: 500,
+      message: error.message,
+    });
   }
 };
+
+
+
 
 const getAllInstrument = async (req, res) => {
   try {
