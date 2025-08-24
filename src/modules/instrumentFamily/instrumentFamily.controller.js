@@ -98,7 +98,10 @@ const createInstrument = async (req, res) => {
 
 const getAllInstrument = async (req, res) => {
   try {
-    const result = await instrumentService.getAllInstrument();
+    const name = req.query.name;
+    const id = req.query.id;
+
+    const result = await instrumentService.getAllInstrument({ name, id });
 
     return res.status(200).json({
       success: true,
