@@ -146,9 +146,17 @@ const axios = require("axios");
 exports.createBusiness = async (req, res) => {
   try {
     const { email, userType } = req.user;
-    const { services, businessInfo, businessHours, longitude, latitude, musicLessons, ...rest } = req.body;
-    const files = req.files;
+    const {
+      services,
+      businessInfo,
+      businessHours,
+      longitude,
+      latitude,
+      musicLessons,
+      ...rest
+    } = req.body;
 
+    const files = req.files;
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ success: false, error: "User not found" });
 
@@ -184,18 +192,24 @@ exports.createBusiness = async (req, res) => {
     let placeId = null;
 
     try {
+      // 1️⃣ Get placeId dynamically using Geocoding API
       const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
         businessInfo.address
       )}&key=${GOOGLE_API_KEY}`;
 
+
       const geoResponse = await axios.get(geoUrl);
-      if (geoResponse.data.status === "OK" && geoResponse.data.results.length > 0) {
+      if (
+        geoResponse.data.status === "OK" &&
+        geoResponse.data.results.length > 0
+      ) {
         placeId = geoResponse.data.results[0].place_id;
 
+        // 2️⃣ Fetch reviews using Place Details API
         const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,user_ratings_total,reviews&key=${GOOGLE_API_KEY}`;
+
         const detailsResponse = await axios.get(detailsUrl);
         const placeDetails = detailsResponse.data.result;
-
         if (placeDetails?.reviews?.length > 0) {
           placeReviews = placeDetails.reviews.slice(0, 5).map((r) => ({
             rating: r.rating,
@@ -217,12 +231,6 @@ exports.createBusiness = async (req, res) => {
       business.review = savedReviews.map((r) => r._id);
       await business.save();
     }
-
-    // ---------- Populate reviews before response ----------
-    await business.populate({
-      path: "review",
-      select: "rating feedback image status googlePlaceId",
-    });
 
     // ---------- Notifications ----------
     const adminUsers = await User.find({ userType: "admin" });
@@ -256,7 +264,7 @@ exports.createBusiness = async (req, res) => {
       success: true,
       message: "Business created successfully",
       business,
-      googleReviews: placeReviews,
+      googleReviews: placeReviews, // show fetched reviews too
     });
   } catch (error) {
     console.error("Create Business Error:", error);
@@ -562,10 +570,12 @@ exports.getAllBusinesses = async (req, res) => {
   }
 };
 
+
 exports.getBusinessById = async (req, res) => {
   try {
     const { businessId } = req.params;
 
+    // Fetch the business
     const business = await Business.findById(businessId)
       .populate("services")
       .populate("musicLessons")
@@ -577,10 +587,25 @@ exports.getBusinessById = async (req, res) => {
       throw new Error("Business not found");
     }
 
+    // Check if the business has been claimed
+    const claim = await ClaimBussiness.findOne({ businessId });
+
+    // Add claim info to the response
+    const businessWithClaimStatus = {
+      ...business.toObject(),
+      isClaimed: !!claim, // true if a claim exists
+      claimInfo: claim ? {
+        userId: claim.userId,
+        status: claim.status,
+        isVerified: claim.isVerified,
+        documents: claim.documents
+      } : null,
+    };
+
     return res.status(200).json({
       success: true,
       message: "Business fetched successfully",
-      data: business,
+      data: businessWithClaimStatus,
     });
   } catch (error) {
     return res.status(500).json({
@@ -589,6 +614,7 @@ exports.getBusinessById = async (req, res) => {
     });
   }
 };
+
 
 exports.getBusinessesByUser = async (req, res) => {
   try {
