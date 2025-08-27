@@ -38,6 +38,12 @@ router.get(
   claimBussinessController.getMyClaimBussiness
 );
 
+router.get(
+  "/claim/:claimBusinessId",
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  claimBussinessController.claimBusinessById
+);
+
 router.put(
   "/claim/:claimBusinessId",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
