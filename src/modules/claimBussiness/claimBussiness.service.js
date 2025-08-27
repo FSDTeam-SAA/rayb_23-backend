@@ -226,6 +226,14 @@ const getMyClaimBussiness = async (email) => {
   return result;
 };
 
+const getClaimBusinessById = async (id) => {
+  const result = await ClaimBussiness.findById(id).populate({
+    path: "userId",
+    select: "name email",
+  });
+  return result;
+};
+
 const toggleClaimBussinessStatus = async (claimBusinessId, payload) => {
   const { status } = payload;
 
@@ -324,6 +332,7 @@ const bussinessEmailVerify = async (userEmail, businessId, payload) => {
 const claimBussinessService = {
   documentVerification,
   getAllClaimBussiness,
+  getClaimBusinessById,
   getMyClaimBussiness,
   toggleClaimBussinessStatus,
   sendOtp,
