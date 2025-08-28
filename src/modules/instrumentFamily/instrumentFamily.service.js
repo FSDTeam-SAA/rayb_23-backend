@@ -46,19 +46,19 @@ const getInstrumentById = async (id) => {
   return await InstrumentFamilyModel.findById(id);
 };
 
-// const updateInstrument = async (instrumentId, payload) => {
-//   const instrument = await InstrumentFamilyModel.findById(instrumentId);
-//   if (!instrument) {
-//     throw new Error("Instrument not found");
-//   }
+const updateInstrumentName = async (instrumentId, payload) => {
+  const instrument = await InstrumentFamilyModel.findById(instrumentId);
+  if (!instrument) {
+    throw new Error("Instrument not found");
+  }
 
-//   const result = await InstrumentFamilyModel.findByIdAndUpdate(
-//     instrumentId,
-//     payload,
-//     { new: true }
-//   );
-//   return result;
-// };
+  const result = await InstrumentFamilyModel.findByIdAndUpdate(
+    instrumentId,
+    payload,
+    { new: true }
+  );
+  return result;
+};
 
 
 
@@ -120,6 +120,7 @@ const instrumentService = {
   getAllInstrument,
   getInstrumentById,
   updateInstrument,
+  updateInstrumentName,
   deleteInstrument,
 };
 
