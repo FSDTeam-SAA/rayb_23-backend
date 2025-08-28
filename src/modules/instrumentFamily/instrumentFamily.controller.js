@@ -142,7 +142,7 @@ const getInstrumentById = async (req, res) => {
 const updateInstrumentName = async (req, res) => {
   try {
     const { instrumentId } = req.params;
-    const result = await instrumentService.updateInstrument(
+    const result = await instrumentService.updateInstrumentName(
       instrumentId,
       req.body
     );
