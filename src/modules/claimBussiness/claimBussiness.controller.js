@@ -6,31 +6,34 @@ const claimBussinessService = require("./claimBussiness.service");
 
 const documentVerification = async (req, res) => {
   try {
-    io = req.app.get("io");
+    const io = req.app.get("io");
     const { email } = req.user;
-    const user = await User.findOne({ email });
-    const { claimBusinessId } = req.params;
+    const { businessId } = req.params;
 
+    // Call the service
     const result = await claimBussinessService.documentVerification(
       req.body,
       email,
       req.files,
-      claimBusinessId
+      businessId
     );
 
+    const user = await User.findOne({ email });
+
+    // Notify user
     const notifyUser = await Notification.create({
-      senderId: null, // sent from system/admin
+      senderId: null,
       receiverId: user._id,
       userType: "user",
       type: "document_verified",
       title: "Document Verification Successful",
       message: `Your claim business documents have been successfully verified. Waiting for admin approval.`,
-      metadata: { claimBusinessId },
+      metadata: { businessId },
     });
     io.to(`${user._id}`).emit("new_notification", notifyUser);
 
+    // Notify admins
     const admins = await User.find({ userType: "admin" });
-
     for (const admin of admins) {
       const notifyAdmin = await Notification.create({
         senderId: user._id,
@@ -39,11 +42,11 @@ const documentVerification = async (req, res) => {
         type: "claim_verification_done",
         title: "Claim Business Ready for Approval",
         message: `${user.name} has submitted verified documents for a claim business. Please review and approve.`,
-        metadata: { claimBusinessId },
+        metadata: { businessId },
       });
-
       io.to(`${admin._id}`).emit("new_notification", notifyAdmin);
     }
+
     return res.status(200).json({
       success: true,
       code: 200,
@@ -51,9 +54,11 @@ const documentVerification = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    return res
-      .status(400)
-      .json({ success: false, code: 400, message: error.message });
+    return res.status(400).json({
+      success: false,
+      code: 400,
+      message: error.message,
+    });
   }
 };
 
@@ -201,6 +206,7 @@ const sendOtp = async (req, res) => {
 
 const bussinessEmailVerify = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const { email } = req.user;
     const { businessId } = req.params;
     const result = await claimBussinessService.bussinessEmailVerify(
