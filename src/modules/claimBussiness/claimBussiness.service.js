@@ -59,9 +59,6 @@ const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
   if (claimType && ["pending", "approved", "rejected"].includes(claimType)) {
     filter.status = claimType;
   }
-  if (id) {
-    filter._id = id;
-  }
 
   if (time && ["last-7", "last-30"].includes(time)) {
     const now = new Date();

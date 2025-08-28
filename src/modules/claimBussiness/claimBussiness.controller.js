@@ -59,13 +59,12 @@ const documentVerification = async (req, res) => {
 
 const getAllClaimBussiness = async (req, res) => {
   try {
-    const { claimType, time, sortBy, id } = req.query;
+    const { claimType, time, sortBy } = req.query;
 
     const result = await claimBussinessService.getAllClaimBussiness({
       claimType,
       time,
-      sortBy,
-      id
+      sortBy
     });
 
     return res.status(200).json({
