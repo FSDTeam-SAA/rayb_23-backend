@@ -139,11 +139,33 @@ const getInstrumentById = async (req, res) => {
 };
 
 
+// const updateInstrument = async (req, res) => {
+//   try {
+//     const { instrumentId } = req.params;
+//     const result = await instrumentService.updateInstrument(
+//       instrumentId,
+//       req.body
+//     );
+
+//     return res.status(200).json({
+//       success: true,
+//       code: 200,
+//       message: "Instrument updated successfully",
+//       data: result,
+//     });
+//   } catch (error) {
+//     return res.status(400).json({ success: false, message: error.message });
+//   }
+// };
+
+
+
 const updateInstrument = async (req, res) => {
   try {
-    const { instrumentId } = req.params;
+    const { instrumentId, typeId } = req.params; // <-- both IDs
     const result = await instrumentService.updateInstrument(
       instrumentId,
+      typeId,
       req.body
     );
 
@@ -157,6 +179,10 @@ const updateInstrument = async (req, res) => {
     return res.status(400).json({ success: false, message: error.message });
   }
 };
+
+
+
+
 
 const deleteInstrument = async (req, res) => {
   try {
