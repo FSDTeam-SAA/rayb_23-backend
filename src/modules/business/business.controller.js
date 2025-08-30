@@ -412,7 +412,7 @@ exports.getAllBusinesses = async (req, res) => {
     const totalCount = await Business.countDocuments(query);
 
     // Find businesses with the query and pagination
-    let businessesQuery = Business.find(query)
+    let businessesQuery = Business.find({status: "approved"}, query)
       .populate("user", "name email")
       .skip(skip)
       .limit(limitNumber);
