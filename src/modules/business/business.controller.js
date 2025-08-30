@@ -164,15 +164,19 @@ exports.createBusiness = async (req, res) => {
 
     // ---------- Upload images ----------
     let image = [];
-    if (files && Array.isArray(files) && files.length > 0) {
+    if (files && Array.isArray(files) && files.length === 0) {
+      // Handle no files uploaded
+      return res.status(400).json({ success: false, message: "No files uploaded" });
+    }
+    else{
       image = await Promise.all(
-        files.map(async (file) => {
-          const imageName = `business/${Date.now()}_${file.originalname}`;
-          const result = await sendImageToCloudinary(imageName, file.path);
-          fs.unlinkSync(file.path);
-          return result.secure_url;
-        })
-      );
+      files.map(async (file) => {
+        const imageName = `business/${Date.now()}_${file.originalname}`;
+        const result = await sendImageToCloudinary(imageName, file.path);
+        fs.unlinkSync(file.path);
+        return result.secure_url;
+      })
+    );
     }
 
     // ---------- Create Business ----------
@@ -412,7 +416,7 @@ exports.getAllBusinesses = async (req, res) => {
     const totalCount = await Business.countDocuments(query);
 
     // Find businesses with the query and pagination
-    let businessesQuery = Business.find({status: "approved"}, query)
+    let businessesQuery = Business.find({ status: "approved" }, query)
       .populate("user", "name email")
       .skip(skip)
       .limit(limitNumber);
