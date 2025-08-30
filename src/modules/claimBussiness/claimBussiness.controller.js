@@ -1,5 +1,6 @@
 const Notification = require("../notification/notification.model");
 const User = require("../user/user.model");
+const ClaimBussiness = require("./claimBussiness.model");
 const claimBussinessService = require("./claimBussiness.service");
 
 //TODO: When admin approved then user userType is changed.
@@ -135,7 +136,7 @@ const toggleClaimBussinessStatus = async (req, res) => {
       req.body
     );
 
-    const claimBusiness = await ClaimBusinessModel.findById(claimBusinessId).populate("userId");
+    const claimBusiness = await ClaimBussiness.findById(claimBusinessId).populate("userId");
 
        if (!claimBusiness) {
       return res.status(404).json({
