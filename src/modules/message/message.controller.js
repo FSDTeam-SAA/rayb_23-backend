@@ -23,6 +23,7 @@ const sendMessage = async (req, res) => {
 const getMessage = async (req, res) => {
   try {
     const { chatId } = req.params;
+    console.log(chatId);
     const result = await messageService.getMessages(chatId);
 
     return res.status(200).json({
@@ -75,11 +76,31 @@ const getSenderMessages = async (req, res) => {
   }
 };
 
+const updateMessageStatus = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const result = await messageService.updateMessageStatus(messageId);
+
+    return res.status(200).json({
+      success: true,
+      code: 200,
+      message: "Message updated successfully",
+      data: result,
+    });
+
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ success: false, code: 400, message: error.message });
+  }
+};
+
 const messageController = {
   sendMessage,
   getMessage,
   getResiverMessage,
   getSenderMessages,
+  updateMessageStatus
 };
 
 module.exports = messageController;

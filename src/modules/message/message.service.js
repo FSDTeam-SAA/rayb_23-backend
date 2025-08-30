@@ -81,11 +81,24 @@ const getSenderMessage = async (senderId) => {
   return messages;
 };
 
+
+const updateMessageStatus = async (messageId) => {
+  const result = await message.findOneAndUpdate(
+    { _id: messageId },
+    { isRead: true },
+    { new: true }
+  )
+
+  return result
+};
+
+
 const messageService = {
   sendMessage,
   getMessages,
   getResiverMessage,
   getSenderMessage,
+  updateMessageStatus
 };
 
 module.exports = messageService;

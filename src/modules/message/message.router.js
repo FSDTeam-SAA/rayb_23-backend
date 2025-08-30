@@ -38,5 +38,12 @@ router.get(
   messageController.getSenderMessages
 );
 
+router.put(
+  "/update-message-status/:messageId",
+  messageController.updateMessageStatus
+);
+
+
+
 const messageRouter = router;
 module.exports = messageRouter;
