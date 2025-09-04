@@ -31,6 +31,7 @@ const loginUser = async (payload) => {
       user.isDeactivate = false;
       user.deactivateStartDate = null;
       user.deactivateEndDate = null;
+      user.deactivateReason = null;
       await user.save();
     }
   }

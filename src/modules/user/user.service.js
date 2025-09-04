@@ -246,7 +246,7 @@ const deactiveAccount = async (email, payload) => {
     const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     // const endDate = new Date(now.getTime() + 2 * 60 * 1000);
 
-    const user = await User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
       isExistingUser._id,
       {
         $set: {
@@ -261,8 +261,7 @@ const deactiveAccount = async (email, payload) => {
 
     await session.commitTransaction();
     session.endSession();
-
-    return user;
+    
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
