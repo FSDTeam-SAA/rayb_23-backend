@@ -38,19 +38,19 @@ const userModel = new Schema(
       type: Boolean,
       default: true,
     },
-    deactivedStartDate: {
+    deactivateStartDate: {
       type: Date,
       default: null,
     },
-    deactivedEndDate: {
+    deactivateEndDate: {
       type: Date,
       default: null,
     },
-    deactivedReason: {
+    deactivateReason: {
       type: String,
       default: null,
     },
-    isDeactived: {
+    isDeactivate: {
       type: Boolean,
       default: false,
     },

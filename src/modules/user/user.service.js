@@ -163,7 +163,7 @@ const resendOtpCode = async ({ email }) => {
 const getAllUsersFromDb = async ({ userType, sortBy, time }) => {
   const filter = {};
 
-  if (userType && ["user", "businessOwner" ,"businessMan"].includes(userType)) {
+  if (userType && ["user", "businessOwner", "businessMan"].includes(userType)) {
     filter.userType = userType;
   }
 
@@ -234,26 +234,40 @@ const updateUserProfile = async (payload, email, file) => {
 };
 
 const deactiveAccount = async (email, payload) => {
-  const isExistingUser = await User.findOne({ email });
-  if (!isExistingUser) throw new Error("User not found");
+  const session = await User.startSession();
 
-  const now = new Date();
-  const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  // const endDate = new Date(now.getTime() + 2 * 60 * 1000); //?for testing 2 minutes....
+  try {
+    session.startTransaction();
 
-  const user = await User.findByIdAndUpdate(
-    isExistingUser._id,
-    {
-      $set: {
-        isDeactived: true,
-        deactivedStartDate: now,
-        deactivedEndDate: endDate,
-        deactivedReason: payload.deactivedReason || null,
+    const isExistingUser = await User.findOne({ email }).session(session);
+    if (!isExistingUser) throw new Error("User not found");
+
+    const now = new Date();
+    const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    // const endDate = new Date(now.getTime() + 2 * 60 * 1000);
+
+    const user = await User.findByIdAndUpdate(
+      isExistingUser._id,
+      {
+        $set: {
+          isDeactivate: true,
+          deactivateStartDate: now,
+          deactivateEndDate: endDate,
+          deactivateReason: payload.deactivateReason || null,
+        },
       },
-    },
-    { new: true }
-  );
-  return user;
+      { new: true, session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return user;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
 };
 
 const deletedUserAccount = async (userId) => {
@@ -306,13 +320,15 @@ const toggleUserStatus = async (userId) => {
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
 
-  user.isActive = !user.isActive;
-
-  await user.save();
-
-  return await User.findById(userId).select(
-    "name email imageLink userType isActive businessId createdAt updatedAt"
+  const result = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: { isActive: !user.isActive },
+    },
+    { new: true }
   );
+
+  return result;
 };
 
 const userService = {

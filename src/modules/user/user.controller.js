@@ -123,6 +123,7 @@ const deactiveAccount = async (req, res) => {
       data: result,
     });
   } catch (error) {
+    console.error('Deactivation error:', error);
     return res.status(400).json({ success: false, message: error.message });
   }
 };

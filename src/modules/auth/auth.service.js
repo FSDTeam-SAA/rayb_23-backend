@@ -15,23 +15,25 @@ const loginUser = async (payload) => {
   if (!user) throw new Error("User not found");
   if (!user.isActive) throw new Error("Account permanently deactivated");
 
-  if (user.isDeactived) {
+  if (!user.isVerified)
+    throw new Error("Please verify your email address first");
+
+
+  if (user.isDeactivate) {
     const now = new Date();
-    if (now > user.deactivedEndDate) {
+    if (now > user.deactivateEndDate) {
       user.isActive = false;
-      user.isDeactived = true;
+      user.isDeactivate = true;
       await user.save();
       throw new Error("Account permanently deactivated");
+
     } else {
-      user.isDeactived = false;
-      user.deactivedStartDate = null;
-      user.deactivedEndDate = null;
+      user.isDeactivate = false;
+      user.deactivateStartDate = null;
+      user.deactivateEndDate = null;
       await user.save();
     }
   }
-
-  if (!user.isVerified)
-    throw new Error("Please verify your email address first");
 
   const isPasswordValid = await bcrypt.compare(payload.password, user.password);
   if (!isPasswordValid) throw new Error("Invalid password");
