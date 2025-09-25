@@ -605,19 +605,17 @@ exports.getBusinessById = async (req, res) => {
 exports.getBusinessesByUser = async (req, res) => {
   try {
     const { userId } = req.user;
-    console.log(userId);
     const isExist = await User.findById({ _id: userId });
-    console.log(isExist);
+
     if (!isExist) {
-      return res.status(404).json({
-        status: false,
-        message: "User not found.",
-      });
+      throw new Error("User not found");
     }
 
     const businesses = await Business.find({ user: userId });
 
-    console.log(businesses);
+    if (!businesses) {
+      throw new Error("No businesses found for this user");
+    }
 
     return res.status(200).json({
       success: true,
@@ -641,6 +639,8 @@ exports.getMyApprovedBusinesses = async (req, res) => {
       user: user._id,
       status: "approved",
     });
+
+    console.log("Found businesses:", businesses);
     if (!businesses) {
       return res.status(404).json({
         success: false,
@@ -656,6 +656,59 @@ exports.getMyApprovedBusinesses = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+
+// exports.getMyApprovedBusinesses = async (req, res) => {
+//   try {
+//     const { email } = req.user;
+//     console.log("Fetching businesses for user:", email);
+
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(404).json({ success: false, error: "User not found" });
+//     }
+
+//     // Check all businesses of this user
+//     const businesses = await Business.find({ user: user._id });
+
+//     // if (!businesses || businesses.length === 0) {
+//     //   return res.status(404).json({
+//     //     success: false,
+//     //     message: "You don't have any businesses yet",
+//     //   });
+//     // }
+
+//     // Check if user has any approved shops
+//     const approvedBusinesses = businesses.filter(
+//       (b) => b.status === "approved"
+//     );
+
+//     if (approvedBusinesses.length > 0) {
+//       return res.status(200).json({
+//         success: true,
+//         message: "Your approved businesses fetched successfully",
+//         data: approvedBusinesses,
+//       });
+//     }
+
+//     // Check if user has any pending shops
+//     const pendingBusinesses = businesses.filter((b) => b.status === "pending");
+//     if (pendingBusinesses.length > 0) {
+//       return res.status(200).json({
+//         success: true,
+//         message: "Your business is waiting for admin approval",
+//         // data: pendingBusinesses,
+//       });
+//     }
+
+//     // If no approved or pending shops
+//     return res.status(404).json({
+//       success: false,
+//       message: "No approved businesses found for this user",
+//     });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
 
 exports.getDashboardData = async (req, res) => {
   try {

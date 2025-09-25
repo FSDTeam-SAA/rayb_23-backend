@@ -45,7 +45,7 @@ router.get("/all", getAllBusinessesByAdmin);
 
 router.get(
   "/my-add-business",
-  auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.businessMan, USER_ROLE.ad),
+  auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.businessMan),
   getBusinessesByUser
 );
 
