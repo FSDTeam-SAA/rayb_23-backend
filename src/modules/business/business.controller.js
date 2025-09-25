@@ -160,8 +160,8 @@ exports.getAllBusinesses = async (req, res) => {
       sort,
       openNow,
       postalCode,
-      page = 1, // Default to page 1
-      limit = 40, // Default to 10 items per page
+      page = 1,
+      limit = 40,
     } = req.query;
 
     // Convert page and limit to numbers
@@ -169,112 +169,207 @@ exports.getAllBusinesses = async (req, res) => {
     const limitNumber = parseInt(limit);
     const skip = (pageNumber - 1) * limitNumber;
 
-    // Base query
-    let query = {};
+    // Base query - always filter by approved status
+    let query = { status: "approved" };
 
-    // Search functionality
+    // Search functionality - handle both string and array inputs
     if (search) {
-      query.$or = [
-        { "businessInfo.name": { $regex: search, $options: "i" } },
-        { "services.newInstrumentName": { $regex: search, $options: "i" } },
-        { "musicLessons.newInstrumentName": { $regex: search, $options: "i" } },
-        {
-          "services.selectedInstrumentsGroup": {
-            $regex: search,
-            $options: "i",
-          },
-        },
-        {
-          "musicLessons.selectedInstrumentsGroupMusic": {
-            $regex: search,
-            $options: "i",
-          },
-        },
-        { "businessInfo.address": { $regex: search, $options: "i" } },
-      ];
+      // Handle both single search term and multiple search terms
+      const searchTerms = Array.isArray(search) ? search : [search];
+
+      // Create regex patterns for each search term
+      const searchRegexArray = searchTerms.map(
+        (term) =>
+          new RegExp(
+            term.toString().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+            "i"
+          )
+      );
+
+      // Create $or conditions for each search term across all fields
+      const searchConditions = searchRegexArray.flatMap((searchRegex) => [
+        { "businessInfo.name": searchRegex },
+        { "services.newInstrumentName": searchRegex },
+        { "musicLessons.newInstrumentName": searchRegex },
+        { "services.selectedInstrumentsGroup": searchRegex },
+        { "musicLessons.selectedInstrumentsGroupMusic": searchRegex },
+        { "businessInfo.address": searchRegex },
+        { "services.instrumentFamily": searchRegex },
+      ]);
+
+      // If we have multiple search terms, we need to match ALL terms
+      if (searchTerms.length > 1) {
+        // Use $and to ensure ALL search terms are matched somewhere in the document
+        query.$and = searchRegexArray.map((searchRegex) => ({
+          $or: [
+            { "businessInfo.name": searchRegex },
+            { "services.newInstrumentName": searchRegex },
+            { "musicLessons.newInstrumentName": searchRegex },
+            { "services.selectedInstrumentsGroup": searchRegex },
+            { "musicLessons.selectedInstrumentsGroupMusic": searchRegex },
+            { "businessInfo.address": searchRegex },
+            { "services.instrumentFamily": searchRegex },
+          ],
+        }));
+      } else {
+        // Single search term - use normal $or
+        query.$or = searchConditions;
+      }
     }
 
-    // Filter by postal code
+    // Filter by postal code (also handle array input)
     if (postalCode) {
-      query["businessInfo.address"] = { $regex: postalCode, $options: "i" };
+      const postalCodeTerms = Array.isArray(postalCode)
+        ? postalCode
+        : [postalCode];
+      const postalCodeRegexArray = postalCodeTerms.map(
+        (term) =>
+          new RegExp(
+            term.toString().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+            "i"
+          )
+      );
+
+      if (postalCodeRegexArray.length > 1) {
+        query["businessInfo.address"] = { $in: postalCodeRegexArray };
+      } else {
+        query["businessInfo.address"] = postalCodeRegexArray[0];
+      }
     }
 
-    // Filter by instrument family
+    // Filter by instrument family (handle array input)
     if (instrumentFamily) {
-      query["services.instrumentFamily"] = instrumentFamily;
+      const instrumentFamilyTerms = Array.isArray(instrumentFamily)
+        ? instrumentFamily
+        : [instrumentFamily];
+      const instrumentFamilyRegexArray = instrumentFamilyTerms.map(
+        (term) =>
+          new RegExp(
+            term.toString().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+            "i"
+          )
+      );
+
+      if (instrumentFamilyRegexArray.length > 1) {
+        query["services.instrumentFamily"] = {
+          $in: instrumentFamilyRegexArray,
+        };
+      } else {
+        query["services.instrumentFamily"] = instrumentFamilyRegexArray[0];
+      }
     }
 
-    // Filter by selected instruments group
+    // Filter by selected instruments group (handle array input)
     if (selectedInstrumentsGroup) {
-      query.$or = [
-        { "services.selectedInstrumentsGroup": selectedInstrumentsGroup },
-        {
-          "musicLessons.selectedInstrumentsGroupMusic":
-            selectedInstrumentsGroup,
-        },
-      ];
+      const groupTerms = Array.isArray(selectedInstrumentsGroup)
+        ? selectedInstrumentsGroup
+        : [selectedInstrumentsGroup];
+      const groupRegexArray = groupTerms.map(
+        (term) =>
+          new RegExp(
+            term.toString().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+            "i"
+          )
+      );
+
+      const groupConditions = groupRegexArray.flatMap((groupRegex) => [
+        { "services.selectedInstrumentsGroup": groupRegex },
+        { "musicLessons.selectedInstrumentsGroupMusic": groupRegex },
+      ]);
+
+      if (groupTerms.length > 1) {
+        if (!query.$and) query.$and = [];
+        query.$and.push({
+          $or: groupConditions,
+        });
+      } else {
+        if (query.$or) {
+          query.$or.push(...groupConditions);
+        } else {
+          query.$or = groupConditions;
+        }
+      }
     }
 
-    // Filter by new instrument name
+    // Filter by new instrument name (handle array input)
     if (newInstrumentName) {
-      query.$or = [
-        { "services.newInstrumentName": newInstrumentName },
-        { "musicLessons.newInstrumentName": newInstrumentName },
-      ];
+      const instrumentNameTerms = Array.isArray(newInstrumentName)
+        ? newInstrumentName
+        : [newInstrumentName];
+      const instrumentNameRegexArray = instrumentNameTerms.map(
+        (term) =>
+          new RegExp(
+            term.toString().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+            "i"
+          )
+      );
+
+      const instrumentNameConditions = instrumentNameRegexArray.flatMap(
+        (instrumentNameRegex) => [
+          { "services.newInstrumentName": instrumentNameRegex },
+          { "musicLessons.newInstrumentName": instrumentNameRegex },
+          { "services.instrumentFamily": instrumentNameRegex },
+        ]
+      );
+
+      if (instrumentNameTerms.length > 1) {
+        if (!query.$and) query.$and = [];
+        query.$and.push({
+          $or: instrumentNameConditions,
+        });
+      } else {
+        if (query.$or) {
+          query.$or.push(...instrumentNameConditions);
+        } else {
+          query.$or = instrumentNameConditions;
+        }
+      }
     }
 
-    // Price range filter
+    // Price range filter (unchanged)
     if (minPrice || maxPrice) {
+      const minPriceNum = minPrice ? parseFloat(minPrice) : 0;
+      const maxPriceNum = maxPrice
+        ? parseFloat(maxPrice)
+        : Number.MAX_SAFE_INTEGER;
+
       const priceQuery = {
         $or: [
-          // For exact pricing
           {
-            $or: [
-              {
-                "services.price": {
-                  $gte: minPrice || 0,
-                  $lte: maxPrice || Number.MAX_SAFE_INTEGER,
-                },
-              },
-              {
-                "musicLessons.price": {
-                  $gte: minPrice || 0,
-                  $lte: maxPrice || Number.MAX_SAFE_INTEGER,
-                },
-              },
+            "services.price": {
+              $gte: minPriceNum,
+              $lte: maxPriceNum,
+            },
+          },
+          {
+            "musicLessons.price": {
+              $gte: minPriceNum,
+              $lte: maxPriceNum,
+            },
+          },
+          {
+            $and: [
+              { "services.minPrice": { $gte: minPriceNum } },
+              { "services.maxPrice": { $lte: maxPriceNum } },
             ],
           },
-          // For range pricing
           {
-            $or: [
-              {
-                $and: [
-                  { "services.minPrice": { $gte: minPrice || 0 } },
-                  {
-                    "services.maxPrice": {
-                      $lte: maxPrice || Number.MAX_SAFE_INTEGER,
-                    },
-                  },
-                ],
-              },
-              {
-                $and: [
-                  { "musicLessons.minPrice": { $gte: minPrice || 0 } },
-                  {
-                    "musicLessons.maxPrice": {
-                      $lte: maxPrice || Number.MAX_SAFE_INTEGER,
-                    },
-                  },
-                ],
-              },
+            $and: [
+              { "musicLessons.minPrice": { $gte: minPriceNum } },
+              { "musicLessons.maxPrice": { $lte: maxPriceNum } },
             ],
           },
         ],
       };
-      query.$and = query.$and ? [...query.$and, priceQuery] : [priceQuery];
+
+      if (query.$and) {
+        query.$and.push(priceQuery);
+      } else {
+        query.$and = [priceQuery];
+      }
     }
 
-    // Filter by offers
+    // Filter by offers (unchanged)
     if (buyInstruments === "true") query.buyInstruments = true;
     if (sellInstruments === "true") query.sellInstruments = true;
     if (offerMusicLessons === "true") query.offerMusicLessons = true;
@@ -283,73 +378,89 @@ exports.getAllBusinesses = async (req, res) => {
     const totalCount = await Business.countDocuments(query);
 
     // Find businesses with the query and pagination
-    let businessesQuery = Business.find({ status: "approved" }, query)
+    let businessesQuery = Business.find(query)
       .populate("user", "name email")
       .skip(skip)
       .limit(limitNumber);
 
-    // Open now filter (after initial query since it requires date/time calculation)
+    // Open now filter (requires special handling) - unchanged
     if (openNow === "true") {
       const now = new Date();
       const currentDay = now
         .toLocaleString("en-us", { weekday: "long" })
         .toLowerCase();
-      const currentHours = now.getHours();
-      const currentMinutes = now.getMinutes();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
 
-      // We need to apply this filter after the initial query due to time calculations
       let businesses = await businessesQuery;
 
       businesses = businesses.filter((business) => {
         const todayHours = business.businessHours.find(
-          (h) => h.day.toLowerCase() === currentDay
+          (h) => h.day.toLowerCase() === currentDay && h.enabled
         );
-        if (!todayHours || !todayHours.enabled) return false;
 
-        // Convert business hours to 24-hour format for comparison
-        const openHour =
-          todayHours.startMeridiem === "PM" && todayHours.startTime !== "12:00"
-            ? parseInt(todayHours.startTime.split(":")[0]) + 12
-            : parseInt(todayHours.startTime.split(":")[0]);
-        const openMinute = parseInt(todayHours.startTime.split(":")[1]);
+        if (!todayHours) return false;
 
-        const closeHour =
-          todayHours.endMeridiem === "PM" && todayHours.endTime !== "12:00"
-            ? parseInt(todayHours.endTime.split(":")[0]) + 12
-            : parseInt(todayHours.endTime.split(":")[0]);
-        const closeMinute = parseInt(todayHours.endTime.split(":")[1]);
+        const startTimeParts = todayHours.startTime.split(":");
+        const endTimeParts = todayHours.endTime.split(":");
 
-        return (
-          (currentHours > openHour ||
-            (currentHours === openHour && currentMinutes >= openMinute)) &&
-          (currentHours < closeHour ||
-            (currentHours === closeHour && currentMinutes <= closeMinute))
-        );
+        let startMinutes =
+          parseInt(startTimeParts[0]) * 60 + parseInt(startTimeParts[1]);
+        let endMinutes =
+          parseInt(endTimeParts[0]) * 60 + parseInt(endTimeParts[1]);
+
+        if (
+          todayHours.startMeridiem === "PM" &&
+          parseInt(startTimeParts[0]) !== 12
+        ) {
+          startMinutes += 12 * 60;
+        }
+        if (
+          todayHours.endMeridiem === "PM" &&
+          parseInt(endTimeParts[0]) !== 12
+        ) {
+          endMinutes += 12 * 60;
+        }
+        if (
+          todayHours.startMeridiem === "AM" &&
+          parseInt(startTimeParts[0]) === 12
+        ) {
+          startMinutes = parseInt(startTimeParts[1]);
+        }
+        if (
+          todayHours.endMeridiem === "AM" &&
+          parseInt(endTimeParts[0]) === 12
+        ) {
+          endMinutes = parseInt(endTimeParts[1]);
+        }
+
+        return currentTime >= startMinutes && currentTime <= endMinutes;
       });
 
-      // Reapply pagination after openNow filter
       const startIndex = skip;
       const endIndex = skip + limitNumber;
       const paginatedBusinesses = businesses.slice(startIndex, endIndex);
 
-      // Sorting after openNow filter
       if (sort) {
         paginatedBusinesses.sort((a, b) => {
           const getMinPrice = (business) => {
             const servicePrices = business.services.map((s) =>
-              s.pricingType === "range"
-                ? parseInt(s.minPrice || 0)
-                : parseInt(s.price || 0)
+              s.pricingType === "range" && s.minPrice
+                ? parseFloat(s.minPrice)
+                : s.price
+                ? parseFloat(s.price)
+                : Infinity
             );
             const lessonPrices = business.musicLessons.map((l) =>
-              l.pricingType === "range"
-                ? parseInt(l.minPrice || 0)
-                : parseInt(l.price || 0)
+              l.pricingType === "range" && l.minPrice
+                ? parseFloat(l.minPrice)
+                : l.price
+                ? parseFloat(l.price)
+                : Infinity
             );
             const allPrices = [...servicePrices, ...lessonPrices].filter(
-              (p) => !isNaN(p)
+              (p) => !isNaN(p) && p !== Infinity
             );
-            return allPrices.length > 0 ? Math.min(...allPrices) : 0;
+            return allPrices.length > 0 ? Math.min(...allPrices) : Infinity;
           };
 
           const aPrice = getMinPrice(a);
@@ -366,7 +477,7 @@ exports.getAllBusinesses = async (req, res) => {
         message: "Businesses fetched successfully",
         data: paginatedBusinesses,
         pagination: {
-          total: businesses.length, // Total after openNow filter
+          total: businesses.length,
           page: pageNumber,
           limit: limitNumber,
           totalPages: Math.ceil(businesses.length / limitNumber),
@@ -374,28 +485,30 @@ exports.getAllBusinesses = async (req, res) => {
       });
     }
 
-    // Sorting for non-openNow queries
+    // Sorting for non-openNow queries - unchanged
     if (sort) {
-      businessesQuery = businessesQuery.lean(); // Convert to plain JS object for sorting
-
-      const businesses = await businessesQuery;
+      let businesses = await businessesQuery.lean();
 
       businesses.sort((a, b) => {
         const getMinPrice = (business) => {
           const servicePrices = business.services.map((s) =>
-            s.pricingType === "range"
-              ? parseInt(s.minPrice || 0)
-              : parseInt(s.price || 0)
+            s.pricingType === "range" && s.minPrice
+              ? parseFloat(s.minPrice)
+              : s.price
+              ? parseFloat(s.price)
+              : Infinity
           );
           const lessonPrices = business.musicLessons.map((l) =>
-            l.pricingType === "range"
-              ? parseInt(l.minPrice || 0)
-              : parseInt(l.price || 0)
+            l.pricingType === "range" && l.minPrice
+              ? parseFloat(l.minPrice)
+              : l.price
+              ? parseFloat(l.price)
+              : Infinity
           );
           const allPrices = [...servicePrices, ...lessonPrices].filter(
-            (p) => !isNaN(p)
+            (p) => !isNaN(p) && p !== Infinity
           );
-          return allPrices.length > 0 ? Math.min(...allPrices) : 0;
+          return allPrices.length > 0 ? Math.min(...allPrices) : Infinity;
         };
 
         const aPrice = getMinPrice(a);
@@ -406,10 +519,12 @@ exports.getAllBusinesses = async (req, res) => {
         return 0;
       });
 
+      const paginatedBusinesses = businesses.slice(skip, skip + limitNumber);
+
       return res.status(200).json({
         success: true,
         message: "Businesses fetched successfully",
-        data: businesses,
+        data: paginatedBusinesses,
         pagination: {
           total: totalCount,
           page: pageNumber,
