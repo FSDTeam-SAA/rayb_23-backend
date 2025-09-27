@@ -8,50 +8,7 @@ const ClaimBussiness = require("./claimBussiness.model");
 const bcrypt = require("bcrypt");
 const Business = require("../business/business.model");
 
-// const documentVerification = async (payload, email, files, businessId) => {
-//   const user = await User.findOne({ email });
-//   if (!user) throw new Error("User not found");
-//   if (!user.isActive) throw new Error("User is not active");
 
-//   const claimBusiness = await ClaimBussiness.findById(businessId);
-//   if (!claimBusiness) throw new Error("Claim business not found");
-
-//   // const business = await BusinessModel.findById(claimBusiness.businessId);
-//   // if (!business) throw new Error("Business not found");
-//   // console.log(business);
-
-//   let uploadedDocuments = [];
-
-//   if (files && Array.isArray(files) && files.length > 0) {
-//     uploadedDocuments = await Promise.all(
-//       files.map(async (file) => {
-//         const imageName = `business/${Date.now()}_${file.originalname}`;
-//         const result = await sendImageToCloudinary(imageName, file.path);
-//         return result.secure_url;
-//       })
-//     );
-//   }
-
-//   const filter = {
-//     businessId: new mongoose.Types.ObjectId(business._id),
-//     userId: new mongoose.Types.ObjectId(user._id),
-//   };
-
-//   const update = {
-//     ...payload,
-//     documents: uploadedDocuments,
-//   };
-
-//   const options = { new: true, upsert: true };
-
-//   const result = await ClaimBussiness.findOneAndUpdate(
-//     filter,
-//     { $set: update },
-//     options
-//   ).populate("userId", "name email number");
-
-//   return result;
-// };
 
 
 const documentVerification = async (payload, email, files, businessId) => {

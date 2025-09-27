@@ -58,8 +58,8 @@ const musicLessonSchema = new Schema(
 
 const businessSchema = new Schema(
   {
-    user: { type: Schema.Types.ObjectId, ref: "User" },
-    adminId: { type: Schema.Types.ObjectId, ref: "User" },
+    // user: { type: Schema.Types.ObjectId, ref: "User" },
+    // adminId: { type: Schema.Types.ObjectId, ref: "User" },
     businessInfo: {
       name: { type: String, required: true },
       image: [

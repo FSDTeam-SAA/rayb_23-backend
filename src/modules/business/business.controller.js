@@ -13,7 +13,7 @@ const axios = require("axios");
 
 exports.createBusiness = async (req, res) => {
   try {
-    const { email, userType } = req.user;
+    // const { email, userType } = req.user;
     const {
       services,
       businessInfo,
@@ -25,11 +25,11 @@ exports.createBusiness = async (req, res) => {
     } = req.body;
 
     const files = req.files;
-    const user = await User.findOne({ email });
-    if (!user)
-      return res.status(404).json({ success: false, error: "User not found" });
+    // const user = await User.findOne({ email });
+    // if (!user)
+    //   return res.status(404).json({ success: false, error: "User not found" });
 
-    const ownerField = userType === "admin" ? "adminId" : "user";
+    // const ownerField = userType === "admin" ? "adminId" : "user";
 
     // ---------- Upload images ----------
     let image = [];
@@ -52,7 +52,7 @@ exports.createBusiness = async (req, res) => {
     // ---------- Create Business ----------
     const business = await Business.create({
       ...rest,
-      [ownerField]: user._id,
+      // [ownerField]: user._id,
       businessInfo: { ...businessInfo, image },
       services,
       musicLessons,
@@ -111,36 +111,35 @@ exports.createBusiness = async (req, res) => {
 
     for (const admin of adminUsers) {
       const notify = await Notification.create({
-        senderId: user._id,
+        // senderId: user._id,
         receiverId: admin._id,
         userType: "admin",
         type: "new_business_submitted",
         title: "New Business Submitted",
-        message: `${user.name || "A user"} submitted a new business.`,
+        message: `A new business has been submitted for approval.`,
         metadata: { businessId: business._id },
       });
       io.to(`${admin._id}`).emit("new_notification", notify);
     }
 
-    const notifyUser = await Notification.create({
-      senderId: user._id,
-      receiverId: user._id,
-      userType: userType,
-      type: "business_submission",
-      title: "Business Created",
-      message: `You have successfully created a business.`,
-      metadata: { businessId: business._id },
-    });
-    io.to(`${user._id}`).emit("new_notification", notifyUser);
+    // const notifyUser = await Notification.create({
+    //   senderId: user._id,
+    //   receiverId: user._id,
+    //   userType: userType,
+    //   type: "business_submission",
+    //   title: "Business Created",
+    //   message: `You have successfully created a business.`,
+    //   metadata: { businessId: business._id },
+    // });
+    // io.to(`${user._id}`).emit("new_notification", notifyUser);
 
     return res.status(201).json({
       success: true,
       message: "Business created successfully",
       business,
-      googleReviews: placeReviews, // show fetched reviews too
+      googleReviews: placeReviews,
     });
   } catch (error) {
-    console.error("Create Business Error:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -379,7 +378,7 @@ exports.getAllBusinesses = async (req, res) => {
 
     // Find businesses with the query and pagination
     let businessesQuery = Business.find(query)
-      .populate("user", "name email")
+      // .populate("user", "name email")
       .skip(skip)
       .limit(limitNumber);
 
@@ -564,8 +563,8 @@ exports.getBusinessById = async (req, res) => {
     const business = await Business.findById(businessId)
       .populate("services")
       .populate("musicLessons")
-      .populate("user", "name email")
-      .populate("adminId", "name email")
+      // .populate("user", "name email")
+      // .populate("adminId", "name email")
       .populate("review");
 
     if (!business) {
@@ -901,9 +900,10 @@ exports.getAllBusinessesByAdmin = async (req, res) => {
       filter.createdAt = { $gte: fromDate };
     }
 
-    let businessesQuery = Business.find(filter)
-      .select("businessInfo user status createdAt")
-      .populate("user", "name email");
+    let businessesQuery = Business.find(filter).select(
+      "businessInfo user status createdAt"
+    );
+    // .populate("user", "name email");
 
     if (["latest", "oldest"].includes(sortBy)) {
       sortOption.createdAt = sortBy === "latest" ? -1 : 1;

@@ -71,6 +71,9 @@ const userModel = new Schema(
       ref: "Business",
       default: null,
     },
+    type: {
+      type: String,
+    },
   },
   { timestamps: true, versionKey: false }
 );
