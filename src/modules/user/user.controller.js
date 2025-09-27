@@ -123,20 +123,19 @@ const deactiveAccount = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error('Deactivation error:', error);
+    console.error("Deactivation error:", error);
     return res.status(400).json({ success: false, message: error.message });
   }
 };
 
 const deletedUserAccount = async (req, res) => {
   try {
-    const { userId } = req.user;
-    const result = await userService.deletedUserAccount(userId);
+    const { userId } = req.params;
+    await userService.deletedUserAccount(userId);
 
     return res.status(200).json({
       success: true,
       message: "Account deleted successfully",
-      data: result,
     });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });

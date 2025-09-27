@@ -4,6 +4,7 @@ const sendEmail = require("../../utils/sendEmail");
 const { createToken } = require("../../utils/tokenGenerate");
 const verificationCodeTemplate = require("../../utils/verificationCodeTemplate");
 const Business = require("../business/business.model");
+const ClaimBussiness = require("../claimBussiness/claimBussiness.model");
 const User = require("./user.model");
 const bcrypt = require("bcrypt");
 
@@ -128,7 +129,6 @@ const verifyUserEmail = async (payload, email) => {
 
   return response;
 };
-
 
 const resendOtpCode = async ({ email }) => {
   const existingUser = await User.findOne({ email });
@@ -261,7 +261,6 @@ const deactiveAccount = async (email, payload) => {
 
     await session.commitTransaction();
     session.endSession();
-    
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -273,14 +272,31 @@ const deletedUserAccount = async (userId) => {
   const user = await User.findById(userId).select("-password -otp -otpExpires");
   if (!user) throw new Error("User not found");
 
-  const result = await User.findByIdAndUpdate(
-    userId,
-    {
-      isActive: false,
-    },
-    { new: true }
-  ).select("-password -otp -otpExpires");
-  return result;
+  const claimBusinesses = await ClaimBussiness.find({
+    userId: user._id,
+    status: "approved",
+  });
+
+  if (claimBusinesses && claimBusinesses.length > 0) {
+    // Check each claimed business
+    for (const claimBusiness of claimBusinesses) {
+      const business = await Business.findOne({
+        _id: claimBusiness.businessId,
+      });
+
+      if (business) {
+        if (business.isActive) {
+          throw new Error(
+            "User has active business. Please deactivate or delete it first."
+          );
+        }
+
+        // throw new Error("User has business records. Please delete them first.");
+      }
+    }
+  }
+
+  await User.findByIdAndDelete(userId);
 };
 
 const addSupport = async (payload) => {

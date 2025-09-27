@@ -57,9 +57,9 @@ router.put(
   userController.deactiveAccount
 );
 
-router.put(
-  "/delete-account",
-  auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
+router.delete(
+  "/delete-account/:userId",
+  // auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
   userController.deletedUserAccount
 );
 
@@ -73,7 +73,7 @@ router.get(
 
 router.put(
   "/toggle-status/:userId",
-  // auth(USER_ROLE.admin),
+  auth(USER_ROLE.admin),
   userController.toggleUserStatus
 );
 
