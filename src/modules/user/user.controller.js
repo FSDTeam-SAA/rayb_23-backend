@@ -176,9 +176,13 @@ const toggleUserStatus = async (req, res) => {
     const { userId } = req.params;
     const user = await userService.toggleUserStatus(userId);
 
+    const { isActive } = user;
+
     return res.status(200).json({
       success: true,
-      message: "User status toggled successfully",
+      message: `User account ${
+        isActive ? "activated" : "deactivated"  
+      } successfully`,
       data: user,
     });
   } catch (error) {
