@@ -163,20 +163,15 @@ exports.getAllBusinesses = async (req, res) => {
       limit = 40,
     } = req.query;
 
-    // Convert page and limit to numbers
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
     const skip = (pageNumber - 1) * limitNumber;
 
-    // Base query - always filter by approved status
     let query = { status: "approved" };
 
-    // Search functionality - handle both string and array inputs
+    // -------- SEARCH --------
     if (search) {
-      // Handle both single search term and multiple search terms
       const searchTerms = Array.isArray(search) ? search : [search];
-
-      // Create regex patterns for each search term
       const searchRegexArray = searchTerms.map(
         (term) =>
           new RegExp(
@@ -185,7 +180,6 @@ exports.getAllBusinesses = async (req, res) => {
           )
       );
 
-      // Create $or conditions for each search term across all fields
       const searchConditions = searchRegexArray.flatMap((searchRegex) => [
         { "businessInfo.name": searchRegex },
         { "services.newInstrumentName": searchRegex },
@@ -196,9 +190,7 @@ exports.getAllBusinesses = async (req, res) => {
         { "services.instrumentFamily": searchRegex },
       ]);
 
-      // If we have multiple search terms, we need to match ALL terms
       if (searchTerms.length > 1) {
-        // Use $and to ensure ALL search terms are matched somewhere in the document
         query.$and = searchRegexArray.map((searchRegex) => ({
           $or: [
             { "businessInfo.name": searchRegex },
@@ -211,12 +203,11 @@ exports.getAllBusinesses = async (req, res) => {
           ],
         }));
       } else {
-        // Single search term - use normal $or
         query.$or = searchConditions;
       }
     }
 
-    // Filter by postal code (also handle array input)
+    // -------- POSTAL CODE --------
     if (postalCode) {
       const postalCodeTerms = Array.isArray(postalCode)
         ? postalCode
@@ -228,7 +219,6 @@ exports.getAllBusinesses = async (req, res) => {
             "i"
           )
       );
-
       if (postalCodeRegexArray.length > 1) {
         query["businessInfo.address"] = { $in: postalCodeRegexArray };
       } else {
@@ -236,7 +226,7 @@ exports.getAllBusinesses = async (req, res) => {
       }
     }
 
-    // Filter by instrument family (handle array input)
+    // -------- INSTRUMENT FAMILY --------
     if (instrumentFamily) {
       const instrumentFamilyTerms = Array.isArray(instrumentFamily)
         ? instrumentFamily
@@ -258,7 +248,7 @@ exports.getAllBusinesses = async (req, res) => {
       }
     }
 
-    // Filter by selected instruments group (handle array input)
+    // -------- SELECTED INSTRUMENT GROUP --------
     if (selectedInstrumentsGroup) {
       const groupTerms = Array.isArray(selectedInstrumentsGroup)
         ? selectedInstrumentsGroup
@@ -270,7 +260,6 @@ exports.getAllBusinesses = async (req, res) => {
             "i"
           )
       );
-
       const groupConditions = groupRegexArray.flatMap((groupRegex) => [
         { "services.selectedInstrumentsGroup": groupRegex },
         { "musicLessons.selectedInstrumentsGroupMusic": groupRegex },
@@ -278,19 +267,14 @@ exports.getAllBusinesses = async (req, res) => {
 
       if (groupTerms.length > 1) {
         if (!query.$and) query.$and = [];
-        query.$and.push({
-          $or: groupConditions,
-        });
+        query.$and.push({ $or: groupConditions });
       } else {
-        if (query.$or) {
-          query.$or.push(...groupConditions);
-        } else {
-          query.$or = groupConditions;
-        }
+        if (query.$or) query.$or.push(...groupConditions);
+        else query.$or = groupConditions;
       }
     }
 
-    // Filter by new instrument name (handle array input)
+    // -------- NEW INSTRUMENT NAME --------
     if (newInstrumentName) {
       const instrumentNameTerms = Array.isArray(newInstrumentName)
         ? newInstrumentName
@@ -302,7 +286,6 @@ exports.getAllBusinesses = async (req, res) => {
             "i"
           )
       );
-
       const instrumentNameConditions = instrumentNameRegexArray.flatMap(
         (instrumentNameRegex) => [
           { "services.newInstrumentName": instrumentNameRegex },
@@ -310,22 +293,16 @@ exports.getAllBusinesses = async (req, res) => {
           { "services.instrumentFamily": instrumentNameRegex },
         ]
       );
-
       if (instrumentNameTerms.length > 1) {
         if (!query.$and) query.$and = [];
-        query.$and.push({
-          $or: instrumentNameConditions,
-        });
+        query.$and.push({ $or: instrumentNameConditions });
       } else {
-        if (query.$or) {
-          query.$or.push(...instrumentNameConditions);
-        } else {
-          query.$or = instrumentNameConditions;
-        }
+        if (query.$or) query.$or.push(...instrumentNameConditions);
+        else query.$or = instrumentNameConditions;
       }
     }
 
-    // Price range filter (unchanged)
+    // -------- PRICE RANGE --------
     if (minPrice || maxPrice) {
       const minPriceNum = minPrice ? parseFloat(minPrice) : 0;
       const maxPriceNum = maxPrice
@@ -334,18 +311,8 @@ exports.getAllBusinesses = async (req, res) => {
 
       const priceQuery = {
         $or: [
-          {
-            "services.price": {
-              $gte: minPriceNum,
-              $lte: maxPriceNum,
-            },
-          },
-          {
-            "musicLessons.price": {
-              $gte: minPriceNum,
-              $lte: maxPriceNum,
-            },
-          },
+          { "services.price": { $gte: minPriceNum, $lte: maxPriceNum } },
+          { "musicLessons.price": { $gte: minPriceNum, $lte: maxPriceNum } },
           {
             $and: [
               { "services.minPrice": { $gte: minPriceNum } },
@@ -361,28 +328,23 @@ exports.getAllBusinesses = async (req, res) => {
         ],
       };
 
-      if (query.$and) {
-        query.$and.push(priceQuery);
-      } else {
-        query.$and = [priceQuery];
-      }
+      if (query.$and) query.$and.push(priceQuery);
+      else query.$and = [priceQuery];
     }
 
-    // Filter by offers (unchanged)
+    // -------- OFFERS --------
     if (buyInstruments === "true") query.buyInstruments = true;
     if (sellInstruments === "true") query.sellInstruments = true;
     if (offerMusicLessons === "true") query.offerMusicLessons = true;
 
-    // First get total count for pagination info
     const totalCount = await Business.countDocuments(query);
 
-    // Find businesses with the query and pagination
     let businessesQuery = Business.find(query)
-      // .populate("user", "name email")
+      .populate("review", "rating") // ensure ratings are available
       .skip(skip)
       .limit(limitNumber);
 
-    // Open now filter (requires special handling) - unchanged
+    // -------- OPEN NOW FILTER --------
     if (openNow === "true") {
       const now = new Date();
       const currentDay = now
@@ -391,12 +353,10 @@ exports.getAllBusinesses = async (req, res) => {
       const currentTime = now.getHours() * 60 + now.getMinutes();
 
       let businesses = await businessesQuery;
-
       businesses = businesses.filter((business) => {
         const todayHours = business.businessHours.find(
           (h) => h.day.toLowerCase() === currentDay && h.enabled
         );
-
         if (!todayHours) return false;
 
         const startTimeParts = todayHours.startTime.split(":");
@@ -410,85 +370,16 @@ exports.getAllBusinesses = async (req, res) => {
         if (
           todayHours.startMeridiem === "PM" &&
           parseInt(startTimeParts[0]) !== 12
-        ) {
+        )
           startMinutes += 12 * 60;
-        }
-        if (
-          todayHours.endMeridiem === "PM" &&
-          parseInt(endTimeParts[0]) !== 12
-        ) {
+        if (todayHours.endMeridiem === "PM" && parseInt(endTimeParts[0]) !== 12)
           endMinutes += 12 * 60;
-        }
-        if (
-          todayHours.startMeridiem === "AM" &&
-          parseInt(startTimeParts[0]) === 12
-        ) {
-          startMinutes = parseInt(startTimeParts[1]);
-        }
-        if (
-          todayHours.endMeridiem === "AM" &&
-          parseInt(endTimeParts[0]) === 12
-        ) {
-          endMinutes = parseInt(endTimeParts[1]);
-        }
 
         return currentTime >= startMinutes && currentTime <= endMinutes;
       });
 
-      const startIndex = skip;
-      const endIndex = skip + limitNumber;
-      const paginatedBusinesses = businesses.slice(startIndex, endIndex);
-
+      // -------- SORT LOGIC --------
       if (sort) {
-        paginatedBusinesses.sort((a, b) => {
-          const getMinPrice = (business) => {
-            const servicePrices = business.services.map((s) =>
-              s.pricingType === "range" && s.minPrice
-                ? parseFloat(s.minPrice)
-                : s.price
-                ? parseFloat(s.price)
-                : Infinity
-            );
-            const lessonPrices = business.musicLessons.map((l) =>
-              l.pricingType === "range" && l.minPrice
-                ? parseFloat(l.minPrice)
-                : l.price
-                ? parseFloat(l.price)
-                : Infinity
-            );
-            const allPrices = [...servicePrices, ...lessonPrices].filter(
-              (p) => !isNaN(p) && p !== Infinity
-            );
-            return allPrices.length > 0 ? Math.min(...allPrices) : Infinity;
-          };
-
-          const aPrice = getMinPrice(a);
-          const bPrice = getMinPrice(b);
-
-          if (sort === "high-to-low") return bPrice - aPrice;
-          if (sort === "low-to-high") return aPrice - bPrice;
-          return 0;
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: "Businesses fetched successfully",
-        data: paginatedBusinesses,
-        pagination: {
-          total: businesses.length,
-          page: pageNumber,
-          limit: limitNumber,
-          totalPages: Math.ceil(businesses.length / limitNumber),
-        },
-      });
-    }
-
-    // Sorting for non-openNow queries - unchanged
-    if (sort) {
-      let businesses = await businessesQuery.lean();
-
-      businesses.sort((a, b) => {
         const getMinPrice = (business) => {
           const servicePrices = business.services.map((s) =>
             s.pricingType === "range" && s.minPrice
@@ -510,13 +401,29 @@ exports.getAllBusinesses = async (req, res) => {
           return allPrices.length > 0 ? Math.min(...allPrices) : Infinity;
         };
 
-        const aPrice = getMinPrice(a);
-        const bPrice = getMinPrice(b);
+        const getAverageRating = (business) => {
+          if (!business.review || business.review.length === 0)
+            return 0;
+          const ratings = business.review
+            .map((r) => parseFloat(r.rating))
+            .filter((r) => !isNaN(r));
+          if (ratings.length === 0) return 0;
+          return ratings.reduce((a, b) => a + b, 0) / ratings.length;
+        };
 
-        if (sort === "high-to-low") return bPrice - aPrice;
-        if (sort === "low-to-high") return aPrice - bPrice;
-        return 0;
-      });
+        businesses.sort((a, b) => {
+          const aPrice = getMinPrice(a);
+          const bPrice = getMinPrice(b);
+          const aRating = getAverageRating(a);
+          const bRating = getAverageRating(b);
+
+          if (sort === "high-to-low") return bPrice - aPrice;
+          if (sort === "low-to-high") return aPrice - bPrice;
+          if (sort === "rating-high-to-low") return bRating - aRating;
+          if (sort === "rating-low-to-high") return aRating - bRating;
+          return 0;
+        });
+      }
 
       const paginatedBusinesses = businesses.slice(skip, skip + limitNumber);
 
@@ -525,21 +432,68 @@ exports.getAllBusinesses = async (req, res) => {
         message: "Businesses fetched successfully",
         data: paginatedBusinesses,
         pagination: {
-          total: totalCount,
+          total: businesses.length,
           page: pageNumber,
           limit: limitNumber,
-          totalPages: Math.ceil(totalCount / limitNumber),
+          totalPages: Math.ceil(businesses.length / limitNumber),
         },
       });
     }
 
-    // Regular query without openNow or sorting
-    const businesses = await businessesQuery;
+    // -------- NON OPEN-NOW SORT --------
+    let businesses = await businessesQuery.lean();
+
+    if (sort) {
+      const getMinPrice = (business) => {
+        const servicePrices = business.services.map((s) =>
+          s.pricingType === "range" && s.minPrice
+            ? parseFloat(s.minPrice)
+            : s.price
+            ? parseFloat(s.price)
+            : Infinity
+        );
+        const lessonPrices = business.musicLessons.map((l) =>
+          l.pricingType === "range" && l.minPrice
+            ? parseFloat(l.minPrice)
+            : l.price
+            ? parseFloat(l.price)
+            : Infinity
+        );
+        const allPrices = [...servicePrices, ...lessonPrices].filter(
+          (p) => !isNaN(p) && p !== Infinity
+        );
+        return allPrices.length > 0 ? Math.min(...allPrices) : Infinity;
+      };
+
+      const getAverageRating = (business) => {
+        if (!business.review || business.review.length === 0) return 0;
+        const ratings = business.review
+          .map((r) => parseFloat(r.rating))
+          .filter((r) => !isNaN(r));
+        if (ratings.length === 0) return 0;
+        return ratings.reduce((a, b) => a + b, 0) / ratings.length;
+      };
+
+      businesses.sort((a, b) => {
+        const aPrice = getMinPrice(a);
+        const bPrice = getMinPrice(b);
+        const aRating = getAverageRating(a);
+        const bRating = getAverageRating(b);
+
+        if (sort === "high-to-low") return bPrice - aPrice;
+        if (sort === "low-to-high") return aPrice - bPrice;
+        if (sort === "rating-high-to-low") return bRating - aRating;
+        if (sort === "rating-low-to-high") return aRating - bRating;
+        return 0;
+      });
+    }
+
+    const paginatedBusinesses = businesses.slice(skip, skip + limitNumber);
 
     return res.status(200).json({
       success: true,
       message: "Businesses fetched successfully",
-      data: businesses,
+      data: paginatedBusinesses,
       pagination: {
         total: totalCount,
         page: pageNumber,
@@ -554,6 +508,7 @@ exports.getAllBusinesses = async (req, res) => {
     });
   }
 };
+
 
 exports.getBusinessById = async (req, res) => {
   try {
@@ -656,58 +611,6 @@ exports.getMyApprovedBusinesses = async (req, res) => {
   }
 };
 
-// exports.getMyApprovedBusinesses = async (req, res) => {
-//   try {
-//     const { email } = req.user;
-//     console.log("Fetching businesses for user:", email);
-
-//     const user = await User.findOne({ email });
-//     if (!user) {
-//       return res.status(404).json({ success: false, error: "User not found" });
-//     }
-
-//     // Check all businesses of this user
-//     const businesses = await Business.find({ user: user._id });
-
-//     // if (!businesses || businesses.length === 0) {
-//     //   return res.status(404).json({
-//     //     success: false,
-//     //     message: "You don't have any businesses yet",
-//     //   });
-//     // }
-
-//     // Check if user has any approved shops
-//     const approvedBusinesses = businesses.filter(
-//       (b) => b.status === "approved"
-//     );
-
-//     if (approvedBusinesses.length > 0) {
-//       return res.status(200).json({
-//         success: true,
-//         message: "Your approved businesses fetched successfully",
-//         data: approvedBusinesses,
-//       });
-//     }
-
-//     // Check if user has any pending shops
-//     const pendingBusinesses = businesses.filter((b) => b.status === "pending");
-//     if (pendingBusinesses.length > 0) {
-//       return res.status(200).json({
-//         success: true,
-//         message: "Your business is waiting for admin approval",
-//         // data: pendingBusinesses,
-//       });
-//     }
-
-//     // If no approved or pending shops
-//     return res.status(404).json({
-//       success: false,
-//       message: "No approved businesses found for this user",
-//     });
-//   } catch (error) {
-//     return res.status(500).json({ success: false, error: error.message });
-//   }
-// };
 
 exports.getDashboardData = async (req, res) => {
   try {
