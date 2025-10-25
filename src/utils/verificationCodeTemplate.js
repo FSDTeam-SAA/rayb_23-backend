@@ -1,39 +1,85 @@
 const { companyName } = require("../lib/companyName");
 
 const verificationCodeTemplate = (code) => `
-  <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: auto; background-color: #f3f4f6; padding: 30px;">
-    <div style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-      
-      <header style="background: linear-gradient(90deg, #4f46e5, #6366f1); padding: 24px; text-align: center; color: #ffffff;">
-        <h2 style="margin: 0; font-size: 24px;">Welcome to ${companyName}</h2>
-        <p style="margin: 6px 0 0; font-size: 14px;">Secure your account with the code below</p>
-      </header>
+  <div style="background-color: #008b8b; margin-top: 50px; padding: 4px 20px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;  max-width: 600px; margin: 0 auto;">
+    <table align="center" cellpadding="0" cellspacing="0" width="100%" style=" background-color: #ffffff; border-radius: 6px; overflow: hidden;">
+      <!-- Header -->
+      <tr>
+        <td align="center" style="background-color: #008b8b; padding: 20px 0;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 600;">
+            ${companyName}
+          </h1>
+        </td>
+      </tr>
 
-      <main style="padding: 30px 25px;">
-        <p style="font-size: 16px; color: #374151; line-height: 1.6; margin-bottom: 18px;">
-          Hi there,
-        </p>
+      <!-- Body -->
+      <tr>
+        <td style="padding: 30px 24px; text-align: left;">
+          <h2 style="color: #111827; font-size: 22px; margin: 0 0 16px; font-weight: 700;">
+            Your Verification code is:
+          </h2>
 
-        <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-          We received a request to verify your account on <strong>${companyName}</strong>. Please use the code below:
-        </p>
+          <p style="color: #374151; font-size: 14px; margin: 0 0 20px;">
+            Please note: Do not share this code with anyone. This one-time code will expire in
+            <strong>5 minutes.</strong>
+          </p>
 
-        <div style="text-align: center; margin: 30px 0;">
-          <span style="display: inline-block; background-color: #eef2ff; color: #4f46e5; font-size: 30px; font-weight: bold; padding: 16px 32px; border-radius: 10px; letter-spacing: 4px;">
-            ${code}
-          </span>
-        </div>
+          <table
+              align="center"
+              width="60%"
+              cellpadding="0"
+              cellspacing="0"
+              style="
+                background-color: #f3f4f6;
+                border-radius: 8px;
+                margin: 24px auto;
+              "
+            >
+              <tr>
+                <td align="center" style="padding: 14px 0">
+                  <span
+                    style="
+                      font-size: 24px;
+                      font-weight: bold;
+                      color: #111827;
+                      letter-spacing: 3px;
+                    "
+                  >
+                    ${code}
+                  </span>
+                </td>
+              </tr>
+            </table>
 
-        <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">
-          This code will expire in <strong>5 minutes</strong>. If you didn't request this, you can safely ignore this email.
-        </p>
-      </main>
+          <p style="color: #374151; font-size: 14px; margin: 0 0 16px;">
+            If you did not make this request, please ignore this email and contact us at
+            <a href="mailto:contact@instrufix.com" style="color: #008b8b; text-decoration: none; font-weight: 500;">
+              contact@instrufix.com
+            </a>.
+          </p>
 
-      <footer style="background-color: #f9fafb; text-align: center; padding: 16px; font-size: 12px; color: #9ca3af;">
-        &copy; ${new Date().getFullYear()} ${companyName}. All rights reserved.
-      </footer>
+          <p style="color: #111827; font-size: 14px; font-weight: 500; margin-top: 24px;">
+            Best,<br />
+            The ${companyName} Team
+          </p>
+        </td>
+      </tr>
 
-    </div>
+      <!-- Footer -->
+      <tr>
+        <td align="center" style="background-color: #008b8b; color: #ffffff; font-size: 12px; padding: 16px;">
+          <p style="margin: 0;">
+            Contact us at
+            <a href="mailto:contact@instrufix.com" style="color: #ffffff; text-decoration: underline;">
+              contact@instrufix.com
+            </a>
+          </p>
+          <p style="margin: 6px 0 0;">
+            &copy; ${new Date().getFullYear()} ${companyName}. All rights reserved.
+          </p>
+        </td>
+      </tr>
+    </table>
   </div>
 `;
 
