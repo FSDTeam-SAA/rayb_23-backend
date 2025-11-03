@@ -292,7 +292,7 @@ exports.getAllBusinesses = async (req, res) => {
       }
     }
 
-    // -------- PRICE RANGE --------
+    // -------- PRICE RANGE FIXED --------
     if (minPrice || maxPrice) {
       const minPriceNum = minPrice ? parseFloat(minPrice) : 0;
       const maxPriceNum = maxPrice
@@ -300,22 +300,105 @@ exports.getAllBusinesses = async (req, res) => {
         : Number.MAX_SAFE_INTEGER;
 
       const priceQuery = {
-        $or: [
-          { "services.price": { $gte: minPriceNum, $lte: maxPriceNum } },
-          { "musicLessons.price": { $gte: minPriceNum, $lte: maxPriceNum } },
-          {
-            $and: [
-              { "services.minPrice": { $gte: minPriceNum } },
-              { "services.maxPrice": { $lte: maxPriceNum } },
-            ],
-          },
-          {
-            $and: [
-              { "musicLessons.minPrice": { $gte: minPriceNum } },
-              { "musicLessons.maxPrice": { $lte: maxPriceNum } },
-            ],
-          },
-        ],
+        $expr: {
+          $or: [
+            {
+              $anyElementTrue: {
+                $map: {
+                  input: "$services",
+                  as: "service",
+                  in: {
+                    $or: [
+                      {
+                        $and: [
+                          { $ne: ["$$service.price", ""] },
+                          {
+                            $gte: [
+                              { $toDouble: "$$service.price" },
+                              minPriceNum,
+                            ],
+                          },
+                          {
+                            $lte: [
+                              { $toDouble: "$$service.price" },
+                              maxPriceNum,
+                            ],
+                          },
+                        ],
+                      },
+                      {
+                        $and: [
+                          { $ne: ["$$service.minPrice", ""] },
+                          { $ne: ["$$service.maxPrice", ""] },
+                          {
+                            $gte: [
+                              { $toDouble: "$$service.minPrice" },
+                              minPriceNum,
+                            ],
+                          },
+                          {
+                            $lte: [
+                              { $toDouble: "$$service.maxPrice" },
+                              maxPriceNum,
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            // ✅ Check inside musicLessons array
+            {
+              $anyElementTrue: {
+                $map: {
+                  input: "$musicLessons",
+                  as: "lesson",
+                  in: {
+                    $or: [
+                      {
+                        $and: [
+                          { $ne: ["$$lesson.price", ""] },
+                          {
+                            $gte: [
+                              { $toDouble: "$$lesson.price" },
+                              minPriceNum,
+                            ],
+                          },
+                          {
+                            $lte: [
+                              { $toDouble: "$$lesson.price" },
+                              maxPriceNum,
+                            ],
+                          },
+                        ],
+                      },
+                      {
+                        $and: [
+                          { $ne: ["$$lesson.minPrice", ""] },
+                          { $ne: ["$$lesson.maxPrice", ""] },
+                          {
+                            $gte: [
+                              { $toDouble: "$$lesson.minPrice" },
+                              minPriceNum,
+                            ],
+                          },
+                          {
+                            $lte: [
+                              { $toDouble: "$$lesson.maxPrice" },
+                              maxPriceNum,
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
       };
 
       if (query.$and) query.$and.push(priceQuery);
@@ -346,41 +429,41 @@ exports.getAllBusinesses = async (req, res) => {
 
     // -------- OPEN NOW FILTER --------
     if (openNow === "true") {
-        const now = new Date();
-        const currentDay = now
-          .toLocaleString("en-us", { weekday: "long" })
-          .toLowerCase();
-        const currentTime = now.getHours() * 60 + now.getMinutes();
+      const now = new Date();
+      const currentDay = now
+        .toLocaleString("en-us", { weekday: "long" })
+        .toLowerCase();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
 
-        let businesses = await businessesQuery;
+      let businesses = await businessesQuery;
 
-        businesses = businesses.filter((business) => {
-          const todayHours = business.businessHours.find(
-            (h) => h.day.toLowerCase() === currentDay && h.enabled
-          );
+      businesses = businesses.filter((business) => {
+        const todayHours = business.businessHours.find(
+          (h) => h.day.toLowerCase() === currentDay && h.enabled
+        );
 
-          if (!todayHours) return false;
+        if (!todayHours) return false;
 
-          const [startH, startM] = todayHours.startTime.split(":").map(Number);
-          const [endH, endM] = todayHours.endTime.split(":").map(Number);
+        const [startH, startM] = todayHours.startTime.split(":").map(Number);
+        const [endH, endM] = todayHours.endTime.split(":").map(Number);
 
-          // ✅ convert to 24-hour format correctly
-          let startHour24 = startH % 12;
-          let endHour24 = endH % 12;
+        // ✅ convert to 24-hour format correctly
+        let startHour24 = startH % 12;
+        let endHour24 = endH % 12;
 
-          if (todayHours.startMeridiem === "PM") startHour24 += 12;
-          if (todayHours.endMeridiem === "PM") endHour24 += 12;
+        if (todayHours.startMeridiem === "PM") startHour24 += 12;
+        if (todayHours.endMeridiem === "PM") endHour24 += 12;
 
-          const startMinutes = startHour24 * 60 + startM;
-          const endMinutes = endHour24 * 60 + endM;
+        const startMinutes = startHour24 * 60 + startM;
+        const endMinutes = endHour24 * 60 + endM;
 
-          // ✅ handle overnight case (e.g. 8 PM – 2 AM)
-          if (endMinutes < startMinutes) {
-            return currentTime >= startMinutes || currentTime <= endMinutes;
-          }
+        // ✅ handle overnight case (e.g. 8 PM – 2 AM)
+        if (endMinutes < startMinutes) {
+          return currentTime >= startMinutes || currentTime <= endMinutes;
+        }
 
-          return currentTime >= startMinutes && currentTime <= endMinutes;
-        });
+        return currentTime >= startMinutes && currentTime <= endMinutes;
+      });
 
       // -------- SORT LOGIC --------
       if (sort) {
@@ -406,8 +489,7 @@ exports.getAllBusinesses = async (req, res) => {
         };
 
         const getAverageRating = (business) => {
-          if (!business.review || business.review.length === 0)
-            return 0;
+          if (!business.review || business.review.length === 0) return 0;
           const ratings = business.review
             .map((r) => parseFloat(r.rating))
             .filter((r) => !isNaN(r));
