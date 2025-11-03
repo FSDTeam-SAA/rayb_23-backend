@@ -346,37 +346,41 @@ exports.getAllBusinesses = async (req, res) => {
 
     // -------- OPEN NOW FILTER --------
     if (openNow === "true") {
-      const now = new Date();
-      const currentDay = now
-        .toLocaleString("en-us", { weekday: "long" })
-        .toLowerCase();
-      const currentTime = now.getHours() * 60 + now.getMinutes();
+        const now = new Date();
+        const currentDay = now
+          .toLocaleString("en-us", { weekday: "long" })
+          .toLowerCase();
+        const currentTime = now.getHours() * 60 + now.getMinutes();
 
-      let businesses = await businessesQuery;
-      businesses = businesses.filter((business) => {
-        const todayHours = business.businessHours.find(
-          (h) => h.day.toLowerCase() === currentDay && h.enabled
-        );
-        if (!todayHours) return false;
+        let businesses = await businessesQuery;
 
-        const startTimeParts = todayHours.startTime.split(":");
-        const endTimeParts = todayHours.endTime.split(":");
+        businesses = businesses.filter((business) => {
+          const todayHours = business.businessHours.find(
+            (h) => h.day.toLowerCase() === currentDay && h.enabled
+          );
 
-        let startMinutes =
-          parseInt(startTimeParts[0]) * 60 + parseInt(startTimeParts[1]);
-        let endMinutes =
-          parseInt(endTimeParts[0]) * 60 + parseInt(endTimeParts[1]);
+          if (!todayHours) return false;
 
-        if (
-          todayHours.startMeridiem === "PM" &&
-          parseInt(startTimeParts[0]) !== 12
-        )
-          startMinutes += 12 * 60;
-        if (todayHours.endMeridiem === "PM" && parseInt(endTimeParts[0]) !== 12)
-          endMinutes += 12 * 60;
+          const [startH, startM] = todayHours.startTime.split(":").map(Number);
+          const [endH, endM] = todayHours.endTime.split(":").map(Number);
 
-        return currentTime >= startMinutes && currentTime <= endMinutes;
-      });
+          // ✅ convert to 24-hour format correctly
+          let startHour24 = startH % 12;
+          let endHour24 = endH % 12;
+
+          if (todayHours.startMeridiem === "PM") startHour24 += 12;
+          if (todayHours.endMeridiem === "PM") endHour24 += 12;
+
+          const startMinutes = startHour24 * 60 + startM;
+          const endMinutes = endHour24 * 60 + endM;
+
+          // ✅ handle overnight case (e.g. 8 PM – 2 AM)
+          if (endMinutes < startMinutes) {
+            return currentTime >= startMinutes || currentTime <= endMinutes;
+          }
+
+          return currentTime >= startMinutes && currentTime <= endMinutes;
+        });
 
       // -------- SORT LOGIC --------
       if (sort) {
@@ -494,6 +498,7 @@ exports.getAllBusinesses = async (req, res) => {
       success: true,
       message: "Businesses fetched successfully",
       data: paginatedBusinesses,
+      searchCount: totalCount,
       pagination: {
         total: totalCount,
         page: pageNumber,
