@@ -161,7 +161,7 @@ const resendOtpCode = async ({ email }) => {
 };
 
 const getAllUsersFromDb = async ({ userType, sortBy, time }) => {
-  const filter = {};
+  const filter = { isVerified: true };
 
   if (userType && ["user", "businessOwner", "businessMan"].includes(userType)) {
     filter.userType = userType;
