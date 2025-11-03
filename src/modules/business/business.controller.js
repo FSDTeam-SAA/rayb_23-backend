@@ -122,17 +122,6 @@ exports.createBusiness = async (req, res) => {
       io.to(`${admin._id}`).emit("new_notification", notify);
     }
 
-    // const notifyUser = await Notification.create({
-    //   senderId: user._id,
-    //   receiverId: user._id,
-    //   userType: userType,
-    //   type: "business_submission",
-    //   title: "Business Created",
-    //   message: `You have successfully created a business.`,
-    //   metadata: { businessId: business._id },
-    // });
-    // io.to(`${user._id}`).emit("new_notification", notifyUser);
-
     return res.status(201).json({
       success: true,
       message: "Business created successfully",
@@ -155,7 +144,8 @@ exports.getAllBusinesses = async (req, res) => {
       maxPrice,
       buyInstruments,
       sellInstruments,
-      offerMusicLessons,
+      tradeInstruments,
+      rentInstruments,
       sort,
       openNow,
       postalCode,
@@ -333,9 +323,19 @@ exports.getAllBusinesses = async (req, res) => {
     }
 
     // -------- OFFERS --------
-    if (buyInstruments === "true") query.buyInstruments = true;
-    if (sellInstruments === "true") query.sellInstruments = true;
-    if (offerMusicLessons === "true") query.offerMusicLessons = true;
+    const offerFilters = [];
+
+    if (buyInstruments === "true") offerFilters.push({ buyInstruments: true });
+    if (sellInstruments === "true")
+      offerFilters.push({ sellInstruments: true });
+    if (tradeInstruments === "true")
+      offerFilters.push({ tradeInstruments: true });
+    if (rentInstruments === "true")
+      offerFilters.push({ rentInstruments: true });
+
+    if (offerFilters.length > 0) {
+      query.$or = query.$or ? [...query.$or, ...offerFilters] : offerFilters;
+    }
 
     const totalCount = await Business.countDocuments(query);
 

@@ -80,7 +80,7 @@ const businessSchema = new Schema(
     businessHours: [businessHoursSchema],
     buyInstruments: { type: Boolean, default: false },
     sellInstruments: { type: Boolean, default: false },
-    offerMusicLessons: { type: Boolean, default: false },
+    tradeInstruments: { type: Boolean, default: false },
     rentInstruments: { type: Boolean, default: false },
     review: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
     reviewImage: [
