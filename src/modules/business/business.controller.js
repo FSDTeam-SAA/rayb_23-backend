@@ -147,7 +147,7 @@ exports.getAllBusinesses = async (req, res) => {
       tradeInstruments,
       rentInstruments,
       sort,
-      openNow,    
+      openNow,
       postalCode,
       page = 1,
       limit = 40,
@@ -596,30 +596,89 @@ exports.getAllBusinesses = async (req, res) => {
   }
 };
 
+// exports.getBusinessById = async (req, res) => {
+//   try {
+//     const { businessId } = req.params;
+
+//     // Fetch the business
+//     const business = await Business.findById(businessId)
+//       .populate("services")
+//       .populate("musicLessons")
+//       // .populate("user", "name email")
+//       // .populate("adminId", "name email")
+//       .populate("review");
+
+//     if (!business) {
+//       throw new Error("Business not found");
+//     }
+
+//     // Check if the business has been claimed
+//     const claim = await ClaimBussiness.findOne({ businessId });
+
+//     // Add claim info to the response
+//     const businessWithClaimStatus = {
+//       ...business.toObject(),
+//       isClaimed: !!claim, // true if a claim exists
+//       claimInfo: claim
+//         ? {
+//             userId: claim.userId,
+//             status: claim.status,
+//             isVerified: claim.isVerified,
+//             documents: claim.documents,
+//           }
+//         : null,
+//     };
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Business fetched successfully",
+//       data: businessWithClaimStatus,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({
+//       success: false,
+//       error: error.message,
+//     });
+//   }
+// };
 
 exports.getBusinessById = async (req, res) => {
   try {
     const { businessId } = req.params;
 
-    // Fetch the business
+    // 1️⃣ Fetch the business
     const business = await Business.findById(businessId)
       .populate("services")
-      .populate("musicLessons")
-      // .populate("user", "name email")
-      // .populate("adminId", "name email")
-      .populate("review");
+      .populate("musicLessons");
 
     if (!business) {
       throw new Error("Business not found");
     }
 
-    // Check if the business has been claimed
+    // 2️⃣ Fetch claim info
     const claim = await ClaimBussiness.findOne({ businessId });
 
-    // Add claim info to the response
-    const businessWithClaimStatus = {
+    // 3️⃣ Fetch review images for this business (approved only)
+    const reviews = await ReviewModel.find({
+      business: businessId,
+      status: "approved",
+    }).select("image");
+    const reviewImages = reviews.flatMap((r) => r.image || []);
+
+    // 4️⃣ Fetch picture images for this business (approved only)
+    const pictures = await PictureModel.find({
+      business: businessId,
+      status: "approved",
+    }).select("image");
+    const pictureImages = pictures.flatMap((p) => p.image || []);
+
+    // 5️⃣ Combine all images into one array
+    const allImages = [...reviewImages, ...pictureImages, ...business.businessInfo.image];
+
+    // 6️⃣ Prepare final response object
+    const businessWithDetails = {
       ...business.toObject(),
-      isClaimed: !!claim, // true if a claim exists
+      isClaimed: !!claim,
       claimInfo: claim
         ? {
             userId: claim.userId,
@@ -628,14 +687,17 @@ exports.getBusinessById = async (req, res) => {
             documents: claim.documents,
           }
         : null,
+      images: allImages, // <-- ✅ all combined images here
     };
 
+    // ✅ Send response
     return res.status(200).json({
       success: true,
       message: "Business fetched successfully",
-      data: businessWithClaimStatus,
+      data: businessWithDetails,
     });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({
       success: false,
       error: error.message,
@@ -697,7 +759,6 @@ exports.getMyApprovedBusinesses = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
-
 
 exports.getDashboardData = async (req, res) => {
   try {
