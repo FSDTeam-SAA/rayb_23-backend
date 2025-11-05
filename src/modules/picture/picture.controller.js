@@ -224,14 +224,6 @@ exports.getAllPicturesByUser = async (req, res) => {
 
 exports.getPictureByBusinessId = async (req, res) => {
   try {
-    const { userId } = req.user;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        status: false,
-        message: "User not found",
-      });
-    }
     const { businessId } = req.params;
     const pictures = await PictureModel.find({ business: businessId }).populate(
       "user",

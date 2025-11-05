@@ -147,7 +147,7 @@ exports.getAllBusinesses = async (req, res) => {
       tradeInstruments,
       rentInstruments,
       sort,
-      openNow,
+      openNow,    
       postalCode,
       page = 1,
       limit = 40,
