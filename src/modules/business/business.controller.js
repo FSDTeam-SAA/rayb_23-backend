@@ -649,7 +649,8 @@ exports.getBusinessById = async (req, res) => {
     // 1️⃣ Fetch the business
     const business = await Business.findById(businessId)
       .populate("services")
-      .populate("musicLessons");
+      .populate("musicLessons")
+      .populate("review");
 
     if (!business) {
       throw new Error("Business not found");

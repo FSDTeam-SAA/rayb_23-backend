@@ -17,12 +17,12 @@ exports.createReview = async (req, res) => {
     }
 
     const files = req.files;
-    if (!files || files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "At least one image is required",
-      });
-    }
+    // if (!files || files.length === 0) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "At least one image is required",
+    //   });
+    // }
 
     // Parse other form-data fields (rating, feedback, businessId)
     const data = JSON.parse(req.body.data);
