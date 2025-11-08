@@ -243,8 +243,8 @@ const deactiveAccount = async (email, payload) => {
     if (!isExistingUser) throw new Error("User not found");
 
     const now = new Date();
-    const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    // const endDate = new Date(now.getTime() + 2 * 60 * 1000);
+    // const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    const endDate = new Date(now.getTime() + 2 * 60 * 1000); // 2 minutes
 
     await User.findByIdAndUpdate(
       isExistingUser._id,
@@ -296,7 +296,17 @@ const deletedUserAccount = async (userId) => {
     }
   }
 
-  await User.findByIdAndDelete(userId);
+  await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        isDeleted: true,
+      },
+    },
+    {
+      new: true,
+    }
+  );
 };
 
 const addSupport = async (payload) => {

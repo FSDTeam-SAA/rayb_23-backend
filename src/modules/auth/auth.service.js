@@ -14,6 +14,8 @@ const loginUser = async (payload) => {
 
   if (!user) throw new Error("User not found");
   if (!user.isActive) throw new Error("Your account is suspended. Please contact support.");
+  if (user.isDelete === true)
+    throw new Error("Your account is deleted. Please contact support.");
 
   if (!user.isVerified)
     throw new Error("Please verify your email address first");

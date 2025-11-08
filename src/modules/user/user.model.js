@@ -34,7 +34,7 @@ const userModel = new Schema(
       type: String,
       enum: ["user", "businessMan", "admin"],
     },
-    isActive: {
+    isActive: {  // isActive false means user permanently deleted
       type: Boolean,
       default: true,
     },
@@ -50,7 +50,11 @@ const userModel = new Schema(
       type: String,
       default: null,
     },
-    isDeactivate: {
+    isDeactivate: {  // isDeactivate false means user can login in 30 days
+      type: Boolean,
+      default: false,
+    },
+    isDelete: {  // isDelete true means it's deleted by admin like permanently deleted.
       type: Boolean,
       default: false,
     },
