@@ -13,13 +13,13 @@ const loginUser = async (payload) => {
   );
 
   if (!user) throw new Error("User not found");
-  if (!user.isActive) throw new Error("Your account is suspended. Please contact support.");
+  if (!user.isActive)
+    throw new Error("Your account is suspended. Please contact support.");
   if (user.isDelete === true)
     throw new Error("Your account is deleted. Please contact support.");
 
   if (!user.isVerified)
     throw new Error("Please verify your email address first");
-
 
   if (user.isDeactivate) {
     const now = new Date();
@@ -28,7 +28,6 @@ const loginUser = async (payload) => {
       user.isDeactivate = true;
       await user.save();
       throw new Error("Account permanently deactivated");
-
     } else {
       user.isDeactivate = false;
       user.deactivateStartDate = null;
@@ -78,12 +77,10 @@ const loginUser = async (payload) => {
       throw new Error("Could not send 2FA verification email");
     }
 
-
     // issue is here?..................
     return {
       message: "Please verify your email",
       accessToken,
-
     };
   }
 
@@ -249,6 +246,10 @@ const changePassword = async (payload, email) => {
     throw new Error("Current and new passwords are required");
   }
 
+  if (currentPassword === newPassword) {
+    throw new Error("Passwords must be different");
+  }
+
   const isExistingUser = await User.findOne({ email });
   if (!isExistingUser) throw new Error("User not found");
 
@@ -284,8 +285,9 @@ const toggleTwoFactorAuthentication = async (email) => {
 
   return {
     success: true,
-    message: `Two-factor authentication ${user.toFactorAuth ? "enabled" : "disabled"
-      } successfully`,
+    message: `Two-factor authentication ${
+      user.toFactorAuth ? "enabled" : "disabled"
+    } successfully`,
   };
 };
 
@@ -315,22 +317,20 @@ const loginWithToken = async (payload) => {
       config.JWT_EXPIRES_IN
     );
 
-    return (
-      {
-        userId: isExistingUser._id,
-        email: isExistingUser.email,
-        userType: isExistingUser.userType,
-        name: isExistingUser.name,
-        accessToken: accessToken
-      }
-    )
+    return {
+      userId: isExistingUser._id,
+      email: isExistingUser.email,
+      userType: isExistingUser.userType,
+      name: isExistingUser.name,
+      accessToken: accessToken,
+    };
 
     // Proceed with your logic
   } catch (error) {
     console.error("JWT Verification failed:", error);
     throw new Error("Invalid token");
   }
-}
+};
 
 const authService = {
   loginUser,
@@ -340,7 +340,7 @@ const authService = {
   resetPassword,
   changePassword,
   toggleTwoFactorAuthentication,
-  loginWithToken
+  loginWithToken,
 };
 
 module.exports = authService;
