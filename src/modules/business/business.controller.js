@@ -596,52 +596,6 @@ exports.getAllBusinesses = async (req, res) => {
   }
 };
 
-// exports.getBusinessById = async (req, res) => {
-//   try {
-//     const { businessId } = req.params;
-
-//     // Fetch the business
-//     const business = await Business.findById(businessId)
-//       .populate("services")
-//       .populate("musicLessons")
-//       // .populate("user", "name email")
-//       // .populate("adminId", "name email")
-//       .populate("review");
-
-//     if (!business) {
-//       throw new Error("Business not found");
-//     }
-
-//     // Check if the business has been claimed
-//     const claim = await ClaimBussiness.findOne({ businessId });
-
-//     // Add claim info to the response
-//     const businessWithClaimStatus = {
-//       ...business.toObject(),
-//       isClaimed: !!claim, // true if a claim exists
-//       claimInfo: claim
-//         ? {
-//             userId: claim.userId,
-//             status: claim.status,
-//             isVerified: claim.isVerified,
-//             documents: claim.documents,
-//           }
-//         : null,
-//     };
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Business fetched successfully",
-//       data: businessWithClaimStatus,
-//     });
-//   } catch (error) {
-//     return res.status(500).json({
-//       success: false,
-//       error: error.message,
-//     });
-//   }
-// };
-
 exports.getBusinessById = async (req, res) => {
   try {
     const { businessId } = req.params;
@@ -650,7 +604,13 @@ exports.getBusinessById = async (req, res) => {
     const business = await Business.findById(businessId)
       .populate("services")
       .populate("musicLessons")
-      .populate("review");
+      .populate({
+        path: "review",
+        populate: {
+          path: "user",
+          select: "name email imageLink",
+        },
+      });
 
     if (!business) {
       throw new Error("Business not found");
@@ -674,7 +634,11 @@ exports.getBusinessById = async (req, res) => {
     const pictureImages = pictures.flatMap((p) => p.image || []);
 
     // 5️⃣ Combine all images into one array
-    const allImages = [...reviewImages, ...pictureImages, ...business.businessInfo.image];
+    const allImages = [
+      ...reviewImages,
+      ...pictureImages,
+      ...business.businessInfo.image,
+    ];
 
     // 6️⃣ Prepare final response object
     const businessWithDetails = {
