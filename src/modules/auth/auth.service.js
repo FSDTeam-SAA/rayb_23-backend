@@ -21,7 +21,7 @@ const loginUser = async (payload) => {
   if (!user.isVerified)
     throw new Error("Please verify your email address first");
 
-  if (user.isDeactivate) {
+  if (user.isDeactivate) {      //! there are some issues need to be fixed.
     const now = new Date();
     if (now > user.deactivateEndDate) {
       user.isActive = false;
