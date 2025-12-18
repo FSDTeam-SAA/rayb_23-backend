@@ -70,7 +70,7 @@ const getAllClaimBussiness = async (req, res) => {
     const result = await claimBussinessService.getAllClaimBussiness({
       claimType,
       time,
-      sortBy
+      sortBy,
     });
 
     return res.status(200).json({
@@ -108,7 +108,9 @@ const claimBusinessById = async (req, res) => {
   try {
     const { claimBusinessId } = req.params;
 
-    const result = await claimBussinessService.getClaimBusinessById(claimBusinessId);
+    const result = await claimBussinessService.getClaimBusinessById(
+      claimBusinessId
+    );
 
     return res.status(200).json({
       success: true,
@@ -130,15 +132,16 @@ const toggleClaimBussinessStatus = async (req, res) => {
     const io = req.app.get("io");
     console.log(req.params);
 
-
     const result = await claimBussinessService.toggleClaimBussinessStatus(
       claimBusinessId,
       req.body
     );
 
-    const claimBusiness = await ClaimBussiness.findById(claimBusinessId).populate("userId");
+    const claimBusiness = await ClaimBussiness.findById(
+      claimBusinessId
+    ).populate("userId");
 
-       if (!claimBusiness) {
+    if (!claimBusiness) {
       return res.status(404).json({
         success: false,
         message: "Claim business not found",
@@ -172,7 +175,6 @@ const toggleClaimBussinessStatus = async (req, res) => {
       io.to(`${user._id}`).emit("new_notification", notify);
     }
 
-
     return res.status(200).json({
       success: true,
       code: 200,
@@ -190,7 +192,7 @@ const toggleClaimBussinessStatus = async (req, res) => {
 const sendOtp = async (req, res) => {
   try {
     const { businessId } = req.params;
-    const result = await claimBussinessService.sendOtp(req.body, businessId);
+    await claimBussinessService.sendOtp(req.body, businessId);
 
     return res.status(200).json({
       success: true,
@@ -218,7 +220,9 @@ const bussinessEmailVerify = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     const admins = await User.find({ userType: "admin" });
@@ -254,7 +258,7 @@ const claimBussinessController = {
   documentVerification,
   getAllClaimBussiness,
   getMyClaimBussiness,
- claimBusinessById,
+  claimBusinessById,
   toggleClaimBussinessStatus,
   sendOtp,
   bussinessEmailVerify,
