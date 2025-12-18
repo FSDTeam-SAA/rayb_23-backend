@@ -18,6 +18,7 @@ const { upload } = require("../../utils/cloudnary");
 const router = express.Router();
 const USER_ROLE = require("../user/user.constant");
 const auth = require("../../middleware/auth");
+const optionalAuth = require("../../middleware/optionalAuth");
 
 router.post(
   "/create",
@@ -36,6 +37,7 @@ router.post(
     next();
   },
   // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  optionalAuth,
   createBusiness
 );
 

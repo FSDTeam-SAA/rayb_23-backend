@@ -13,7 +13,36 @@ const axios = require("axios");
 
 exports.createBusiness = async (req, res) => {
   try {
-    // const { email, userType } = req.user;
+    // const { type } = req.body;
+    const { type } = req.query;
+    let user = null;
+
+    // ---------- Validation ----------
+    if (!type || !["myBusiness", "addABusiness"].includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid business type",
+      });
+    }
+
+    // ---------- Conditional Authentication ----------
+    if (type === "myBusiness") {
+      if (!req.user || !req.user.email) {
+        return res.status(401).json({
+          success: false,
+          message: "Please log in to create a business",
+        });
+      }
+
+      user = await User.findOne({ email: req.user.email });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+    }
+
     const {
       services,
       businessInfo,
@@ -24,101 +53,101 @@ exports.createBusiness = async (req, res) => {
       ...rest
     } = req.body;
 
+    // ---------- Files Validation ----------
     const files = req.files;
-    // const user = await User.findOne({ email });
-    // if (!user)
-    //   return res.status(404).json({ success: false, error: "User not found" });
-
-    // const ownerField = userType === "admin" ? "adminId" : "user";
-
-    // ---------- Upload images ----------
-    let image = [];
-    if (files && Array.isArray(files) && files.length === 0) {
-      // Handle no files uploaded
-      return res
-        .status(400)
-        .json({ success: false, message: "No files uploaded" });
-    } else {
-      image = await Promise.all(
-        files.map(async (file) => {
-          const imageName = `business/${Date.now()}_${file.originalname}`;
-          const result = await sendImageToCloudinary(imageName, file.path);
-          fs.unlinkSync(file.path);
-          return result.secure_url;
-        })
-      );
+    if (!files || !Array.isArray(files) || files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No files uploaded",
+      });
     }
+
+    // ---------- Upload Images ----------
+    const image = await Promise.all(
+      files.map(async (file) => {
+        const imageName = `business/${Date.now()}_${file.originalname}`;
+        const result = await sendImageToCloudinary(imageName, file.path);
+        fs.unlinkSync(file.path);
+        return result.secure_url;
+      })
+    );
 
     // ---------- Create Business ----------
     const business = await Business.create({
       ...rest,
-      // [ownerField]: user._id,
-      businessInfo: { ...businessInfo, image },
+      type,
+      // owner: user ? user._id : null, // only for myBusiness
+      userId: user ? user._id : null,
+      businessInfo: {
+        ...businessInfo,
+        image,
+      },
       services,
       musicLessons,
       businessHours,
       longitude,
       latitude,
+      isVerified: type === "addABusiness" ? false : true,
     });
 
-    // ---------- Google Place API ----------
+    // ---------- Google Place Reviews ----------
     let placeReviews = [];
     let placeId = null;
 
     try {
-      // 1️⃣ Get placeId dynamically using Geocoding API
       const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
         businessInfo.address
       )}&key=${GOOGLE_API_KEY}`;
 
       const geoResponse = await axios.get(geoUrl);
+
       if (
         geoResponse.data.status === "OK" &&
         geoResponse.data.results.length > 0
       ) {
         placeId = geoResponse.data.results[0].place_id;
 
-        // 2️⃣ Fetch reviews using Place Details API
-        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,user_ratings_total,reviews&key=${GOOGLE_API_KEY}`;
-
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=rating,reviews&key=${GOOGLE_API_KEY}`;
         const detailsResponse = await axios.get(detailsUrl);
-        const placeDetails = detailsResponse.data.result;
-        if (placeDetails?.reviews?.length > 0) {
-          placeReviews = placeDetails.reviews.slice(0, 5).map((r) => ({
-            rating: r.rating,
-            feedback: r.text || "No feedback",
-            user: null,
-            business: business._id,
-            googlePlaceId: placeId,
-            status: "approved",
-          }));
+
+        if (detailsResponse.data.result?.reviews?.length > 0) {
+          placeReviews = detailsResponse.data.result.reviews
+            .slice(0, 5)
+            .map((r) => ({
+              rating: r.rating,
+              feedback: r.text || "No feedback",
+              user: null,
+              business: business._id,
+              googlePlaceId: placeId,
+              status: "approved",
+            }));
         }
       }
     } catch (err) {
-      console.warn("Google Place fetch failed:", err.message);
+      console.warn("Google review fetch failed:", err.message);
     }
 
-    // ---------- Save Google reviews ----------
+    // ---------- Save Google Reviews ----------
     if (placeReviews.length > 0) {
       const savedReviews = await ReviewModel.insertMany(placeReviews);
       business.review = savedReviews.map((r) => r._id);
       await business.save();
     }
 
-    // ---------- Notifications ----------
+    // ---------- Notify Admins (Optional) ----------
     const adminUsers = await User.find({ userType: "admin" });
     const io = req.app.get("io");
 
     for (const admin of adminUsers) {
       const notify = await Notification.create({
-        // senderId: user._id,
         receiverId: admin._id,
         userType: "admin",
         type: "new_business_submitted",
         title: "New Business Submitted",
-        message: `A new business has been submitted for approval.`,
+        message: "A new business has been submitted for approval.",
         metadata: { businessId: business._id },
       });
+
       io.to(`${admin._id}`).emit("new_notification", notify);
     }
 
@@ -129,7 +158,10 @@ exports.createBusiness = async (req, res) => {
       googleReviews: placeReviews,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
@@ -240,7 +272,6 @@ exports.getAllBusinesses = async (req, res) => {
       }
     }
 
-
     // NEW INSTRUMENT NAME FILTER
 
     if (newInstrumentName) {
@@ -296,7 +327,6 @@ exports.getAllBusinesses = async (req, res) => {
 
       query.$and = query.$and ? [...query.$and, priceQuery] : [priceQuery];
     }
-
 
     // SPECIAL FLAGS
 

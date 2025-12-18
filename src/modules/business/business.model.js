@@ -58,7 +58,7 @@ const musicLessonSchema = new Schema(
 
 const businessSchema = new Schema(
   {
-    user: { type: Schema.Types.ObjectId, ref: "User" },
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
     // adminId: { type: Schema.Types.ObjectId, ref: "User" },
     businessInfo: {
       name: { type: String, required: true },
@@ -93,6 +93,10 @@ const businessSchema = new Schema(
       type: String,
       enum: ["pending", "approved", "rejected"],
       default: "pending",
+    },
+    type: {
+      type: String,
+      enum: ["myBusiness", "addABusiness"],
     },
     longitude: { type: Number },
     latitude: { type: Number },
