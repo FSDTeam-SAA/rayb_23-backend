@@ -275,25 +275,42 @@ const toggleClaimBussinessStatus = async (claimBusinessId, payload) => {
 const sendOtp = async (payload, businessId) => {
   const { email } = payload;
 
-  const bussiness = await BusinessModel.findById(businessId);
-  if (!bussiness) throw new Error("Business not found");
+  if (!email) {
+    throw new Error("Email is required");
+  }
+
+  const business = await BusinessModel.findById(businessId);
+  if (!business) {
+    throw new Error("Business not found");
+  }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const hashedOtp = await bcrypt.hash(otp, 10);
   const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
-  await BusinessModel.findOneAndUpdate(
-    { _id: businessId },
-    { $set: { otp: hashedOtp, otpExpires } },
+  await BusinessModel.findByIdAndUpdate(
+    businessId,
+    {
+      otp: hashedOtp,
+      otpExpires,
+    },
     { new: true }
   );
 
-  await sendEmail({
+  const emailResult = await sendEmail({
     to: email,
     subject: "Verify your email",
     html: verificationCodeTemplate(otp),
   });
+
+  // 🔴 VERY IMPORTANT
+  if (!emailResult.success) {
+    throw new Error("Failed to send OTP email");
+  }
+
+  return true;
 };
+
 
 const bussinessEmailVerify = async (userEmail, businessId, payload) => {
   const { otp } = payload;

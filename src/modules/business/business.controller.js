@@ -504,7 +504,7 @@ exports.getBusinessesByUser = async (req, res) => {
 exports.getMyApprovedBusinesses = async (req, res) => {
   try {
     const { email } = req.user;
-    console.log("Fetching approved businesses for user:", email);
+    // console.log("Fetching approved businesses for user:", email);
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ success: false, error: "User not found" });
@@ -514,7 +514,7 @@ exports.getMyApprovedBusinesses = async (req, res) => {
       status: "approved",
     });
 
-    console.log("Found businesses:", businesses);
+    // console.log("Found businesses:", businesses);
     if (!businesses) {
       return res.status(404).json({
         success: false,
