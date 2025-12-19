@@ -13,7 +13,6 @@ const axios = require("axios");
 
 exports.createBusiness = async (req, res) => {
   try {
-    // const { type } = req.body;
     const { type } = req.query;
     let user = null;
 
@@ -90,6 +89,16 @@ exports.createBusiness = async (req, res) => {
       isVerified: type === "addABusiness" ? false : true,
     });
 
+    // ---------- AUTO CLAIM BUSINESS (ONLY myBusiness) ----------
+    if (type === "myBusiness" && user) {
+      await ClaimBussiness.create({
+        businessId: business._id,
+        userId: user._id,
+        status: "pending",
+        isVerified: true,
+      });
+    }
+
     // ---------- Google Place Reviews ----------
     let placeReviews = [];
     let placeId = null;
@@ -164,6 +173,12 @@ exports.createBusiness = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+//!----------------------------------------------------------------
 
 exports.getAllBusinesses = async (req, res) => {
   try {
@@ -400,7 +415,6 @@ exports.getAllBusinesses = async (req, res) => {
     });
   }
 };
-
 
 exports.getBusinessById = async (req, res) => {
   try {
