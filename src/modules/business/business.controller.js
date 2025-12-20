@@ -174,12 +174,6 @@ exports.createBusiness = async (req, res) => {
   }
 };
 
-
-
-
-
-//!----------------------------------------------------------------
-
 exports.getAllBusinesses = async (req, res) => {
   try {
     const {
@@ -273,26 +267,51 @@ exports.getAllBusinesses = async (req, res) => {
       });
     }
 
-    // 💰 PRICE FILTER
+    // 💰 PRICE FILTER (FIXED & CORRECT)
     if (minPrice || maxPrice) {
       const min = minPrice ? Number(minPrice) : 0;
       const max = maxPrice ? Number(maxPrice) : Number.MAX_SAFE_INTEGER;
 
       query.$and.push({
         $or: [
-          { "services.price": { $gte: min, $lte: max } },
-          { "musicLessons.price": { $gte: min, $lte: max } },
+          // ✅ SERVICES
           {
-            $and: [
-              { "services.minPrice": { $gte: min } },
-              { "services.maxPrice": { $lte: max } },
-            ],
+            services: {
+              $elemMatch: {
+                $or: [
+                  // exact / hourly
+                  {
+                    pricingType: { $in: ["exact", "hourly"] },
+                    price: { $gte: min, $lte: max },
+                  },
+                  // range overlap
+                  {
+                    pricingType: "range",
+                    minPrice: { $lte: max },
+                    maxPrice: { $gte: min },
+                  },
+                ],
+              },
+            },
           },
+
+          // ✅ MUSIC LESSONS
           {
-            $and: [
-              { "musicLessons.minPrice": { $gte: min } },
-              { "musicLessons.maxPrice": { $lte: max } },
-            ],
+            musicLessons: {
+              $elemMatch: {
+                $or: [
+                  {
+                    pricingType: { $in: ["exact", "hourly"] },
+                    price: { $gte: min, $lte: max },
+                  },
+                  {
+                    pricingType: "range",
+                    minPrice: { $lte: max },
+                    maxPrice: { $gte: min },
+                  },
+                ],
+              },
+            },
           },
         ],
       });
