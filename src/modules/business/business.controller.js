@@ -362,7 +362,6 @@ exports.getAllBusinesses = async (req, res) => {
   }
 };
 
-
 //!------------------------------------------------------
 
 exports.getBusinessById = async (req, res) => {
@@ -409,6 +408,22 @@ exports.getBusinessById = async (req, res) => {
       ...business.businessInfo.image,
     ];
 
+    const userAddPhotos = await PictureModel.find({
+      business: businessId,
+      status: "approved",
+    })
+      .populate("user", "name imageLink")
+      .select("image user createdAt");
+
+    business.businessInfo.userAddedPhotos = userAddPhotos.map((photo) => ({
+      // image: photo.image,
+      addedBy: {
+        name: photo.user?.name || "Anonymous",
+        profilePhoto: photo.user?.imageLink || null,
+      },
+      addedAt: photo.createdAt,
+    }));
+
     // 6️⃣ Prepare final response object
     const businessWithDetails = {
       ...business.toObject(),
@@ -422,6 +437,7 @@ exports.getBusinessById = async (req, res) => {
           }
         : null,
       images: allImages, // <-- ✅ all combined images here
+      userAddedPhotos: business.businessInfo.userAddedPhotos,
     };
 
     // ✅ Send response

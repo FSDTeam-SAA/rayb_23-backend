@@ -8,8 +8,8 @@ const getTimeRange = require("../../utils/getTimeRange");
 exports.uploadPicture = async (req, res) => {
   try {
     const io = req.app.get("io");
-    const { email: userEmail, userId: userID,} = req.user;
-   
+    const { email: userEmail, userId: userID } = req.user;
+
     const user = await User.findOne({ email: userEmail });
     if (!user) {
       return res.status(400).json({ status: false, message: "User not found" });
@@ -48,12 +48,14 @@ exports.uploadPicture = async (req, res) => {
     });
     const picture = await newPictures.save();
 
-    await BusinessModel.findByIdAndUpdate({ _id: data.business }, {
-      $push: { reviewImage: picture._id },
-    });
+    await BusinessModel.findByIdAndUpdate(
+      { _id: data.business },
+      {
+        $push: { reviewImage: picture._id },
+      }
+    );
 
     const business = await BusinessModel.findById({ _id: data.business });
-    console.log(business);
 
     if (business?.user) {
       const businessMan = await Notification.create({
@@ -62,20 +64,18 @@ exports.uploadPicture = async (req, res) => {
         userType: "businessMan",
         type: "review_image_uploaded",
         title: "New Review Image",
-        message: `${user.name||"A User"} uploaded a new picture for your business.`,
+        message: `${
+          user.name || "A User"
+        } uploaded a new picture for your business.`,
         metadata: {
           businessId: data.business,
           pictureId: picture._id,
         },
       });
 
-      io.to(`${business.user}`).emit(
-        "new_notification",
-        businessMan
-      );
+      io.to(`${business.user}`).emit("new_notification", businessMan);
     }
 
-   
     const admins = await User.find({ userType: "admin" });
     for (const admin of admins) {
       const adminNotification = await Notification.create({
@@ -84,8 +84,10 @@ exports.uploadPicture = async (req, res) => {
         userType: "admin",
         type: "review_image_uploaded",
         title: "New Picture Uploaded",
-        message: `${user.name || "A User"} uploaded a new picture for business: ${business.businessInfo.name
-          || ""
+        message: `${
+          user.name || "A User"
+        } uploaded a new picture for business: ${
+          business.businessInfo.name || ""
         }`,
         metadata: {
           businessId: data.business,
@@ -112,7 +114,6 @@ exports.uploadPicture = async (req, res) => {
   }
 };
 
-
 exports.getAllPicturesAdmin = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -125,28 +126,22 @@ exports.getAllPicturesAdmin = async (req, res) => {
       });
     }
 
-
     const photoType = req.query.photoType || "all";
     const sortBy = req.query.sortBy || "desc";
     const nameSort = req.query.nameSort || "all";
     const timeRange = req.query.timeRange || "all";
-
 
     const query = {};
     if (photoType !== "all") {
       query.status = photoType;
     }
 
-
     const dateRange = getTimeRange(timeRange);
     Object.assign(query, dateRange);
-
 
     let pictures = await PictureModel.find(query)
       .populate("user", "name email")
       .populate("business", "businessInfo");
-
-
 
     if (nameSort === "az") {
       pictures.sort((a, b) => {
@@ -169,7 +164,6 @@ exports.getAllPicturesAdmin = async (req, res) => {
       pictures.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
-
     return res.status(200).json({
       status: true,
       message: "Pictures fetched successfully",
@@ -184,8 +178,6 @@ exports.getAllPicturesAdmin = async (req, res) => {
     });
   }
 };
-
-
 
 exports.getAllPicturesByUser = async (req, res) => {
   try {
@@ -221,7 +213,6 @@ exports.getAllPicturesByUser = async (req, res) => {
   }
 };
 
-
 exports.getPictureByBusinessId = async (req, res) => {
   try {
     const { businessId } = req.params;
@@ -249,7 +240,6 @@ exports.getPictureByBusinessId = async (req, res) => {
   }
 };
 
-
 exports.getPictureById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -275,7 +265,6 @@ exports.getPictureById = async (req, res) => {
     });
   }
 };
-
 
 exports.updatePictureById = async (req, res) => {
   try {
@@ -344,8 +333,9 @@ exports.updatePictureById = async (req, res) => {
         userType: "admin",
         type: "review_image_updated",
         title: "Picture Updated",
-        message: `${user.name} updated a review image for business: ${business.businessInfo?.businessName || "N/A"
-          }`,
+        message: `${user.name} updated a review image for business: ${
+          business.businessInfo?.businessName || "N/A"
+        }`,
         metadata: {
           businessId: business._id,
           pictureId: updatedPicture._id,
@@ -421,8 +411,9 @@ exports.deletedPicture = async (req, res) => {
         userType: "admin",
         type: "review_image_deleted",
         title: "Picture Deleted",
-        message: `${user.name} deleted a review image from business: ${business.businessInfo?.businessName || "N/A"
-          }`,
+        message: `${user.name} deleted a review image from business: ${
+          business.businessInfo?.businessName || "N/A"
+        }`,
         metadata: {
           businessId: business._id,
           pictureId: deletedPicture._id,
@@ -452,11 +443,11 @@ exports.togglePictureStatus = async (req, res) => {
     const { userId } = req.user;
     const user = await User.findById(userId);
 
-    if (user?.userType !== "admin" ){
+    if (user?.userType !== "admin") {
       return res.status(403).json({
-        status:false,
-        message: "access denied."
-      })
+        status: false,
+        message: "access denied.",
+      });
     }
     const { id } = req.params;
     const { status } = req.body;
@@ -469,7 +460,6 @@ exports.togglePictureStatus = async (req, res) => {
     }
     picture.status = status;
     await picture.save();
-
 
     // Send notification to uploader
     if (picture.user) {
@@ -488,7 +478,6 @@ exports.togglePictureStatus = async (req, res) => {
 
       io.to(`${picture.user._id}`).emit("new_notification", notify);
     }
-
 
     return res.status(200).json({
       status: true,
