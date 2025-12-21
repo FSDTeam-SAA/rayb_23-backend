@@ -368,7 +368,7 @@ exports.getBusinessById = async (req, res) => {
   try {
     const { businessId } = req.params;
 
-    // 1️⃣ Fetch the business
+    // 1️⃣ Fetch business
     const business = await Business.findById(businessId)
       .populate("services")
       .populate("musicLessons")
@@ -381,33 +381,39 @@ exports.getBusinessById = async (req, res) => {
       });
 
     if (!business) {
-      throw new Error("Business not found");
+      return res.status(404).json({
+        success: false,
+        message: "Business not found",
+      });
     }
 
     // 2️⃣ Fetch claim info
     const claim = await ClaimBussiness.findOne({ businessId });
 
-    // 3️⃣ Fetch review images for this business (approved only)
+    // 3️⃣ Fetch approved review images
     const reviews = await ReviewModel.find({
       business: businessId,
       status: "approved",
     }).select("image");
+
     const reviewImages = reviews.flatMap((r) => r.image || []);
 
-    // 4️⃣ Fetch picture images for this business (approved only)
+    // 4️⃣ Fetch approved picture images
     const pictures = await PictureModel.find({
       business: businessId,
       status: "approved",
     }).select("image");
+
     const pictureImages = pictures.flatMap((p) => p.image || []);
 
-    // 5️⃣ Combine all images into one array
+    // 5️⃣ Combine all images
     const allImages = [
       ...reviewImages,
       ...pictureImages,
-      ...business.businessInfo.image,
+      ...(business.businessInfo?.image || []),
     ];
 
+    // 6️⃣ Fetch user-added photos (with user info)
     const userAddPhotos = await PictureModel.find({
       business: businessId,
       status: "approved",
@@ -415,16 +421,29 @@ exports.getBusinessById = async (req, res) => {
       .populate("user", "name imageLink")
       .select("image user createdAt");
 
-    business.businessInfo.userAddedPhotos = userAddPhotos.map((photo) => ({
-      // image: photo.image,
-      addedBy: {
-        name: photo.user?.name || "Anonymous",
-        profilePhoto: photo.user?.imageLink || null,
-      },
-      addedAt: photo.createdAt,
-    }));
+    const userPhotoMap = {};
 
-    // 6️⃣ Prepare final response object
+    userAddPhotos.forEach((photo) => {
+      const userId = photo.user?._id?.toString() || "anonymous";
+
+      if (!userPhotoMap[userId]) {
+        userPhotoMap[userId] = {
+          addedBy: {
+            name: photo.user?.name || "Anonymous",
+            profilePhoto: photo.user?.imageLink || null,
+          },
+          // images: [],
+        };
+      }
+
+      // if (Array.isArray(photo.image)) {
+      //   userPhotoMap[userId].images.push(...photo.image);
+      // }
+    });
+
+    const userAddedPhotos = Object.values(userPhotoMap);
+
+    // 8️⃣ Final response object
     const businessWithDetails = {
       ...business.toObject(),
       isClaimed: !!claim,
@@ -436,21 +455,21 @@ exports.getBusinessById = async (req, res) => {
             documents: claim.documents,
           }
         : null,
-      images: allImages, // <-- ✅ all combined images here
-      userAddedPhotos: business.businessInfo.userAddedPhotos,
+      images: allImages,
+      userAddedPhotos,
     };
 
-    // ✅ Send response
+    // 9️⃣ Send response
     return res.status(200).json({
       success: true,
       message: "Business fetched successfully",
       data: businessWithDetails,
     });
   } catch (error) {
-    console.error(error);
+    console.error("getBusinessById error:", error);
     return res.status(500).json({
       success: false,
-      error: error.message,
+      message: error.message,
     });
   }
 };
