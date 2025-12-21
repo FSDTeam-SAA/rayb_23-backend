@@ -32,22 +32,22 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
-io.on("connection", (socket) => {
-  console.log("a user connected");
+// io.on("connection", (socket) => {
+//   console.log("a user connected");
 
-  socket.on("joinChat", (chatId) => {
-    socket.join(chatId);
-    console.log("user joined chatId", chatId);
-  });
-  socket.on("joinNotification", (userId) => {
-    socket.join(userId);
-    console.log("user joined userId", userId);
-  });
+//   socket.on("joinChat", (chatId) => {
+//     socket.join(chatId);
+//     console.log("user joined chatId", chatId);
+//   });
+//   socket.on("joinNotification", (userId) => {
+//     socket.join(userId);
+//     console.log("user joined userId", userId);
+//   });
 
-  socket.on("disconnect", () => {
-    console.log("user disconnected");
-  });
-});
+//   socket.on("disconnect", () => {
+//     console.log("user disconnected");
+//   });
+// });
 
 app.use("/api/v1", router);
 

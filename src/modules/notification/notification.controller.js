@@ -22,10 +22,11 @@ exports.createNotification = async (req, res) => {
       notify,
     });
   } catch (error) {
-    res.status(500).json({ status: false, message: "Error", error: error.message });
+    res
+      .status(500)
+      .json({ status: false, message: "Error", error: error.message });
   }
 };
-
 
 exports.getNotifications = async (req, res) => {
   try {
@@ -36,9 +37,14 @@ exports.getNotifications = async (req, res) => {
     }
     let notify;
     if (userType === "admin") {
-      notify = await Notification.find({ isIgnored: false }).sort({ createdAt: -1 });
+      notify = await Notification.find({ isIgnored: false }).sort({
+        createdAt: -1,
+      });
     } else {
-      notify = await Notification.find({ receiverId: userId, isIgnored: false }).sort({ createdAt: -1 });
+      notify = await Notification.find({
+        receiverId: userId,
+        isIgnored: false,
+      }).sort({ createdAt: -1 });
     }
 
     return res.status(200).json({
@@ -47,9 +53,12 @@ exports.getNotifications = async (req, res) => {
       notify,
     });
   } catch (error) {
-    res.status(500).json({ status: false, message: "Error", error: error.message });
+    res
+      .status(500)
+      .json({ status: false, message: "Error", error: error.message });
   }
 };
+
 exports.getAllNotifications = async (req, res) => {
   try {
     const { userId, userType } = req.user;
@@ -61,7 +70,9 @@ exports.getAllNotifications = async (req, res) => {
     if (userType === "admin") {
       notify = await Notification.find().sort({ createdAt: -1 });
     } else {
-      notify = await Notification.find({ receiverId: userId}).sort({ createdAt: -1 });
+      notify = await Notification.find({ receiverId: userId }).sort({
+        createdAt: -1,
+      });
     }
 
     return res.status(200).json({
@@ -70,7 +81,9 @@ exports.getAllNotifications = async (req, res) => {
       notify,
     });
   } catch (error) {
-    res.status(500).json({ status: false, message: "Error", error: error.message });
+    res
+      .status(500)
+      .json({ status: false, message: "Error", error: error.message });
   }
 };
 
@@ -78,7 +91,11 @@ exports.makeIgnore = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const updated = await Notification.findByIdAndUpdate(id, { isIgnored: true }, { new: true });
+    const updated = await Notification.findByIdAndUpdate(
+      id,
+      { isIgnored: true },
+      { new: true }
+    );
 
     return res.status(200).json({
       status: true,
@@ -86,7 +103,9 @@ exports.makeIgnore = async (req, res) => {
       updated,
     });
   } catch (error) {
-    res.status(500).json({ status: false, message: "Error", error: error.message });
+    res
+      .status(500)
+      .json({ status: false, message: "Error", error: error.message });
   }
 };
 
@@ -94,7 +113,11 @@ exports.markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const updated = await Notification.findByIdAndUpdate(id, { isRead: true }, { new: true });
+    const updated = await Notification.findByIdAndUpdate(
+      id,
+      { isRead: true },
+      { new: true }
+    );
 
     return res.status(200).json({
       status: true,
@@ -102,7 +125,9 @@ exports.markAsRead = async (req, res) => {
       updated,
     });
   } catch (error) {
-    res.status(500).json({ status: false, message: "Error", error: error.message });
+    res
+      .status(500)
+      .json({ status: false, message: "Error", error: error.message });
   }
 };
 
@@ -117,6 +142,8 @@ exports.deleteNotification = async (req, res) => {
       message: "Notification deleted",
     });
   } catch (error) {
-    res.status(500).json({ status: false, message: "Error", error: error.message });
+    res
+      .status(500)
+      .json({ status: false, message: "Error", error: error.message });
   }
 };

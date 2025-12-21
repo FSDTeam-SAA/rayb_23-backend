@@ -13,6 +13,7 @@ const axios = require("axios");
 
 exports.createBusiness = async (req, res) => {
   try {
+    const io = req.app.get("io");
     const { type } = req.query;
     let user = null;
 
@@ -143,21 +144,20 @@ exports.createBusiness = async (req, res) => {
       await business.save();
     }
 
-    // ---------- Notify Admins (Optional) ----------
-    const adminUsers = await User.find({ userType: "admin" });
-    const io = req.app.get("io");
+    if (user) {
+      const admins = await User.find({ userType: "admin" });
 
-    for (const admin of adminUsers) {
-      const notify = await Notification.create({
-        receiverId: admin._id,
-        userType: "admin",
-        type: "new_business_submitted",
-        title: "New Business Submitted",
-        message: "A new business has been submitted for approval.",
-        metadata: { businessId: business._id },
-      });
-
-      io.to(`${admin._id}`).emit("new_notification", notify);
+      for (const admin of admins) {
+        await Notification.create({
+          senderId: null,
+          receiverId: admin._id,
+          userType: "admin",
+          type: "new_business",
+          title: "New Business",
+          message: `A new business has been created by ${user.name}`,
+          metadata: { businessId: business._id },
+        });
+      }
     }
 
     return res.status(201).json({
