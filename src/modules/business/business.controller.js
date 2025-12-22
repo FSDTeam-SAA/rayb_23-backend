@@ -137,7 +137,7 @@ exports.createBusiness = async (req, res) => {
       console.warn("Google review fetch failed:", err.message);
     }
 
-    // ---------- Save Google Reviews ----------
+   
     if (placeReviews.length > 0) {
       const savedReviews = await ReviewModel.insertMany(placeReviews);
       business.review = savedReviews.map((r) => r._id);
@@ -362,7 +362,7 @@ exports.getAllBusinesses = async (req, res) => {
   }
 };
 
-//!------------------------------------------------------
+//!-----------------------------------------------------------------
 
 exports.getBusinessById = async (req, res) => {
   try {

@@ -17,7 +17,7 @@ const createNotification = async ({
   message,
   metadata = {},
 }) => {
-  // 🔒 Duplicate protection (IMPORTANT)
+
   const exists = await Notification.findOne({
     receiverId,
     type,
