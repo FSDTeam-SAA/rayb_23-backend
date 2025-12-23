@@ -8,12 +8,13 @@ const ClaimBussiness = require("../claimBussiness/claimBussiness.model");
 const getTimeRange = require("../../utils/getTimeRange");
 const SavedBusinessModel = require("../savedBusiness/SavedBusiness.model");
 const Notification = require("../notification/notification.model");
+const { createNotification } = require("../socket/notification.service");
 const { GOOGLE_API_KEY } = require("../../config");
 const axios = require("axios");
 
 exports.createBusiness = async (req, res) => {
   try {
-    const io = req.app.get("io");
+    // const io = req.app.get("io");
     const { type } = req.query;
     let user = null;
 
@@ -137,7 +138,6 @@ exports.createBusiness = async (req, res) => {
       console.warn("Google review fetch failed:", err.message);
     }
 
-   
     if (placeReviews.length > 0) {
       const savedReviews = await ReviewModel.insertMany(placeReviews);
       business.review = savedReviews.map((r) => r._id);
@@ -148,8 +148,8 @@ exports.createBusiness = async (req, res) => {
       const admins = await User.find({ userType: "admin" });
 
       for (const admin of admins) {
-        await Notification.create({
-          senderId: null,
+        await createNotification({
+          senderId: user._id,
           receiverId: admin._id,
           userType: "admin",
           type: "new_business",
@@ -361,8 +361,6 @@ exports.getAllBusinesses = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
-
-//!-----------------------------------------------------------------
 
 exports.getBusinessById = async (req, res) => {
   try {
