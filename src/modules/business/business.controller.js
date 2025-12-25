@@ -285,24 +285,38 @@ exports.getAllBusinesses = async (req, res) => {
 
     /* ---------------- PRICE FILTER (JS SIDE) ---------------- */
 
-    if (minPrice || maxPrice) {
-      const min = minPrice ? Number(minPrice) : 0;
-      const max = maxPrice ? Number(maxPrice) : Number.MAX_SAFE_INTEGER;
+    const hasMin = minPrice !== undefined && minPrice !== "";
+    const hasMax = maxPrice !== undefined && maxPrice !== "";
+
+    if (hasMin || hasMax) {
+      const min = hasMin ? Number(minPrice) : 0;
+      const max = hasMax ? Number(maxPrice) : Number.MAX_SAFE_INTEGER;
 
       businesses = businesses.filter((b) => {
         const items = [...(b.services || []), ...(b.musicLessons || [])];
 
         return items.some((item) => {
+          // RANGE pricing
           if (item.pricingType === "range") {
-            const minP = Number(item.minPrice);
-            const maxP = Number(item.maxPrice);
-            if (isNaN(minP) || isNaN(maxP)) return false;
-            return minP <= max && maxP >= min;
+            const itemMin = Number(item.minPrice);
+            const itemMax = Number(item.maxPrice);
+            if (isNaN(itemMin) || isNaN(itemMax)) return false;
+
+            // STRICT minPrice logic
+            const minPass = itemMin >= min; 
+            const maxPass = itemMax <= max; 
+            if (hasMin && hasMax) return minPass && maxPass;
+            if (hasMin) return minPass;
+            if (hasMax) return itemMax <= max;
           }
 
+          // EXACT pricing
           const price = Number(item.price);
           if (isNaN(price)) return false;
-          return price >= min && price <= max;
+
+          if (hasMin && hasMax) return price >= min && price <= max;
+          if (hasMin) return price >= min;
+          if (hasMax) return price <= max;
         });
       });
     }
