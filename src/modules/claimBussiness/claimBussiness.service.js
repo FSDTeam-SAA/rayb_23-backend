@@ -8,9 +8,6 @@ const ClaimBussiness = require("./claimBussiness.model");
 const bcrypt = require("bcrypt");
 const Business = require("../business/business.model");
 
-
-
-
 const documentVerification = async (payload, email, files, businessId) => {
   // Find the user
   const user = await User.findOne({ email });
@@ -58,7 +55,6 @@ const documentVerification = async (payload, email, files, businessId) => {
 
   return result;
 };
-
 
 const getAllClaimBussiness = async ({ claimType, time, sortBy }) => {
   const filter = {};
@@ -223,12 +219,16 @@ const getMyClaimBussiness = async (email) => {
 
   if (!user.isActive) throw new Error("User is not active");
 
-  const result = await ClaimBussiness.find({ userId: user._id }).populate({
-    path: "userId",
-    select: "name email",
-  });
+  const result = await ClaimBussiness.find({
+    userId: user._id,
+    status: "approved",
+  })
+    .populate({ path: "userId", select: "name email" })
+    .populate({ path: "businessId" });
+
   return result;
-};
+}
+
 
 const getClaimBusinessById = async (id) => {
   const result = await ClaimBussiness.findById(id).populate({
@@ -310,7 +310,6 @@ const sendOtp = async (payload, businessId) => {
 
   return true;
 };
-
 
 const bussinessEmailVerify = async (userEmail, businessId, payload) => {
   const { otp } = payload;
