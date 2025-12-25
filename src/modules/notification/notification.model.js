@@ -25,5 +25,11 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+
+// notificationSchema.index(
+//   { receiverId: 1, type: 1, "metadata.businessId": 1 },
+//   { unique: true }
+// );
+
 const Notification = mongoose.model("Notification", notificationSchema);
 module.exports = Notification;

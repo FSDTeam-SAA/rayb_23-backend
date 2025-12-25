@@ -8,13 +8,11 @@ const ClaimBussiness = require("../claimBussiness/claimBussiness.model");
 const getTimeRange = require("../../utils/getTimeRange");
 const SavedBusinessModel = require("../savedBusiness/SavedBusiness.model");
 const Notification = require("../notification/notification.model");
-const { createNotification } = require("../socket/notification.service");
 const { GOOGLE_API_KEY } = require("../../config");
 const axios = require("axios");
 
 exports.createBusiness = async (req, res) => {
   try {
-    // const io = req.app.get("io");
     const { type } = req.query;
     let user = null;
 
@@ -145,18 +143,26 @@ exports.createBusiness = async (req, res) => {
     }
 
     if (user) {
-      const admins = await User.find({ userType: "admin" });
+      const admin = await User.find({ userType: "admin" });
 
-      for (const admin of admins) {
-        await createNotification({
-          senderId: user._id,
+      if (admin) {
+        const alreadyNotified = await Notification.findOne({
           receiverId: admin._id,
-          userType: "admin",
           type: "new_business",
-          title: "New Business",
-          message: `A new business has been created by ${user.name}`,
-          metadata: { businessId: business._id },
+          "metadata.businessId": business._id,
         });
+
+        if (!alreadyNotified) {
+          await Notification.create({
+            senderId: user._id,
+            receiverId: admin._id,
+            userType: "admin",
+            type: "new_business",
+            title: "New Business",
+            message: `A new business ${businessInfo.name} has been created by ${user.name}`,
+            metadata: { businessId: business._id },
+          });
+        }
       }
     }
 
