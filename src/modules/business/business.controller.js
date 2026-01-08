@@ -94,7 +94,7 @@ exports.createBusiness = async (req, res) => {
       await ClaimBussiness.create({
         businessId: business._id,
         userId: user._id,
-        status: "pending",
+        status: "approved",
         isVerified: true,
       });
     }
