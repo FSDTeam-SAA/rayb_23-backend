@@ -87,6 +87,7 @@ exports.createBusiness = async (req, res) => {
       longitude,
       latitude,
       isVerified: type === "addABusiness" ? false : true,
+      status: type === "addABusiness" ? "pending" : "approved",
     });
 
     // ---------- AUTO CLAIM BUSINESS (ONLY myBusiness) ----------
