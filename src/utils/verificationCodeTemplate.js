@@ -19,9 +19,9 @@ const verificationCodeTemplate = (code) => `
             Your Verification code is:
           </h2>
 
-          <p style="color: #374151; font-size: 14px; margin: 0 0 20px;">
-            Please note: Do not share this code with anyone. This one-time code will expire in
-            <strong>5 minutes.</strong>
+          <p style="color: #374151; font-size: 12px; margin: 0 0 20px;">
+            Please note: Do not share this code with anyone. This one-time code will expire in <strong>5 minutes.</strong>
+            
           </p>
 
           <table
@@ -55,7 +55,7 @@ const verificationCodeTemplate = (code) => `
             If you did not make this request, please ignore this email and contact us at
             <a href="mailto:contact@instrufix.com" style="color: #008b8b; text-decoration: none; font-weight: 500;">
               contact@instrufix.com
-            </a>.
+            </a>
           </p>
 
           <p style="color: #111827; font-size: 14px; font-weight: 500; margin-top: 24px;">
@@ -69,10 +69,8 @@ const verificationCodeTemplate = (code) => `
       <tr>
         <td align="center" style="background-color: #008b8b; color: #ffffff; font-size: 12px; padding: 16px;">
           <p style="margin: 0;">
-            Contact us at
-            <a href="mailto:contact@instrufix.com" style="color: #ffffff; text-decoration: underline;">
-              contact@instrufix.com
-            </a>
+            Contact us at contact@instrufix.com
+            
           </p>
           <p style="margin: 6px 0 0;">
             &copy; ${new Date().getFullYear()} ${companyName}. All rights reserved.

@@ -11,7 +11,6 @@ const createToken = (payload, secret, expiresIn) => {
 };
 
 const verifyToken = (token, secret) => {
-//   console.log("Verifying token:", token); // Log the token
 
   return jwt.verify(token, secret);
 };
