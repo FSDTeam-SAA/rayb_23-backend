@@ -304,8 +304,8 @@ exports.getAllBusinesses = async (req, res) => {
             if (isNaN(itemMin) || isNaN(itemMax)) return false;
 
             // STRICT minPrice logic
-            const minPass = itemMin >= min; 
-            const maxPass = itemMax <= max; 
+            const minPass = itemMin >= min;
+            const maxPass = itemMax <= max;
             if (hasMin && hasMax) return minPass && maxPass;
             if (hasMin) return minPass;
             if (hasMax) return itemMax <= max;
@@ -454,10 +454,6 @@ exports.getBusinessById = async (req, res) => {
           // images: [],
         };
       }
-
-      // if (Array.isArray(photo.image)) {
-      //   userPhotoMap[userId].images.push(...photo.image);
-      // }
     });
 
     const userAddedPhotos = Object.values(userPhotoMap);
