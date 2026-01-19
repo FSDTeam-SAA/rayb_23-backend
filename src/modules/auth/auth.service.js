@@ -8,9 +8,11 @@ const verificationCodeTemplate = require("../../utils/verificationCodeTemplate")
 const sendEmail = require("../../utils/sendEmail");
 
 const loginUser = async (payload) => {
-  const user = await User.findOne({ email: payload.email }).select(
-    "+password +toFactorAuth +otp +otpExpires",
-  );
+  const email = payload.email.toLowerCase();
+
+  const user = await User.findOne({
+    email: { $regex: `^${email}$`, $options: "i" },
+  }).select("+password +toFactorAuth +otp +otpExpires");
 
   if (!user) throw new Error("User not found");
   if (!user.isActive)

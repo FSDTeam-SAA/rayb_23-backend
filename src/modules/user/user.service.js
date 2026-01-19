@@ -9,7 +9,11 @@ const User = require("./user.model");
 const bcrypt = require("bcrypt");
 
 const createNewAccountInDB = async (payload) => {
-  const existingUser = await User.findOne({ email: payload.email });
+  const email = payload.email.toLowerCase();
+  const existingUser = await User.findOne({
+    email: { $regex: `^${email}$`, $options: "i" },
+  });
+
   if (existingUser) {
     throw new Error("User already exists");
   }
@@ -54,13 +58,13 @@ const createNewAccountInDB = async (payload) => {
   const accessToken = createToken(
     JwtToken,
     config.JWT_SECRET,
-    config.JWT_EXPIRES_IN
+    config.JWT_EXPIRES_IN,
   );
 
   const refreshToken = createToken(
     JwtToken,
     config.refreshTokenSecret,
-    config.jwtRefreshTokenExpiresIn
+    config.jwtRefreshTokenExpiresIn,
   );
 
   return {
@@ -99,9 +103,9 @@ const verifyUserEmail = async (payload, email) => {
       isVerified: true,
       $unset: { otp: "", otpExpires: "" },
     },
-    { new: true }
+    { new: true },
   ).select(
-    "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires"
+    "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires",
   );
 
   const response = {
@@ -121,7 +125,7 @@ const verifyUserEmail = async (payload, email) => {
     const accessToken = createToken(
       JwtToken,
       config.JWT_SECRET,
-      config.JWT_EXPIRES_IN
+      config.JWT_EXPIRES_IN,
     );
 
     response.accessToken = accessToken;
@@ -149,7 +153,7 @@ const resendOtpCode = async ({ email }) => {
       otp: hashedOtp,
       otpExpires,
     },
-    { new: true }
+    { new: true },
   ).select("name email userType");
 
   await sendEmail({
@@ -228,7 +232,7 @@ const updateUserProfile = async (payload, email, file) => {
       email,
     },
     payload,
-    { new: true }
+    { new: true },
   ).select("-password -otp -otpExpires");
   return updatedUser;
 };
@@ -256,7 +260,7 @@ const deactiveAccount = async (email, payload) => {
           deactivateReason: payload.deactivateReason || null,
         },
       },
-      { new: true, session }
+      { new: true, session },
     );
 
     await session.commitTransaction();
@@ -287,7 +291,7 @@ const deletedUserAccount = async (userId) => {
       if (business) {
         if (business.isActive) {
           throw new Error(
-            "User has active business. Please deactivate or delete it first."
+            "User has active business. Please deactivate or delete it first.",
           );
         }
 
@@ -305,7 +309,7 @@ const deletedUserAccount = async (userId) => {
     },
     {
       new: true,
-    }
+    },
   );
 };
 
@@ -326,7 +330,7 @@ const addSupport = async (payload) => {
     },
     {
       new: true,
-    }
+    },
   ).select("name email support");
 
   return updatedUser;
@@ -334,7 +338,7 @@ const addSupport = async (payload) => {
 
 const getSingleUser = async (userId) => {
   const user = await User.findById(userId).select(
-    "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires -__v"
+    "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires -__v",
   );
   if (!user) throw new Error("User not found");
 
@@ -350,7 +354,7 @@ const toggleUserStatus = async (userId) => {
     {
       $set: { isActive: !user.isActive },
     },
-    { new: true }
+    { new: true },
   );
 
   return result;
