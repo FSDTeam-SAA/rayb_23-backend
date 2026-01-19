@@ -9,7 +9,7 @@ const sendEmail = require("../../utils/sendEmail");
 
 const loginUser = async (payload) => {
   const user = await User.findOne({ email: payload.email }).select(
-    "+password +toFactorAuth +otp +otpExpires"
+    "+password +toFactorAuth +otp +otpExpires",
   );
 
   if (!user) throw new Error("User not found");
@@ -21,7 +21,8 @@ const loginUser = async (payload) => {
   if (!user.isVerified)
     throw new Error("Please verify your email address first");
 
-  if (user.isDeactivate) {      //! there are some issues need to be fixed.
+  if (user.isDeactivate) {
+    //! there are some issues need to be fixed.
     const now = new Date();
     if (now > user.deactivateEndDate) {
       user.isActive = false;
@@ -49,13 +50,13 @@ const loginUser = async (payload) => {
   const accessToken = createToken(
     tokenPayload,
     config.JWT_SECRET,
-    config.JWT_EXPIRES_IN
+    config.JWT_EXPIRES_IN,
   );
 
   const refreshToken = createToken(
     tokenPayload,
     config.refreshTokenSecret,
-    config.jwtRefreshTokenExpiresIn
+    config.jwtRefreshTokenExpiresIn,
   );
 
   if (String(user.toFactorAuth) === "true") {
@@ -129,7 +130,7 @@ const LoginRefreshToken = async (token) => {
   const accessToken = createToken(
     JwtPayload,
     config.JWT_SECRET,
-    config.JWT_EXPIRES_IN
+    config.JWT_EXPIRES_IN,
   );
 
   return { accessToken };
@@ -164,7 +165,7 @@ const forgotPassword = async (email) => {
   const accessToken = createToken(
     JwtToken,
     config.JWT_SECRET,
-    config.JWT_EXPIRES_IN
+    config.JWT_EXPIRES_IN,
   );
 
   return { accessToken };
@@ -189,7 +190,7 @@ const verifyToken = async (otp, email) => {
 
   const isOtpMatched = await bcrypt.compare(
     otp.toString(),
-    isExistingUser.resetPasswordOtp
+    isExistingUser.resetPasswordOtp,
   );
   if (!isOtpMatched) throw new Error("Invalid OTP ");
 
@@ -206,7 +207,7 @@ const verifyToken = async (otp, email) => {
   const accessToken = createToken(
     JwtToken,
     config.JWT_SECRET,
-    config.JWT_EXPIRES_IN
+    config.JWT_EXPIRES_IN,
   );
 
   return { accessToken };
@@ -220,9 +221,18 @@ const resetPassword = async (payload, email) => {
   const isExistingUser = await User.findOne({ email });
   if (!isExistingUser) throw new Error("User not found");
 
+  // --- CHECK OLD PASSWORD ---
+  const isSamePassword = await bcrypt.compare(
+    payload.newPassword,
+    isExistingUser.password,
+  );
+  if (isSamePassword) {
+    throw new Error("New password must be different from old password");
+  }
+
   const hashedPassword = await bcrypt.hash(
     payload.newPassword,
-    Number(config.bcryptSaltRounds)
+    Number(config.bcryptSaltRounds),
   );
 
   const result = await User.findOneAndUpdate(
@@ -232,9 +242,9 @@ const resetPassword = async (payload, email) => {
       otp: undefined,
       otpExpires: undefined,
     },
-    { new: true }
+    { new: true },
   ).select(
-    "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires"
+    "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires",
   );
 
   return result;
@@ -255,13 +265,13 @@ const changePassword = async (payload, email) => {
 
   const isPasswordMatched = await bcrypt.compare(
     currentPassword,
-    isExistingUser.password
+    isExistingUser.password,
   );
   if (!isPasswordMatched) throw new Error("Invalid current password");
 
   const hashedPassword = await bcrypt.hash(
     newPassword,
-    Number(config.bcryptSaltRounds)
+    Number(config.bcryptSaltRounds),
   );
 
   const result = await User.findOneAndUpdate(
@@ -269,9 +279,9 @@ const changePassword = async (payload, email) => {
     {
       password: hashedPassword,
     },
-    { new: true }
+    { new: true },
   ).select(
-    "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires"
+    "-password -otp -otpExpires -resetPasswordOtp -resetPasswordOtpExpires",
   );
   return result;
 };
@@ -314,7 +324,7 @@ const loginWithToken = async (payload) => {
     const accessToken = createToken(
       JwtToken,
       config.JWT_SECRET,
-      config.JWT_EXPIRES_IN
+      config.JWT_EXPIRES_IN,
     );
 
     return {
