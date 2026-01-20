@@ -1,34 +1,40 @@
 const { Schema, model } = require("mongoose");
 
-const messageSchema = new Schema({
-  senderId: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
+const messageSchema = new Schema(
+  {
+    senderId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    receiverId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    message: {
+      type: String,
+      default: "",
+    },
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
+    image: {
+      type: String,
+    },
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+    chat: {
+      type: Schema.Types.ObjectId,
+      ref: "Chat",
+    },
   },
-  receiverId: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
+  {
+    timestamps: true,
+    versionKey: false,
   },
-  message: {
-    type: String,
-  },
-  isRead: {
-    type: Boolean,
-    default: false,
-  },
-  image: {
-    type: String,
-    default: null,
-  },
-  date: {
-    type: Date,
-    default: Date.now,
-  },
-  chat: {
-    type: Schema.Types.ObjectId,
-    ref: "Chat",
-  },
-});
+);
 
 const message = model("Message", messageSchema);
 module.exports = message;
