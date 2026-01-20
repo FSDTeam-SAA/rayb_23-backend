@@ -18,9 +18,7 @@ const messageSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    image: {
-      type: String,
-    },
+    images: [{ type: String }],
     date: {
       type: Date,
       default: Date.now,
@@ -38,4 +36,3 @@ const messageSchema = new Schema(
 
 const Message = model("Message", messageSchema);
 module.exports = Message;
-  

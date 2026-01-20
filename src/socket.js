@@ -19,31 +19,30 @@ function initSocket(io) {
 
     // Send message
     socket.on("sendMessage", async (data) => {
-      const { chatId, senderId, receiverIds, message, images } = data;
+      const { chatId, senderId, receiverId, message, image } = data;
+
       try {
         const newMessage = await Message.create({
           senderId,
-          receiverIds,
+          receiverId,
           message,
-          images,
+          image,
           chat: chatId,
         });
 
         await Chat.findByIdAndUpdate(chatId, { lastMessage: newMessage._id });
 
-        // Emit message to chat room
+        // Send message to chat room
         io.to(chatId).emit("newMessage", newMessage);
 
-        // Emit notification to each receiver
-        receiverIds.forEach((rid) => {
-          io.to(rid.toString()).emit("notification", {
-            message: "You have a new message",
-            chatId,
-            senderId,
-          });
+        // Send notification to receiver room
+        io.to(receiverId.toString()).emit("notification", {
+          chatId,
+          senderId,
+          message: "New message received",
         });
       } catch (err) {
-        console.error("sendMessage error:", err.message);
+        console.log("sendMessageErr:", err.message);
       }
     });
 
