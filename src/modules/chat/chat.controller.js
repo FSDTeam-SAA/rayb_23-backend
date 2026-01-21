@@ -1,5 +1,20 @@
 const chatService = require("./chat.service");
 
+const createChat = async (req, res) => {
+  try {
+    const { participants } = req.body;
+    const result = await chatService.createChat(participants);
+
+    return res.status(201).json({
+      success: true,
+      message: "Chat created successfully",
+      data: result,
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
 const getChat = async (req, res) => {
   try {
     const { userId } = req.query;
@@ -16,6 +31,7 @@ const getChat = async (req, res) => {
 };
 
 const chatController = {
+  createChat,
   getChat,
 };
 

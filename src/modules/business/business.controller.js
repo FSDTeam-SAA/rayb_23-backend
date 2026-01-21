@@ -68,7 +68,7 @@ exports.createBusiness = async (req, res) => {
         const result = await sendImageToCloudinary(imageName, file.path);
         fs.unlinkSync(file.path);
         return result.secure_url;
-      })
+      }),
     );
 
     // ---------- Create Business ----------
@@ -106,7 +106,7 @@ exports.createBusiness = async (req, res) => {
 
     try {
       const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        businessInfo.address
+        businessInfo.address,
       )}&key=${GOOGLE_API_KEY}`;
 
       const geoResponse = await axios.get(geoUrl);
@@ -210,7 +210,7 @@ exports.getAllBusinesses = async (req, res) => {
       const arr = Array.isArray(value) ? value : [value];
       return arr.map(
         (v) =>
-          new RegExp(v.toString().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
+          new RegExp(v.toString().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
       );
     };
 
@@ -333,7 +333,7 @@ exports.getAllBusinesses = async (req, res) => {
 
       businesses = businesses.filter((b) => {
         const today = b.businessHours?.find(
-          (h) => h.day.toLowerCase() === day && h.enabled
+          (h) => h.day.toLowerCase() === day && h.enabled,
         );
         if (!today) return false;
 
@@ -354,7 +354,7 @@ exports.getAllBusinesses = async (req, res) => {
       const getMinPrice = (b) => {
         const prices = [...(b.services || []), ...(b.musicLessons || [])]
           .map((x) =>
-            x.pricingType === "range" ? Number(x.minPrice) : Number(x.price)
+            x.pricingType === "range" ? Number(x.minPrice) : Number(x.price),
           )
           .filter((n) => !isNaN(n));
 
@@ -364,7 +364,7 @@ exports.getAllBusinesses = async (req, res) => {
       businesses.sort((a, b) =>
         sort === "high-to-low"
           ? getMinPrice(b) - getMinPrice(a)
-          : getMinPrice(a) - getMinPrice(b)
+          : getMinPrice(a) - getMinPrice(b),
       );
     }
 
@@ -623,7 +623,7 @@ exports.getBusinessmanDashboardData = async (req, res) => {
 
     // Step 1: Find all businesses owned by the user
     const businesses = await Business.find({ user: userId }).select(
-      "_id businessInfo.name"
+      "_id businessInfo.name",
     );
     const savedBusiness = await SavedBusinessModel.find({
       user: userId,
@@ -736,7 +736,7 @@ exports.getAllBusinessesByAdmin = async (req, res) => {
     }
 
     let businessesQuery = Business.find(filter).select(
-      "businessInfo user status createdAt"
+      "businessInfo user status createdAt",
     );
     // .populate("user", "name email");
 
@@ -775,7 +775,7 @@ exports.getAllBusinessesByAdmin = async (req, res) => {
 
       const paginated = sortedBusinesses.slice(
         (pageNumber - 1) * pageSize,
-        pageNumber * pageSize
+        pageNumber * pageSize,
       );
 
       return res.status(200).json({
@@ -901,7 +901,7 @@ exports.updateBusiness = async (req, res) => {
           const imageName = `business/${Date.now()}_${file.originalname}`;
           const result = await sendImageToCloudinary(imageName, file.path);
           return result.secure_url;
-        })
+        }),
       );
     }
 
@@ -921,7 +921,7 @@ exports.updateBusiness = async (req, res) => {
     const updatedBusiness = await Business.findByIdAndUpdate(
       businessId,
       { $set: updatePayload },
-      { new: true }
+      { new: true },
     );
 
     const adminUsers = await User.find({ userType: "admin" });
@@ -1012,7 +1012,7 @@ exports.removedImage = async (req, res) => {
     const updatedBusiness = await Business.findByIdAndUpdate(
       businessId,
       { $set: { "businessInfo.image": updatedImages } },
-      { new: true, runValidators: false }
+      { new: true, runValidators: false },
     );
 
     const adminUsers = await User.find({ userType: "admin" });
