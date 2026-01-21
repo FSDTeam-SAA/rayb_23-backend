@@ -4,6 +4,9 @@ const sendMessage = async (req, res) => {
   try {
     const result = await messageService.sendMessage(req.body, req.files);
 
+    const io = req.app.get("io");
+    io.to(result.chat.toString()).emit("newMessage", result);
+
     return res.status(201).json({
       success: true,
       message: "Message sent successfully",
