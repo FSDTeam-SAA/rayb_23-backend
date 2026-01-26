@@ -20,7 +20,7 @@ const businessHoursSchema = new Schema(
     endMeridiem: { type: String },
     enabled: { type: Boolean, default: true },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const serviceSchema = new Schema(
@@ -37,7 +37,7 @@ const serviceSchema = new Schema(
     selectedInstrumentsGroup: { type: String, required: true },
     instrumentFamily: { type: String, required: true },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const musicLessonSchema = new Schema(
@@ -53,7 +53,7 @@ const musicLessonSchema = new Schema(
     maxPrice: { type: Number, default: 0 },
     selectedInstrumentsGroupMusic: { type: String, required: true },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const businessSchema = new Schema(
@@ -78,6 +78,7 @@ const businessSchema = new Schema(
     services: [serviceSchema],
     musicLessons: [musicLessonSchema],
     businessHours: [businessHoursSchema],
+    email: { type: String },
     buyInstruments: { type: Boolean, default: false },
     sellInstruments: { type: Boolean, default: false },
     tradeInstruments: { type: Boolean, default: false },
@@ -111,7 +112,7 @@ const businessSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Business = model("Business", businessSchema);

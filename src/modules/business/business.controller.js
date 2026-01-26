@@ -49,6 +49,7 @@ exports.createBusiness = async (req, res) => {
       longitude,
       latitude,
       musicLessons,
+      email,
       ...rest
     } = req.body;
 
@@ -88,14 +89,15 @@ exports.createBusiness = async (req, res) => {
       latitude,
       isVerified: type === "addABusiness" ? false : true,
       status: type === "addABusiness" ? "pending" : "approved",
+      email: type === "addABusiness" ? email : null,
     });
 
-    // ---------- AUTO CLAIM BUSINESS (ONLY myBusiness) ----------
+    // ---------- AUTO CLAIM BUSINESS OFF (ONLY myBusiness) ----------
     if (type === "myBusiness" && user) {
       await ClaimBussiness.create({
         businessId: business._id,
         userId: user._id,
-        status: "approved",
+        // status: "approved",
         isVerified: true,
       });
     }
@@ -489,17 +491,18 @@ exports.getBusinessById = async (req, res) => {
   }
 };
 
+//! Check the logic again.
 exports.getBusinessesByUser = async (req, res) => {
   try {
     const { userId } = req.user;
     const isExist = await User.findById({ _id: userId });
+    console.log(isExist);
 
     if (!isExist) {
       throw new Error("User not found");
     }
 
-    const businesses = await Business.find({ user: userId });
-
+    const businesses = await Business.find({ userId: isExist._id });
     if (!businesses) {
       throw new Error("No businesses found for this user");
     }
@@ -517,13 +520,12 @@ exports.getBusinessesByUser = async (req, res) => {
 exports.getMyApprovedBusinesses = async (req, res) => {
   try {
     const { email } = req.user;
-    // console.log("Fetching approved businesses for user:", email);
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ success: false, error: "User not found" });
     }
     const businesses = await Business.find({
-      user: user._id,
+      userId: user._id,
       status: "approved",
     });
 

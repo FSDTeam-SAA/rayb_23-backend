@@ -67,6 +67,14 @@ const createNewAccountInDB = async (payload) => {
     config.jwtRefreshTokenExpiresIn,
   );
 
+  const findBusinessByEmail = await Business.findOne({ email: result.email });
+  if (findBusinessByEmail) {
+    await Business.findOneAndUpdate(
+      { email: result.email },
+      { userId: result._id },
+    );
+  }
+
   return {
     user: {
       _id: result._id,
