@@ -838,10 +838,10 @@ exports.getAllBusinessesByAdmin = async (req, res) => {
 
 exports.toggleBusinessStatus = async (req, res) => {
   try {
-    const io = req.app.get("io");
     const { businessId } = req.params;
     const { status } = req.body;
 
+    // ---------- Validate Status ----------
     if (!["approved", "rejected"].includes(status)) {
       return res.status(400).json({
         success: false,
@@ -849,6 +849,7 @@ exports.toggleBusinessStatus = async (req, res) => {
       });
     }
 
+    // ---------- Find Business ----------
     const business = await Business.findById(businessId);
     if (!business) {
       return res.status(404).json({
@@ -857,32 +858,36 @@ exports.toggleBusinessStatus = async (req, res) => {
       });
     }
 
+    // ---------- Update Status ----------
     business.status = status;
     await business.save();
 
-    // Get the business owner
-    const ownerId = business.user || business.adminId;
-    const userType = business.user ? "user" : "admin"; // just in case
+    const owner = business.userId;
+    if (owner) {
+      const alreadyNotified = await Notification.findOne({
+        receiverId: owner._id,
+        type: `business_${status}`,
+        "metadata.businessId": business._id,
+      });
 
-    // Send notification to business owner only if status is approved
-    if (status === "approved" && ownerId) {
-      const owner = await User.findById(ownerId);
-      if (owner) {
-        const notify = await Notification.create({
-          senderId: null, // admin system
+      if (!alreadyNotified) {
+        // ---------- Create Notification ----------
+        await Notification.create({
+          senderId: null, // system/admin
           receiverId: owner._id,
-          userType,
-          type: "business_approved",
-          title: "Business Approved",
-          message: `Your business "${
-            business.businessInfo?.name || "Business"
-          }" has been approved.`,
+          userType: business.user ? "user" : "admin",
+          type: `business_${status}`,
+          title:
+            status === "approved" ? "Business Approved" : "Business Rejected",
+          message:
+            status === "approved"
+              ? `Your business ${business.businessInfo?.name || "Business"} has been approved.`
+              : `Your business ${business.businessInfo?.name || "Business"} has been rejected. `,
           metadata: {
             businessId: business._id,
+            status,
           },
         });
-
-        io.to(`${owner._id}`).emit("new_notification", notify);
       }
     }
 
