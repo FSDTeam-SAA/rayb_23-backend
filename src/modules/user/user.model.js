@@ -15,7 +15,7 @@ const userModel = new Schema(
     bio: { type: String, default: null },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      // required: [true, "Password is required"],
       min: [8, "Password must be at least 8 characters"],
     },
     phone: {

@@ -72,11 +72,22 @@ exports.createBusiness = async (req, res) => {
       }),
     );
 
-    // ---------- Create Business ----------
+    if (type === "addABusiness") {
+      const isEmailAlreadyInUse = await Business.findOne({ email });
+      if (isEmailAlreadyInUse) {
+        throw new Error("Email is already use by another business");
+      }
+
+      const isEmailUseAsUser = await User.findOne({ email });
+      if (isEmailUseAsUser) {
+        throw new Error("Email is already use by another user");
+      }
+    }
+
+    // ---------- Create Business (NO AUTO APPROVAL) ----------
     const business = await Business.create({
       ...rest,
       type,
-      // owner: user ? user._id : null, // only for myBusiness
       userId: user ? user._id : null,
       businessInfo: {
         ...businessInfo,
@@ -87,18 +98,17 @@ exports.createBusiness = async (req, res) => {
       businessHours,
       longitude,
       latitude,
-      isVerified: type === "addABusiness" ? false : true,
-      status: type === "addABusiness" ? "pending" : "approved",
+      isVerified: false, // ❌ no auto approval
+      status: "pending", // ❌ always pending
       email: type === "addABusiness" ? email : null,
     });
 
-    // ---------- AUTO CLAIM BUSINESS OFF (ONLY myBusiness) ----------
+    // ---------- AUTO CLAIM (ONLY myBusiness, BUT NOT VERIFIED) ----------
     if (type === "myBusiness" && user) {
       await ClaimBussiness.create({
         businessId: business._id,
         userId: user._id,
-        // status: "approved",
-        isVerified: true,
+        isVerified: false,
       });
     }
 
@@ -145,35 +155,42 @@ exports.createBusiness = async (req, res) => {
       await business.save();
     }
 
-    if (user) {
-      const admin = await User.find({ userType: "admin" });
+    // ---------- ADMIN NOTIFICATION (SINGLE ADMIN, NO LOOP) ----------
+    const admin = await User.findOne({ userType: "admin" });
 
-      if (admin) {
-        const alreadyNotified = await Notification.findOne({
+    if (admin) {
+      const alreadyNotified = await Notification.findOne({
+        receiverId: admin._id,
+        type: "new_business",
+        "metadata.businessId": business._id,
+      });
+
+      if (!alreadyNotified) {
+        await Notification.create({
+          senderId: user ? user._id : null,
           receiverId: admin._id,
+          userType: "admin",
           type: "new_business",
-          "metadata.businessId": business._id,
+          title:
+            type === "myBusiness"
+              ? `A business ${businessInfo.name} was submitted by ${user.name}`
+              : `A business ${businessInfo.name} was added.`,
+          message:
+            type === "myBusiness"
+              ? `User ${user.name} submitted their business ${businessInfo.name} for approval.`
+              : `A business ${businessInfo.name} was added and requires approval.`,
+          metadata: {
+            businessId: business._id,
+            businessType: type,
+          },
         });
-
-        if (!alreadyNotified) {
-          await Notification.create({
-            senderId: user._id,
-            receiverId: admin._id,
-            userType: "admin",
-            type: "new_business",
-            title: "New Business",
-            message: `A new business ${businessInfo.name} has been created by ${user.name}`,
-            metadata: { businessId: business._id },
-          });
-        }
       }
     }
 
     return res.status(201).json({
       success: true,
-      message: "Business created successfully",
+      message: "Business submitted for admin approval",
       business,
-      googleReviews: placeReviews,
     });
   } catch (error) {
     return res.status(500).json({

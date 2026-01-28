@@ -36,6 +36,7 @@ const createNewAccountInDB = async (payload) => {
   } else {
     const newUser = new User({
       ...payload,
+      // password: payload.password,
       otp: hashedOtp,
       otpExpires,
       isVerified: false,
@@ -67,12 +68,19 @@ const createNewAccountInDB = async (payload) => {
     config.jwtRefreshTokenExpiresIn,
   );
 
-  const findBusinessByEmail = await Business.findOne({ email: result.email });
-  if (findBusinessByEmail) {
+  // 🔹 Business auto-link
+  const business = await Business.findOne({ email: result.email });
+
+  if (business) {
     await Business.findOneAndUpdate(
       { email: result.email },
       { userId: result._id },
+      { new: true },
     );
+
+    result.businessId = business._id;
+    result.userType = "user";
+    await result.save();
   }
 
   return {
