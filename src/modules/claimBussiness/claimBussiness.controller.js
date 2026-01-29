@@ -16,7 +16,7 @@ const documentVerification = async (req, res) => {
       req.body,
       email,
       req.files,
-      businessId
+      businessId,
     );
 
     const user = await User.findOne({ email });
@@ -108,9 +108,8 @@ const claimBusinessById = async (req, res) => {
   try {
     const { claimBusinessId } = req.params;
 
-    const result = await claimBussinessService.getClaimBusinessById(
-      claimBusinessId
-    );
+    const result =
+      await claimBussinessService.getClaimBusinessById(claimBusinessId);
 
     return res.status(200).json({
       success: true,
@@ -134,12 +133,11 @@ const toggleClaimBussinessStatus = async (req, res) => {
 
     const result = await claimBussinessService.toggleClaimBussinessStatus(
       claimBusinessId,
-      req.body
+      req.body,
     );
 
-    const claimBusiness = await ClaimBussiness.findById(
-      claimBusinessId
-    ).populate("userId");
+    const claimBusiness =
+      await ClaimBussiness.findById(claimBusinessId).populate("userId");
 
     if (!claimBusiness) {
       return res.status(404).json({
@@ -147,33 +145,6 @@ const toggleClaimBussinessStatus = async (req, res) => {
         message: "Claim business not found",
       });
     }
-    // const user = claimBusiness.userId;
-
-    // // Send notification to user based on status
-    // let title = "";
-    // let message = "";
-
-    // if (status === "approved") {
-    //   title = "Claim Approved";
-    //   message = `Your claim business request has been approved by the admin.`;
-    // } else if (status === "rejected") {
-    //   title = "Claim Rejected";
-    //   message = `Your claim business request has been rejected by the admin.`;
-    // }
-
-    // if (status === "approved" || status === "rejected") {
-    //   const notify = await Notification.create({
-    //     senderId: null, // or admin._id if you want to show admin
-    //     receiverId: user._id,
-    //     userType: "user",
-    //     type: "claim_status_change",
-    //     title,
-    //     message,
-    //     metadata: { claimBusinessId },
-    //   });
-
-    //   io.to(`${user._id}`).emit("new_notification", notify);
-    // }
 
     return res.status(200).json({
       success: true,
@@ -215,7 +186,7 @@ const bussinessEmailVerify = async (req, res) => {
     const result = await claimBussinessService.bussinessEmailVerify(
       email,
       businessId,
-      req.body
+      req.body,
     );
 
     const user = await User.findOne({ email });

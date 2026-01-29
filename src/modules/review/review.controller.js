@@ -9,7 +9,6 @@ const getTimeRange = require("../../utils/getTimeRange");
 
 exports.createReview = async (req, res) => {
   try {
-    const io = req.app.get("io");
     const { email: userEmail } = req.user;
     const user = await User.findOne({ email: userEmail });
     if (!user) {
@@ -17,18 +16,9 @@ exports.createReview = async (req, res) => {
     }
 
     const files = req.files;
-    // if (!files || files.length === 0) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "At least one image is required",
-    //   });
-    // }
-
-    // Parse other form-data fields (rating, feedback, businessId)
     const data = JSON.parse(req.body.data);
 
     const { rating, feedback, business } = data;
-    // const businessId = await business.findOne({ _id: business })
     if (!business) {
       return res
         .status(400)
@@ -41,10 +31,10 @@ exports.createReview = async (req, res) => {
         const imageName = `reviews/${Date.now()}_${file.originalname}`;
         const { secure_url } = await sendImageToCloudinary(
           imageName,
-          file.path
+          file.path,
         );
         return secure_url;
-      })
+      }),
     );
 
     // Create review
@@ -63,26 +53,34 @@ exports.createReview = async (req, res) => {
 
     const businessData = await Business.findById(business);
 
-    const adminUsers = await User.find({ userType: "admin" });
-
-    for (const admin of adminUsers) {
-      const notify = await Notification.create({
-        senderId: user._id,
+    const admin = await User.findOne({ userType: "admin" });
+    if (admin) {
+      const alreadyNotified = await Notification.findOne({
         receiverId: admin._id,
-        userType: "admin",
-        type: "business_review",
-        title: "New Business Review",
-        message: `${user.name} added a review on a business.`,
-        metadata: { businessId: business },
+        type: "new_business",
+        "metadata.businessId": business._id,
       });
 
-      io.to(`${admin._id}`).emit("new_notification", notify);
+      if (!alreadyNotified) {
+        await Notification.create({
+          senderId: user ? user._id : null,
+          receiverId: admin._id,
+          userType: "admin",
+          type: "review",
+          title: "New Review on Business",
+          message: `${user.name} added a review on ${businessData.businessInfo.name}.`,
+          metadata: {
+            businessId: business,
+            reviewId: review._id,
+          },
+        });
+      }
     }
+    console.log("api is coming there");
+    if (businessData?.userId) {
+      const ownerId = businessData.userId;
 
-    if (businessData?.user) {
-      const ownerId = businessData.user;
-
-      const notify = await Notification.create({
+      await Notification.create({
         senderId: user._id,
         receiverId: ownerId,
         userType: "businessMan",
@@ -91,8 +89,6 @@ exports.createReview = async (req, res) => {
         message: `${user.name} has reviewed your business.`,
         metadata: { businessId: business, reviewId: review._id },
       });
-
-      io.to(`${ownerId}`).emit("new_notification", notify);
     }
 
     return res.status(201).json({
@@ -112,10 +108,8 @@ exports.createReview = async (req, res) => {
 
 exports.getReviewsByAdmin = async (req, res) => {
   try {
-
-    console.log(req.user)
+    console.log(req.user);
     const { userId, userType } = req.user;
-
 
     console.log("Authenticated User from Token:", req.user);
 
@@ -125,7 +119,6 @@ exports.getReviewsByAdmin = async (req, res) => {
         message: "You are not authorized to access this resource",
       });
     }
-
 
     const user = await User.findById(userId);
     if (!user) {
@@ -142,12 +135,10 @@ exports.getReviewsByAdmin = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-
     const query = {};
     if (reviewType !== "all") {
       query.status = reviewType;
     }
-
 
     const dateFilter = getTimeRange(timeRange);
     Object.assign(query, dateFilter);
@@ -199,7 +190,6 @@ exports.getReviewsByAdmin = async (req, res) => {
     });
   }
 };
-
 
 exports.getMyReviews = async (req, res) => {
   try {
@@ -284,8 +274,9 @@ exports.updateReview = async (req, res) => {
         userType: "businessMan",
         type: "review_updated",
         title: "A Review Was Updated",
-        message: `${user.name || "A user"
-          } updated their review on your business.`,
+        message: `${
+          user.name || "A user"
+        } updated their review on your business.`,
         metadata: { businessId: business._id, reviewId: result._id },
       });
       io.to(`${ownerId}`).emit("new_notification", notify);
@@ -325,7 +316,9 @@ exports.toggleReview = async (req, res) => {
     // ✅ Get the review first
     const review = await ReviewModel.findById(id);
     if (!review) {
-      return res.status(404).json({ status: false, message: "Review not found" });
+      return res
+        .status(404)
+        .json({ status: false, message: "Review not found" });
     }
 
     // ✅ Get the business from the review
@@ -352,7 +345,7 @@ exports.toggleReview = async (req, res) => {
     const updatedReview = await ReviewModel.findByIdAndUpdate(
       id,
       { status },
-      { new: true }
+      { new: true },
     );
 
     return res.status(200).json({
@@ -360,12 +353,10 @@ exports.toggleReview = async (req, res) => {
       message: "Review status updated successfully",
       data: updatedReview,
     });
-
   } catch (error) {
     return res.status(500).json({ status: false, error: error.message });
   }
 };
-
 
 exports.reportReview = async (req, res) => {
   try {
@@ -506,8 +497,9 @@ exports.deleteReview = async (req, res) => {
         userType: "businessMan",
         type: "review_deleted",
         title: "A Review Was Deleted",
-        message: `${user.name || "A user"
-          } deleted their review on your business.`,
+        message: `${
+          user.name || "A user"
+        } deleted their review on your business.`,
         metadata: { businessId: business._id, reviewId: review._id },
       });
       io.to(`${ownerId}`).emit("new_notification", notify);
@@ -542,7 +534,6 @@ exports.getReviewsByBusiness = async (req, res) => {
   }
 };
 
-
 // google Api
 
 // exports.getReviewsByGooglePlaceId = async (req, res) => {
@@ -566,8 +557,6 @@ exports.getReviewsByBusiness = async (req, res) => {
 //     res.status(500).json({ error: error.message });
 //   }
 // };
-
-
 
 //  exports.getReviewsByGooglePlaceId = async (req, res) =>{ try {
 //     const { query } = req.query; // example: "Eiffel Tower Paris"
@@ -596,7 +585,6 @@ exports.getReviewsByBusiness = async (req, res) => {
 //     const detailsResponse = await axios.get(detailsUrl);
 //     const placeDetails = detailsResponse.data.result;
 
-   
 //   } catch (error) {
 //     console.error("Google API Error:", error.response?.data || error.message);
 //     res.status(500).json({ success: false, message: "Failed to fetch place reviews" });
