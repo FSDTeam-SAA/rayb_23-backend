@@ -5,6 +5,7 @@ const { createToken } = require("../../utils/tokenGenerate");
 const verificationCodeTemplate = require("../../utils/verificationCodeTemplate");
 const Business = require("../business/business.model");
 const ClaimBussiness = require("../claimBussiness/claimBussiness.model");
+const Notification = require("../notification/notification.model");
 const User = require("./user.model");
 const bcrypt = require("bcrypt");
 
@@ -81,6 +82,33 @@ const createNewAccountInDB = async (payload) => {
     result.businessId = business._id;
     result.userType = "user";
     await result.save();
+  }
+
+  const admin = await User.findOne({ userType: "admin" });
+  if (admin) {
+    const alreadyNotified = await Notification.findOne({
+      receiverId: admin._id,
+      type: "user_created",
+      metadata: {
+        userId: result._id,
+        userType: result.userType,
+      },
+    });
+
+    if (!alreadyNotified) {
+      await Notification.create({
+        senderId: result._id,
+        receiverId: admin._id,
+        userType: "admin",
+        type: "user_created",
+        title: "New User Created",
+        message: `New user ${result.name} created`,
+        metadata: {
+          userId: result._id,
+          userType: result.userType,
+        },
+      });
+    }
   }
 
   return {

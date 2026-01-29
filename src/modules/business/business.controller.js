@@ -157,7 +157,6 @@ exports.createBusiness = async (req, res) => {
 
     // ---------- ADMIN NOTIFICATION (SINGLE ADMIN, NO LOOP) ----------
     const admin = await User.findOne({ userType: "admin" });
-
     if (admin) {
       const alreadyNotified = await Notification.findOne({
         receiverId: admin._id,
