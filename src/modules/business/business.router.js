@@ -79,7 +79,7 @@ router.get(
 
 router.put(
   "/toggle/:businessId",
-  // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   toggleBusinessStatus
 );
 router.put(

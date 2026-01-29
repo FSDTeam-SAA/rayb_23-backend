@@ -7,6 +7,7 @@ const User = require("../user/user.model");
 const ClaimBussiness = require("./claimBussiness.model");
 const bcrypt = require("bcrypt");
 const Business = require("../business/business.model");
+const Notification = require("../notification/notification.model");
 
 const documentVerification = async (payload, email, files, businessId) => {
   // Find the user
@@ -30,7 +31,7 @@ const documentVerification = async (payload, email, files, businessId) => {
         const imageName = `business/${Date.now()}_${file.originalname}`;
         const result = await sendImageToCloudinary(imageName, file.path);
         return result.secure_url;
-      })
+      }),
     );
   }
 
@@ -50,7 +51,7 @@ const documentVerification = async (payload, email, files, businessId) => {
   const result = await ClaimBussiness.findOneAndUpdate(
     filter,
     { $set: update },
-    options
+    options,
   ).populate("userId", "name email number");
 
   return result;
@@ -227,8 +228,7 @@ const getMyClaimBussiness = async (email) => {
     .populate({ path: "businessId" });
 
   return result;
-}
-
+};
 
 const getClaimBusinessById = async (id) => {
   const result = await ClaimBussiness.findById(id).populate({
@@ -258,7 +258,7 @@ const toggleClaimBussinessStatus = async (claimBusinessId, payload) => {
   const result = await ClaimBussiness.findByIdAndUpdate(
     { _id: claimBusinessId },
     { $set: { status } },
-    { new: true }
+    { new: true },
   )
     .populate("userId", "name email number")
     .populate("businessId", "businessInfo");
@@ -266,8 +266,40 @@ const toggleClaimBussinessStatus = async (claimBusinessId, payload) => {
   await User.findByIdAndUpdate(
     user._id,
     { $set: { userType: "businessMan" } },
-    { new: true }
+    { new: true },
   );
+
+  // ---------- Notification Logic ----------
+  if (user) {
+    // Duplicate check
+    const alreadyNotified = await Notification.findOne({
+      receiverId: user._id,
+      type: `claim_business_${status}`, // claim_business_approved / rejected
+      "metadata.claimBusinessId": claimBusinessId,
+    });
+
+    if (!alreadyNotified) {
+      await Notification.create({
+        senderId: null, // system/admin
+        receiverId: user._id,
+        userType: "user",
+        type: `claim_business_${status}`,
+        title:
+          status === "approved"
+            ? "Business Claim Approved"
+            : "Business Claim Rejected",
+        message:
+          status === "approved"
+            ? `Your claim for business ${business.businessInfo?.name || "Business"} has been approved.`
+            : `Your claim for business ${business.businessInfo?.name || "Business"} has been rejected.`,
+        metadata: {
+          claimBusinessId,
+          status,
+          businessId: business._id,
+        },
+      });
+    }
+  }
 
   return result;
 };
@@ -294,7 +326,7 @@ const sendOtp = async (payload, businessId) => {
       otp: hashedOtp,
       otpExpires,
     },
-    { new: true }
+    { new: true },
   );
 
   const emailResult = await sendEmail({

@@ -46,7 +46,7 @@ router.get(
 
 router.put(
   "/claim/:claimBusinessId",
-  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   claimBussinessController.toggleClaimBussinessStatus
 );
 

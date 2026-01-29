@@ -147,33 +147,33 @@ const toggleClaimBussinessStatus = async (req, res) => {
         message: "Claim business not found",
       });
     }
-    const user = claimBusiness.userId;
+    // const user = claimBusiness.userId;
 
-    // Send notification to user based on status
-    let title = "";
-    let message = "";
+    // // Send notification to user based on status
+    // let title = "";
+    // let message = "";
 
-    if (status === "approved") {
-      title = "Claim Approved";
-      message = `Your claim business request has been approved by the admin.`;
-    } else if (status === "rejected") {
-      title = "Claim Rejected";
-      message = `Your claim business request has been rejected by the admin.`;
-    }
+    // if (status === "approved") {
+    //   title = "Claim Approved";
+    //   message = `Your claim business request has been approved by the admin.`;
+    // } else if (status === "rejected") {
+    //   title = "Claim Rejected";
+    //   message = `Your claim business request has been rejected by the admin.`;
+    // }
 
-    if (status === "approved" || status === "rejected") {
-      const notify = await Notification.create({
-        senderId: null, // or admin._id if you want to show admin
-        receiverId: user._id,
-        userType: "user",
-        type: "claim_status_change",
-        title,
-        message,
-        metadata: { claimBusinessId },
-      });
+    // if (status === "approved" || status === "rejected") {
+    //   const notify = await Notification.create({
+    //     senderId: null, // or admin._id if you want to show admin
+    //     receiverId: user._id,
+    //     userType: "user",
+    //     type: "claim_status_change",
+    //     title,
+    //     message,
+    //     metadata: { claimBusinessId },
+    //   });
 
-      io.to(`${user._id}`).emit("new_notification", notify);
-    }
+    //   io.to(`${user._id}`).emit("new_notification", notify);
+    // }
 
     return res.status(200).json({
       success: true,
