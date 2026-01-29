@@ -76,7 +76,7 @@ exports.createReview = async (req, res) => {
         });
       }
     }
-    console.log("api is coming there");
+
     if (businessData?.userId) {
       const ownerId = businessData.userId;
 
@@ -108,10 +108,7 @@ exports.createReview = async (req, res) => {
 
 exports.getReviewsByAdmin = async (req, res) => {
   try {
-    console.log(req.user);
     const { userId, userType } = req.user;
-
-    console.log("Authenticated User from Token:", req.user);
 
     if (userType !== "admin") {
       return res.status(403).json({
@@ -297,8 +294,6 @@ exports.toggleReview = async (req, res) => {
     const { email: userEmail } = req.user;
     const user = await User.findOne({ email: userEmail });
 
-    const io = req.app.get("io");
-
     if (user.userType !== "admin") {
       return res.status(403).json({ status: false, message: "Access denied" });
     }
@@ -323,10 +318,10 @@ exports.toggleReview = async (req, res) => {
 
     // ✅ Get the business from the review
     const business = await Business.findById(review.business);
-    const ownerId = business?.user;
+    const ownerId = business?.userId;
 
     if (ownerId) {
-      const notify = await Notification.create({
+      await Notification.create({
         senderId: user._id,
         receiverId: ownerId,
         userType: "businessMan",
@@ -338,7 +333,6 @@ exports.toggleReview = async (req, res) => {
             : "Your review has been rejected by the admin.",
         metadata: { businessId: business._id, reviewId: review._id },
       });
-      io.to(`${ownerId}`).emit("new_notification", notify);
     }
 
     // ✅ Update after notification logic
@@ -360,7 +354,6 @@ exports.toggleReview = async (req, res) => {
 
 exports.reportReview = async (req, res) => {
   try {
-    const io = req.app.get("io");
     const { email } = req.user;
     const { id } = req.params;
     const { message } = req.body;
@@ -378,7 +371,6 @@ exports.reportReview = async (req, res) => {
     }
 
     const review = await ReviewModel.findById(id);
-    console.log(review.business);
     if (!review) {
       return res
         .status(404)
@@ -394,7 +386,6 @@ exports.reportReview = async (req, res) => {
     }
 
     const business = await Business.findById(review.business);
-    console.log(business);
     if (!business) {
       return res
         .status(404)
@@ -416,21 +407,28 @@ exports.reportReview = async (req, res) => {
     };
     await review.save();
 
-    const adminUsers = await User.find({ userType: "admin" });
-    for (const admin of adminUsers) {
-      const notify = await Notification.create({
-        senderId: user._id,
+    const admin = await User.findOne({ userType: "admin" });
+    if (admin) {
+      const alreadyNotified = await Notification.findOne({
         receiverId: admin._id,
-        userType: "admin",
-        type: "review_reported",
-        title: "Review Reported",
-        message: `${user.name || "A user"} reported a review.`,
-        metadata: {
-          businessId: business?._id,
-          reviewId: review._id,
-        },
+        type: "new_business",
+        "metadata.businessId": business._id,
       });
-      io.to(`${admin._id}`).emit("new_notification", notify);
+
+      if (!alreadyNotified) {
+        await Notification.create({
+          senderId: user ? user._id : null,
+          receiverId: admin._id,
+          userType: "admin",
+          type: "review",
+          title: "A Review Was Reported",
+          message: `${user.name} reported a review on ${business.businessInfo.name}.`,
+          metadata: {
+            businessId: business,
+            reviewId: review._id,
+          },
+        });
+      }
     }
 
     return res.status(200).json({
@@ -449,7 +447,6 @@ exports.reportReview = async (req, res) => {
 
 exports.deleteReview = async (req, res) => {
   try {
-    const io = req.app.get("io");
     const { email: userEmail } = req.user;
 
     const user = await User.findOne({ email: userEmail });
@@ -473,25 +470,35 @@ exports.deleteReview = async (req, res) => {
       });
     }
 
-    const adminUsers = await User.find({ userType: "admin" });
     const business = await Business.findById(review.business);
-    const ownerId = business?.user;
+    const ownerId = business?.userId;
 
-    for (const admin of adminUsers) {
-      const notify = await Notification.create({
-        senderId: user._id,
+    const admin = await User.findOne({ userType: "admin" });
+    if (admin) {
+      const alreadyNotified = await Notification.findOne({
         receiverId: admin._id,
-        userType: "admin",
-        type: "review_deleted",
-        title: "Review Deleted",
-        message: `${user.name || "A user"} deleted a review.`,
-        metadata: { businessId: business?._id, reviewId: review._id },
+        type: "new_business",
+        "metadata.businessId": business._id,
       });
-      io.to(`${admin._id}`).emit("new_notification", notify);
+
+      if (!alreadyNotified) {
+        await Notification.create({
+          senderId: user ? user._id : null,
+          receiverId: admin._id,
+          userType: "admin",
+          type: "review",
+          title: "A Review Was Deleted",
+          message: `${user.name} deleted a review on ${business.businessInfo.name}.`,
+          metadata: {
+            businessId: business,
+            reviewId: review._id,
+          },
+        });
+      }
     }
 
     if (ownerId) {
-      const notify = await Notification.create({
+      await Notification.create({
         senderId: user._id,
         receiverId: ownerId,
         userType: "businessMan",
@@ -502,7 +509,6 @@ exports.deleteReview = async (req, res) => {
         } deleted their review on your business.`,
         metadata: { businessId: business._id, reviewId: review._id },
       });
-      io.to(`${ownerId}`).emit("new_notification", notify);
     }
 
     return res.status(200).json({
@@ -533,60 +539,3 @@ exports.getReviewsByBusiness = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-// google Api
-
-// exports.getReviewsByGooglePlaceId = async (req, res) => {
-//   try {
-//     const { placeId } = req.params;
-//     const response = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${process.env.GOOGLE_MAPS_API_KEY}`);
-//     const reviews = response.data.result.reviews || [];
-//     return res.status(200).json({ success: true, data: reviews });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
-// exports.getReviewsByGoogleReviewId = async (req, res) => {
-//   try {
-//     const { reviewId } = req.params;
-//     const response = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?reviewid=${reviewId}&key=${process.env.GOOGLE_MAPS_API_KEY}`);
-//     const reviews = response.data.result.reviews || [];
-//     return res.status(200).json({ success: true, data: reviews });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
-//  exports.getReviewsByGooglePlaceId = async (req, res) =>{ try {
-//     const { query } = req.query; // example: "Eiffel Tower Paris"
-
-//     if (!query) {
-//       return res.status(400).json({ success: false, message: "Query is required" });
-//     }
-
-//     // 1️Step 1: Find placeId
-//     const searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(
-//       query
-//     )}&inputtype=textquery&fields=place_id,name,formatted_address&key=${GOOGLE_API_KEY}`;
-
-//     const searchResponse = await axios.get(searchUrl);
-//     const candidates = searchResponse.data.candidates;
-
-//     if (!candidates || candidates.length === 0) {
-//       return res.status(404).json({ success: false, message: "Place not found" });
-//     }
-
-//     const placeId = candidates[0].place_id;
-
-//     // 2️Step 2: Get place details (with reviews)
-//     const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,reviews,formatted_address,geometry&key=${GOOGLE_API_KEY}`;
-
-//     const detailsResponse = await axios.get(detailsUrl);
-//     const placeDetails = detailsResponse.data.result;
-
-//   } catch (error) {
-//     console.error("Google API Error:", error.response?.data || error.message);
-//     res.status(500).json({ success: false, message: "Failed to fetch place reviews" });
-//   }
-// }
