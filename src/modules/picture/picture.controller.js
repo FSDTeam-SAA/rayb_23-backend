@@ -7,7 +7,6 @@ const getTimeRange = require("../../utils/getTimeRange");
 
 exports.uploadPicture = async (req, res) => {
   try {
-    const io = req.app.get("io");
     const { email: userEmail, userId: userID } = req.user;
 
     const user = await User.findOne({ email: userEmail });
@@ -461,7 +460,6 @@ exports.deletedPicture = async (req, res) => {
 
 exports.togglePictureStatus = async (req, res) => {
   try {
-    const io = req.app.get("io");
     const { userId } = req.user;
     const user = await User.findById(userId);
 
@@ -485,10 +483,10 @@ exports.togglePictureStatus = async (req, res) => {
 
     // Send notification to uploader
     if (picture.user) {
-      const notify = await Notification.create({
-        senderId: req.user.userId, // Admin/moderator ID
+      await Notification.create({
+        senderId: req.user.userId,
         receiverId: picture.user,
-        userType: "user", // picture uploader is regular user
+        userType: "user", 
         type: "picture_status_update",
         title: "Picture Status Changed",
         message: `Your uploaded picture's status has been updated to "${status}".`,
@@ -498,7 +496,6 @@ exports.togglePictureStatus = async (req, res) => {
         },
       });
 
-      io.to(`${picture.user._id}`).emit("new_notification", notify);
     }
 
     return res.status(200).json({
