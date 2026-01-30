@@ -36,10 +36,10 @@ exports.uploadPicture = async (req, res) => {
         const imageName = `Picture/${Date.now()}_${file.originalname}`;
         const { secure_url } = await sendImageToCloudinary(
           imageName,
-          file.path
+          file.path,
         );
         return secure_url;
-      })
+      }),
     );
     const newPictures = new PictureModel({
       image: uploadedImages,
@@ -52,53 +52,75 @@ exports.uploadPicture = async (req, res) => {
       { _id: data.business },
       {
         $push: { reviewImage: picture._id },
-      }
+      },
     );
 
     const business = await BusinessModel.findById({ _id: data.business });
 
-    if (business?.user) {
-      const businessMan = await Notification.create({
-        senderId: user._id,
-        receiverId: business.user,
-        userType: "businessMan",
-        type: "review_image_uploaded",
-        title: "New Review Image",
-        message: `${
-          user.name || "A User"
-        } uploaded a new picture for your business.`,
-        metadata: {
-          businessId: data.business,
-          pictureId: picture._id,
-        },
-      });
-
-      io.to(`${business.user}`).emit("new_notification", businessMan);
-    }
-
-    const admins = await User.find({ userType: "admin" });
-    for (const admin of admins) {
-      const adminNotification = await Notification.create({
-        senderId: user._id,
+    const admin = await User.findOne({ userType: "admin" });
+    if (admin) {
+      const alreadyNotified = await Notification.findOne({
         receiverId: admin._id,
-        userType: "admin",
         type: "review_image_uploaded",
-        title: "New Picture Uploaded",
-        message: `${
-          user.name || "A User"
-        } uploaded a new picture for business: ${
-          business.businessInfo.name || ""
-        }`,
         metadata: {
           businessId: data.business,
           pictureId: picture._id,
         },
       });
 
-      io.to(`${admin._id}`).emit("new_notification", adminNotification);
+      if (!alreadyNotified) {
+        await Notification.create({
+          senderId: user._id,
+          receiverId: admin._id,
+          userType: "admin",
+          type: "review_image_uploaded",
+          title: "New Picture Uploaded",
+          message: `${
+            user.name || "A User"
+          } uploaded a new picture for business: ${
+            business.businessInfo.name || ""
+          }`,
+          metadata: {
+            businessId: data.business,
+            pictureId: picture._id,
+          },
+        });
+      }
     }
 
-    res.app.get("io").emit("new-picture", picture);
+    const owner = business.userId;
+    if (owner) {
+      const alreadyNotified = await Notification.findOne({
+        receiverId: owner._id,
+        type: "review_image_uploaded",
+        metadata: {
+          businessId: data.business,
+          pictureId: picture._id,
+        },
+      });
+
+      if (!alreadyNotified) {
+        // ---------- Create Notification ----------
+        await Notification.create({
+          senderId: user._id,
+          receiverId: owner._id,
+          userType: "businessMan",
+          type: "review_image_uploaded",
+          title: "New Picture Uploaded",
+          message: `${
+            user.name || "A User"
+          } uploaded a new picture for business: ${
+            business.businessInfo.name || ""
+          }`,
+          metadata: {
+            businessId: data.business,
+            pictureId: picture._id,
+          },
+        });
+      }
+    }
+
+    // res.app.get("io").emit("new-picture", picture);
 
     return res.status(201).json({
       status: true,
@@ -191,7 +213,7 @@ exports.getAllPicturesByUser = async (req, res) => {
     }
     const pictures = await PictureModel.find({ user: userId }).populate(
       "business",
-      "businessInfo"
+      "businessInfo",
     );
     // if (!pictures || pictures.length === 0) {
     //   return res.status(200).json({
@@ -218,7 +240,7 @@ exports.getPictureByBusinessId = async (req, res) => {
     const { businessId } = req.params;
     const pictures = await PictureModel.find({ business: businessId }).populate(
       "user",
-      "name email"
+      "name email",
     );
     if (!pictures || pictures.length === 0) {
       return res.status(404).json({
@@ -290,7 +312,7 @@ exports.updatePictureById = async (req, res) => {
     const updatedPicture = await PictureModel.findByIdAndUpdate(
       id,
       { image },
-      { new: true }
+      { new: true },
     )
       .populate("user", "name email")
       .populate("business", "businessInfo");
@@ -320,7 +342,7 @@ exports.updatePictureById = async (req, res) => {
 
       io.to(`${business.user._id}`).emit(
         "new_notification",
-        notifyBusinessOwner
+        notifyBusinessOwner,
       );
     }
 
@@ -398,7 +420,7 @@ exports.deletedPicture = async (req, res) => {
 
       io.to(`${business.user._id}`).emit(
         "new_notification",
-        notifyBusinessOwner
+        notifyBusinessOwner,
       );
     }
 
