@@ -203,6 +203,11 @@ exports.getAllPicturesAdmin = async (req, res) => {
 exports.getAllPicturesByUser = async (req, res) => {
   try {
     const { userId } = req.user;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
@@ -210,20 +215,52 @@ exports.getAllPicturesByUser = async (req, res) => {
         message: "User not found",
       });
     }
+
+    // Get all pictures of the user with business info
     const pictures = await PictureModel.find({ user: userId }).populate(
       "business",
       "businessInfo",
     );
-    // if (!pictures || pictures.length === 0) {
-    //   return res.status(200).json({
-    //     status: false,
-    //     message: "No pictures found for this user",
-    //   });
-    // }
+
+    // Group pictures by business
+    const groupedByBusiness = pictures.reduce((acc, pic) => {
+      const businessId = pic.business._id.toString();
+
+      if (!acc[businessId]) {
+        acc[businessId] = {
+          business: pic.business,
+          images: [],
+        };
+      }
+
+      // Push image object with _id, url, and status
+      pic.image.forEach((imgUrl) => {
+        acc[businessId].images.push({
+          _id: pic._id,
+          url: imgUrl,
+          status: pic.status,
+        });
+      });
+
+      return acc;
+    }, {});
+
+    // Convert object to array
+    const result = Object.values(groupedByBusiness);
+
+    // Pagination
+    const paginatedResult = result.slice(skip, skip + limit);
+
     return res.status(200).json({
       status: true,
       message: "Pictures fetched successfully",
-      data: pictures,
+      data: paginatedResult,
+      meta: {
+        page,
+        limit,
+        totalBusinesses: result.length,
+        totalPages: Math.ceil(result.length / limit),
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -486,7 +523,7 @@ exports.togglePictureStatus = async (req, res) => {
       await Notification.create({
         senderId: req.user.userId,
         receiverId: picture.user,
-        userType: "user", 
+        userType: "user",
         type: "picture_status_update",
         title: "Picture Status Changed",
         message: `Your uploaded picture's status has been updated to "${status}".`,
@@ -495,7 +532,6 @@ exports.togglePictureStatus = async (req, res) => {
           newStatus: status,
         },
       });
-
     }
 
     return res.status(200).json({

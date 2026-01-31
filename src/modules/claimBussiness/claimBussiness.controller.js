@@ -127,9 +127,9 @@ const claimBusinessById = async (req, res) => {
 const toggleClaimBussinessStatus = async (req, res) => {
   try {
     const { claimBusinessId } = req.params;
-    const { status } = req.body;
-    const io = req.app.get("io");
-    console.log(req.params);
+    // const { status } = req.body;
+    // const io = req.app.get("io");
+    // console.log(req.params);
 
     const result = await claimBussinessService.toggleClaimBussinessStatus(
       claimBusinessId,
