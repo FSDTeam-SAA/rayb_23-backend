@@ -191,11 +191,19 @@ exports.getReviewsByAdmin = async (req, res) => {
 exports.getMyReviews = async (req, res) => {
   try {
     const { email } = req.user;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const user = await User.findOne({ email });
     if (!user) {
-      throw new Error("User not found");
+      return res.status(404).json({ status: false, message: "User not found" });
     }
 
+    // Total count for pagination
+    const totalReviews = await Review.countDocuments({ user: user._id });
+
+    // Fetch paginated reviews
     const reviews = await Review.find({ user: user._id })
       .populate({
         path: "business",
@@ -208,12 +216,21 @@ exports.getMyReviews = async (req, res) => {
       .populate({
         path: "user",
         select: "name email imageLink",
-      });
+      })
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }); // optional: latest reviews first
 
     return res.json({
       status: true,
-      message: "Review fetched successfully",
+      message: "Reviews fetched successfully",
       data: reviews,
+      meta: {
+        page,
+        limit,
+        totalReviews,
+        totalPages: Math.ceil(totalReviews / limit),
+      },
     });
   } catch (error) {
     return res.status(500).json({ status: false, error: error.message });
