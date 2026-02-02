@@ -7,7 +7,14 @@ const http = require("http");
 
 async function main() {
   try {
-    await mongoose.connect(config.MONGODB_URI);
+    await mongoose.connect(config.MONGODB_URI, {
+      maxPoolSize: 50, // 🔥 Increase connection pool (default is 5)
+      minPoolSize: 10, // optional but recommended
+      serverSelectionTimeoutMS: 30000, // ⏱️ Wait 30s before failing
+      socketTimeoutMS: 45000, // ⏱️ Close idle sockets after 45s
+      connectTimeoutMS: 30000, // ⏱️ Connection timeout
+      heartbeatFrequencyMS: 10000,
+    });
     console.log("Database connected.....");
 
     const server = http.createServer(app);

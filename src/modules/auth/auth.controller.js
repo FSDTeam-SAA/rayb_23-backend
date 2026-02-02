@@ -43,8 +43,6 @@ const loginUser = async (req, res) => {
 
 
 const loginWithToken = async (req, res) => {
-
-  console.log("Hello")
   try {
     const result = await authService.loginWithToken(req.body);
 

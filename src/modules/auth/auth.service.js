@@ -8,11 +8,17 @@ const verificationCodeTemplate = require("../../utils/verificationCodeTemplate")
 const sendEmail = require("../../utils/sendEmail");
 
 const loginUser = async (payload) => {
-  const email = payload.email.toLowerCase();
+  const email = payload.email.trim().toLowerCase();
 
-  const user = await User.findOne({
-    email: { $regex: `^${email}$`, $options: "i" },
-  }).select("+password +toFactorAuth +otp +otpExpires");
+  // const user = await User.findOne({
+  //   email: { $regex: `^${email}$`, $options: "i" },
+  // }).select("+password +toFactorAuth +otp +otpExpires");
+
+  const user = await User.findOne({ email }).select(
+    "+password +toFactorAuth +otp +otpExpires",
+  );
+
+  // console.log(user);
 
   if (!user) throw new Error("User not found");
   if (!user.isActive)
@@ -40,7 +46,12 @@ const loginUser = async (payload) => {
     }
   }
 
+console.log("Email:", email);
+console.log("Plain password:", payload.password);
+console.log("DB password hash:", user.password);
+
   const isPasswordValid = await bcrypt.compare(payload.password, user.password);
+console.log("Password match result:", isPasswordValid);
   if (!isPasswordValid) throw new Error("Invalid password");
 
   const tokenPayload = {

@@ -513,6 +513,7 @@ exports.getBusinessesByUser = async (req, res) => {
     const { userId } = req.user;
     const isExist = await User.findById({ _id: userId });
     console.log(isExist);
+    console.log("this api is calling");
 
     if (!isExist) {
       throw new Error("User not found");
@@ -648,7 +649,7 @@ exports.getBusinessmanDashboardData = async (req, res) => {
     }).select("_id savedBusiness businessInfo.name");
     const businessIds = businesses.map((b) => b._id);
     const savedBusinessIds = savedBusiness.map((b) => b.savedBusiness);
-    console.log(savedBusinessIds);
+    // console.log(savedBusinessIds);
 
     const startDate = getTimeRange(range);
 

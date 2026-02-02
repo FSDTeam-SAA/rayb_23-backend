@@ -11,9 +11,11 @@ const bcrypt = require("bcrypt");
 
 const createNewAccountInDB = async (payload) => {
   const email = payload.email.toLowerCase();
-  const existingUser = await User.findOne({
-    email: { $regex: `^${email}$`, $options: "i" },
-  });
+  // const existingUser = await User.findOne({
+  //   email: { $regex: `^${email}$`, $options: "i" },
+  // });
+
+  const existingUser = await User.findOne({ email });
 
   if (existingUser) {
     throw new Error("User already exists");
@@ -37,7 +39,6 @@ const createNewAccountInDB = async (payload) => {
   } else {
     const newUser = new User({
       ...payload,
-      // password: payload.password,
       otp: hashedOtp,
       otpExpires,
       isVerified: false,
@@ -180,7 +181,7 @@ const verifyUserEmail = async (payload, email) => {
 
 const resendOtpCode = async ({ email }) => {
   const existingUser = await User.findOne({ email });
-  console.log(existingUser);
+  // console.log(existingUser);
   if (!existingUser) throw new Error("User not found");
 
   if (existingUser.isVerified) {
