@@ -71,19 +71,19 @@ const createNewAccountInDB = async (payload) => {
   );
 
   // 🔹 Business auto-link
-  const business = await Business.findOne({ email: result.email });
+  // const business = await Business.findOne({ email: result.email });
 
-  if (business) {
-    await Business.findOneAndUpdate(
-      { email: result.email },
-      { userId: result._id },
-      { new: true },
-    );
+  // if (business) {
+  //   await Business.findOneAndUpdate(
+  //     { email: result.email },
+  //     { userId: result._id },
+  //     { new: true },
+  //   );
 
-    result.businessId = business._id;
-    result.userType = "user";
-    await result.save();
-  }
+  //   result.businessId = business._id;
+  //   result.userType = "user";
+  //   await result.save();
+  // }
 
   const admin = await User.findOne({ userType: "admin" });
   if (admin) {
