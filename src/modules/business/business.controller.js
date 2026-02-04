@@ -511,26 +511,51 @@ exports.getBusinessById = async (req, res) => {
 exports.getBusinessesByUser = async (req, res) => {
   try {
     const { userId } = req.user;
-    const isExist = await User.findById({ _id: userId });
-    console.log(isExist);
-    console.log("this api is calling");
 
+    // pagination params
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const isExist = await User.findById(userId);
     if (!isExist) {
-      throw new Error("User not found");
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
-    const businesses = await Business.find({ userId: isExist._id });
-    if (!businesses) {
-      throw new Error("No businesses found for this user");
+    const [businesses, total] = await Promise.all([
+      Business.find({ userId: isExist._id })
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }),
+      Business.countDocuments({ userId: isExist._id }),
+    ]);
+
+    if (businesses.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No businesses found for this user",
+      });
     }
 
     return res.status(200).json({
       success: true,
       message: "Your businesses fetched successfully",
       data: businesses,
+      meta: {
+        totalItems: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        limit,
+      },
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
