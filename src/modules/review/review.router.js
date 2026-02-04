@@ -9,6 +9,7 @@ const {
   reportReview,
   getReviewsByBusiness,
   getReviewsByGooglePlaceId,
+  addReplyMyBusinessReview,
 } = require("./review.controller");
 const { upload } = require("../../utils/cloudnary");
 const auth = require("../../middleware/auth");
@@ -19,46 +20,48 @@ router.post(
   "/create",
   upload.array("image", 5), // 🔹 Accept up to 5 images with field name "image"
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  createReview
+  createReview,
 );
 
-router.get(
-  "/all",
-  auth(USER_ROLE.admin),
-  getReviewsByAdmin
-);
+router.get("/all", auth(USER_ROLE.admin), getReviewsByAdmin);
 
 // router.get("/google-reviews", auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user), getReviewsByGooglePlaceId);
 
 router.get(
   "/my-review",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  getMyReviews
+  getMyReviews,
 );
 
 router.put(
   "/edit/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  updateReview
+  updateReview,
 );
 
 router.put("/toggle/:id", auth(USER_ROLE.admin), toggleReview);
 router.put(
   "/report/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  reportReview
+  reportReview,
 );
 
 router.delete(
   "/delete-Review/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  deleteReview
+  deleteReview,
+);
+
+router.put(
+  "/reply/:id",
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  addReplyMyBusinessReview,
 );
 
 router.get(
   "/:businessId",
   // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  getReviewsByBusiness
+  getReviewsByBusiness,
 );
 
 const reviewRouter = router;

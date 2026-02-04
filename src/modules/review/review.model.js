@@ -20,7 +20,20 @@ const reviewSchema = new mongoose.Schema(
       isReported: { type: Boolean, default: false },
       reportMessage: { type: String, default: "" },
     },
-    reply: { type: String },
+    reply: {
+      type: [
+        {
+          text: { type: String, required: true },
+          repliedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+          repliedAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
+
     googlePlaceId: { type: String, default: null },
   },
   { timestamps: true },

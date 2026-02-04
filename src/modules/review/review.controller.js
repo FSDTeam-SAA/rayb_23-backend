@@ -1,7 +1,7 @@
 const Review = require("./review.model");
 const Business = require("../business/business.model");
 const User = require("../user/user.model");
-const { sendImageToCloudinary } = require("../../utils/cloudnary"); // assume you're using this
+const { sendImageToCloudinary } = require("../../utils/cloudnary");
 const fs = require("fs");
 const ReviewModel = require("./review.model");
 const Notification = require("../notification/notification.model");
@@ -554,5 +554,76 @@ exports.getReviewsByBusiness = async (req, res) => {
     return res.status(200).json({ success: true, data: reviews });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+exports.addReplyMyBusinessReview = async (req, res) => {
+  try {
+    const { email } = req.user;
+    const { reply } = req.body;
+    const { id: reviewId } = req.params;
+
+    if (!reviewId) {
+      return res.status(400).json({
+        success: false,
+        message: "Review ID is required",
+      });
+    }
+
+    if (!reply || typeof reply !== "string" || !reply.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Reply text is required",
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const review = await ReviewModel.findById(reviewId)
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found",
+      });
+    }
+
+    // Only business owner can reply
+    if (String(review.business.userId) !== String(user._id)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to reply to this review",
+      });
+    }
+
+    // 🚨 HARD SAFETY (prevents future crashes)
+    if (!Array.isArray(review.reply)) {
+      review.reply = [];
+    }
+
+    review.reply.push({
+      text: reply.trim(),
+      repliedBy: user._id,
+      repliedAt: new Date(),
+    });
+
+    await review.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Reply added successfully",
+      data: review,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
