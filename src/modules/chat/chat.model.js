@@ -33,7 +33,7 @@ const chatSchema = new Schema(
         },
       },
     ],
-    lastMessage: { type: Schema.Types.ObjectId, ref: "Message", default: "" },
+    lastMessage: { type: Schema.Types.ObjectId, ref: "Message", default: null },
   },
   {
     timestamps: true,

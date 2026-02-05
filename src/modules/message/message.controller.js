@@ -1,6 +1,6 @@
 const messageService = require("./message.service");
 
-const sendMessage = async (req, res) => {
+const sendMessage = async (req, res, next) => {
   try {
     const result = await messageService.sendMessage(req.body, req.files);
 
@@ -13,9 +13,10 @@ const sendMessage = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    throw new Error(error);
+    next(error);
   }
 };
+
 
 const getMessage = async (req, res) => {
   try {

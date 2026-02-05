@@ -2,135 +2,96 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Socket.IO Chat Tester with Image</title>
+<title>Real-Time Chat Tester</title>
 <style>
-  body { font-family: monospace; margin: 20px; }
-  #log {
-    white-space: pre-wrap;
-    border: 1px solid #ccc;
-    padding: 10px;
-    height: 300px;
-    overflow-y: scroll;
-    background: #f9f9f9;
-  }
-  input, button {
-    margin-top: 5px;
-    width: 300px;
-    padding: 5px;
-  }
+  body { font-family: sans-serif; display: flex; margin: 0; height: 100vh; }
+  #chatList { width: 30%; border-right: 1px solid #ccc; overflow-y: auto; padding: 10px; }
+  #chatBox { flex: 1; display: flex; flex-direction: column; padding: 10px; }
+  #messages { flex: 1; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #f9f9f9; }
+  input, button { padding: 5px; margin-top: 5px; width: 100%; box-sizing: border-box; }
+  .message { margin-bottom: 5px; }
+  .message.you { text-align: right; color: green; }
+  .message.other { text-align: left; color: blue; }
 </style>
 </head>
 <body>
 
-<h2>Socket.IO Chat Tester (with Image)</h2>
+<div id="chatList">
+  <h3>Chats</h3>
+  <div id="chats"></div>
+</div>
 
-<label>Chat Room ID:
-  <input type="text" id="chatId" placeholder="Enter chat room ID" />
-</label><br>
-<button id="connectBtn">Connect</button>
-<div id="status">Status: Disconnected</div>
-
-<h3>Send Message</h3>
-<input type="text" id="messageText" placeholder="Enter your message" />
-<input type="file" id="imageInput" accept="image/*" />
-<button id="sendBtn" disabled>Send Message</button>
-
-<h3>Messages / Events</h3>
-<div id="log"></div>
+<div id="chatBox">
+  <h3>Chat</h3>
+  <div id="messages"></div>
+  <input type="text" id="messageText" placeholder="Enter message..." />
+  <input type="file" id="imageInput" accept="image/*" />
+  <button id="sendBtn">Send</button>
+</div>
 
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
-let socket = null;
+const socket = io("http://localhost:8001");
 
-const chatIdInput = document.getElementById("chatId");
-const connectBtn = document.getElementById("connectBtn");
+const userId = prompt("Enter your User ID");
+const chatId = prompt("Enter Chat ID");
+const receiverId = prompt("Enter Receiver User ID");
+
+const messagesDiv = document.getElementById("messages");
 const sendBtn = document.getElementById("sendBtn");
 const messageText = document.getElementById("messageText");
 const imageInput = document.getElementById("imageInput");
-const logDiv = document.getElementById("log");
-const statusDiv = document.getElementById("status");
 
-function log(msg) {
-  const time = new Date().toLocaleTimeString();
-  logDiv.textContent += `[${time}] ${msg}\n`;
-  logDiv.scrollTop = logDiv.scrollHeight;
+// join chat room
+socket.emit("joinChat", chatId);
+socket.emit("joinNotification", userId);
+
+function logMessage(msg, type="other") {
+  const div = document.createElement("div");
+  div.className = "message " + type;
+  div.textContent = msg;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-connectBtn.onclick = () => {
-  if (socket && socket.connected) {
-    socket.disconnect();
-    statusDiv.textContent = "Status: Disconnected";
-    connectBtn.textContent = "Connect";
-    sendBtn.disabled = true;
-    log("Disconnected");
-    return;
-  }
+// receive new messages in real-time
+socket.on("newMessage", (data) => {
+  const type = data.senderId === userId ? "you" : "other";
+  const text = data.message + (data.image?.length ? " [Image]" : "");
+  logMessage(text, type);
+});
 
-  const chatId = chatIdInput.value.trim();
-  if (!chatId) {
-    alert("Please enter a chat room ID");
-    return;
-  }
+// receive notifications (optional)
+socket.on("notification", (data) => {
+  console.log("Notification:", data);
+});
 
-  socket = io("http://localhost:8001");
-
-  socket.on("connect", () => {
-    statusDiv.textContent = "Status: Connected";
-    connectBtn.textContent = "Disconnect";
-    sendBtn.disabled = false;
-    log(`Connected as ${socket.id}`);
-
-    socket.emit("joinChat", chatId);
-    log(`Joined room: ${chatId}`);
-  });
-
-  socket.on("disconnect", () => {
-    statusDiv.textContent = "Status: Disconnected";
-    connectBtn.textContent = "Connect";
-    sendBtn.disabled = true;
-    log("Disconnected from server");
-  });
-
-  socket.on("message", (data) => {
-    log(`📥 New Message: ${JSON.stringify(data)}`);
-  });
-};
-
+// send message
 sendBtn.onclick = () => {
-  const chatId = chatIdInput.value.trim();
   const text = messageText.value.trim();
   const file = imageInput.files[0];
 
-  if (!text && !file) {
-    alert("Please enter a message or select an image");
-    return;
-  }
+  if (!text && !file) return;
 
-  const formData = new FormData();
-  formData.append("chat", chatId);
-  formData.append("message", text);
-  formData.append("senderId", "68650d3ac935d4a2875ac9c3");
-  formData.append("receiverId", "68651ac748153c766779a1e5");
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const imgData = file ? e.target.result : null;
 
-  if (file) {
-    formData.append("image", file);
-  }
-
-  fetch("http://localhost:8001/api/v1/message/send-message", {
-    method: "POST",
-    body: formData,
-  })
-    .then(res => res.json())
-    .then(data => {
-      log(`📤 Sent to API: ${JSON.stringify(data)}`);
-      messageText.value = "";
-      imageInput.value = "";
-    })
-    .catch(err => {
-      log(`❌ Error: ${err}`);
+    socket.emit("sendMessage", {
+      chatId,
+      senderId: userId,
+      receiverId,
+      message: text,
+      image: imgData // base64
     });
+
+    messageText.value = "";
+    imageInput.value = "";
+  };
+
+  if (file) reader.readAsDataURL(file);
+  else reader.onload();
 };
 </script>
-
 </body>
 </html>

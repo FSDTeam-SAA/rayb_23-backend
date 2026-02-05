@@ -34,7 +34,7 @@ const userModel = new Schema(
       type: String,
       enum: ["user", "businessMan", "admin"],
     },
-    isActive: {  // isActive false means user permanently deleted
+    isActive: {  
       type: Boolean,
       default: true,
     },

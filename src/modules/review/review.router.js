@@ -18,7 +18,7 @@ const router = express.Router();
 
 router.post(
   "/create",
-  upload.array("image", 5), // 🔹 Accept up to 5 images with field name "image"
+  upload.array("image", 5), 
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   createReview,
 );

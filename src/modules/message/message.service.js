@@ -6,8 +6,28 @@ const fs = require("fs");
 const sendMessage = async (payload, files) => {
   const { chatId, senderId, receiverId, message } = payload;
 
-  let imageUrls = [];
+  // 1️⃣ Chat exist check
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new Error("Chat not found");
+  }
 
+  // 2️⃣ Sender validation
+  const senderValid = chat.participants.some(
+    (p) => p.userId.toString() === senderId,
+  );
+
+  // 3️⃣ Receiver validation
+  const receiverValid = chat.participants.some(
+    (p) => p.userId.toString() === receiverId,
+  );
+
+  if (!senderValid || !receiverValid) {
+    throw new Error("Invalid sender or receiver");
+  }
+
+  // 4️⃣ Image upload
+  let imageUrls = [];
   if (files?.length > 0) {
     for (const file of files) {
       const uploaded = await sendImageToCloudinary(file.path, "messages");
@@ -16,6 +36,7 @@ const sendMessage = async (payload, files) => {
     }
   }
 
+  // 5️⃣ Create message
   const newMsg = await Message.create({
     chat: chatId,
     senderId,
@@ -24,7 +45,10 @@ const sendMessage = async (payload, files) => {
     images: imageUrls,
   });
 
-  await Chat.findByIdAndUpdate(chatId, { lastMessage: newMsg._id });
+  // 6️⃣ Update last message
+  await Chat.findByIdAndUpdate(chatId, {
+    lastMessage: newMsg._id,
+  });
 
   return newMsg;
 };
