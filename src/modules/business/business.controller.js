@@ -72,17 +72,17 @@ exports.createBusiness = async (req, res) => {
       }),
     );
 
-    if (type === "addABusiness") {
-      const isEmailAlreadyInUse = await Business.findOne({ email });
-      if (isEmailAlreadyInUse) {
-        throw new Error("Email is already use by another business");
-      }
+    // if (type === "addABusiness") {
+    //   const isEmailAlreadyInUse = await Business.findOne({ email });
+    //   if (isEmailAlreadyInUse) {
+    //     throw new Error("Email is already use by another business");
+    //   }
 
-      const isEmailUseAsUser = await User.findOne({ email });
-      if (isEmailUseAsUser) {
-        throw new Error("Email is already use by another user");
-      }
-    }
+    //   const isEmailUseAsUser = await User.findOne({ email });
+    //   if (isEmailUseAsUser) {
+    //     throw new Error("Email is already use by another user");
+    //   }
+    // }
 
     // ---------- Create Business (NO AUTO APPROVAL) ----------
     const business = await Business.create({
