@@ -1,32 +1,6 @@
 const Notification = require("./notification.model");
 const User = require("../user/user.model");
 
-// exports.createNotification = async (req, res) => {
-//   try {
-//     const { receiverId, userType, type, title, message, metadata } = req.body;
-//     const senderId = req.user.userId;
-
-//     const notify = await Notification.create({
-//       senderId,
-//       receiverId,
-//       userType,
-//       type,
-//       title,
-//       message,
-//       metadata,
-//     });
-
-//     return res.status(201).json({
-//       status: true,
-//       message: "Notification created.",
-//       notify,
-//     });
-//   } catch (error) {
-//     res
-//       .status(500)
-//       .json({ status: false, message: "Error", error: error.message });
-//   }
-// };
 
 exports.getNotifications = async (req, res) => {
   try {

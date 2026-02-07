@@ -23,6 +23,7 @@ exports.uploadPicture = async (req, res) => {
       });
     }
     const data = JSON.parse(req.body.data);
+    console.log(data);
     if (!data.business) {
       return res
         .status(400)
@@ -55,6 +56,12 @@ exports.uploadPicture = async (req, res) => {
     );
 
     const business = await BusinessModel.findById({ _id: data.business });
+    if (!business) {
+      return res.status(404).json({
+        status: false,
+        message: "Business not found",
+      });
+    }
 
     const admin = await User.findOne({ userType: "admin" });
     if (admin) {
@@ -118,8 +125,6 @@ exports.uploadPicture = async (req, res) => {
         });
       }
     }
-
-    // res.app.get("io").emit("new-picture", picture);
 
     return res.status(201).json({
       status: true,
