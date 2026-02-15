@@ -281,7 +281,7 @@ exports.getPictureByBusinessId = async (req, res) => {
     const { businessId } = req.params;
     const pictures = await PictureModel.find({ business: businessId }).populate(
       "user",
-      "name email",
+      "name email imageLink",
     );
     if (!pictures || pictures.length === 0) {
       return res.status(404).json({
