@@ -101,6 +101,7 @@ exports.createBusiness = async (req, res) => {
       isVerified: false, // ❌ no auto approval
       status: "pending", // ❌ always pending
       email: type === "addABusiness" ? email : null,
+      isClaimed: type === "addABusiness" ? false : true,
     });
 
     // ---------- AUTO CLAIM (ONLY myBusiness, BUT NOT VERIFIED) ----------
