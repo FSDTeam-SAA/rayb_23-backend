@@ -487,7 +487,7 @@ exports.getBusinessById = async (req, res) => {
       ...business.toObject(),
 
       // ✅ DO NOT override isClaimed unless approved claim exists
-      isClaimed: business.isClaimed && Boolean(claim),
+      isClaimed: business.isClaimed,
 
       claimInfo: claim
         ? {
