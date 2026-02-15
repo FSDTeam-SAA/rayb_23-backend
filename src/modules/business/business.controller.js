@@ -424,8 +424,11 @@ exports.getBusinessById = async (req, res) => {
       });
     }
 
-    // 2️⃣ Fetch claim info
-    const claim = await ClaimBussiness.findOne({ businessId });
+    // 2️⃣ Fetch ONLY approved claim (important)
+    const claim = await ClaimBussiness.findOne({
+      businessId,
+      status: "approved",
+    });
 
     // 3️⃣ Fetch approved review images
     const reviews = await ReviewModel.find({
@@ -445,12 +448,12 @@ exports.getBusinessById = async (req, res) => {
 
     // 5️⃣ Combine all images
     const allImages = [
+      ...(business.businessInfo?.image || []),
       ...reviewImages,
       ...pictureImages,
-      ...(business.businessInfo?.image || []),
     ];
 
-    // 6️⃣ Fetch user-added photos (with user info)
+    // 6️⃣ Fetch user-added photos with user info
     const userAddPhotos = await PictureModel.find({
       business: businessId,
       status: "approved",
@@ -469,17 +472,22 @@ exports.getBusinessById = async (req, res) => {
             name: photo.user?.name || "Anonymous",
             profilePhoto: photo.user?.imageLink || null,
           },
-          // images: [],
+          images: [],
         };
       }
+
+      userPhotoMap[userId].images.push(...(photo.image || []));
     });
 
     const userAddedPhotos = Object.values(userPhotoMap);
 
-    // 8️⃣ Final response object
+    // 7️⃣ Final response object (NO overwrite bug)
     const businessWithDetails = {
       ...business.toObject(),
-      isClaimed: !!claim,
+
+      // ✅ DO NOT override isClaimed unless approved claim exists
+      isClaimed: business.isClaimed && Boolean(claim),
+
       claimInfo: claim
         ? {
             userId: claim.userId,
@@ -488,24 +496,25 @@ exports.getBusinessById = async (req, res) => {
             documents: claim.documents,
           }
         : null,
+
       images: allImages,
       userAddedPhotos,
     };
 
-    // 9️⃣ Send response
+    // 8️⃣ Send response
     return res.status(200).json({
       success: true,
       message: "Business fetched successfully",
       data: businessWithDetails,
     });
   } catch (error) {
-    console.error("getBusinessById error:", error);
     return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
+
 
 //! Check the logic again.
 exports.getBusinessesByUser = async (req, res) => {
