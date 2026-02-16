@@ -431,6 +431,9 @@ exports.getBusinessById = async (req, res) => {
       status: "approved",
     });
 
+
+    
+
     // 3️⃣ Fetch approved review images
     const reviews = await ReviewModel.find({
       business: businessId,
