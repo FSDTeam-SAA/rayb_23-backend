@@ -53,8 +53,11 @@ const sendMessage = async (payload, files) => {
   return newMsg;
 };
 
-const getMessages = async (chatId) => {
-  const chat = await Chat.findById(chatId);
+const getMessages = async (chatId, businessId) => {
+    const chat = await Chat.findOne({
+      _id: chatId,
+      businessId: businessId, // 🔑 only specific business
+    });
   if (!chat) throw new Error("Chat not found");
 
   const messages = await Message.find({ chat: chatId }).sort({ createdAt: 1 });

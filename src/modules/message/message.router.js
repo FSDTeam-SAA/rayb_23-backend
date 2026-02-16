@@ -9,7 +9,7 @@ router.post(
   upload.array("image", 5),
   messageController.sendMessage,
 );
-router.get("/get-messages/:chatId", messageController.getMessage);
+router.get("/get-messages", messageController.getMessage);
 
 const messageRouter = router;
 module.exports = messageRouter;
