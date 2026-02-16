@@ -17,11 +17,25 @@ const sendMessage = async (req, res, next) => {
   }
 };
 
-
 const getMessage = async (req, res) => {
   try {
-    const {chatId, businessId} = req.body;
-    const result = await messageService.getMessages(chatId, businessId);
+    const { chatId, businessId, userId } = req.body;
+    const result = await messageService.getMessages(chatId, businessId, userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Messages retrieved successfully",
+      data: result,
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+const getSenderMessages = async (req, res) => {
+  try {
+    const { chatId, userId } = req.body;
+    const result = await messageService.getSenderMessages(chatId, userId);
 
     return res.status(200).json({
       success: true,
@@ -36,6 +50,7 @@ const getMessage = async (req, res) => {
 const messageController = {
   sendMessage,
   getMessage,
+  getSenderMessages,
 };
 
 module.exports = messageController;

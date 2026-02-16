@@ -10,7 +10,7 @@ router.post(
   messageController.sendMessage,
 );
 router.get("/get-messages", messageController.getMessage);
+// router.get("/get-sender-messages", messageController.getSenderMessages);
 
 const messageRouter = router;
 module.exports = messageRouter;
-

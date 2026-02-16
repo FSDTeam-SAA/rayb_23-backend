@@ -53,14 +53,43 @@ const sendMessage = async (payload, files) => {
   return newMsg;
 };
 
-const getMessages = async (chatId, businessId) => {
-    const chat = await Chat.findOne({
-      _id: chatId,
-      businessId: businessId, // 🔑 only specific business
-    });
+const getMessages = async (chatId, businessId, currentUserId) => {
+  // 1️⃣ Find chat by ID
+  const chat = await Chat.findById(chatId).lean();
   if (!chat) throw new Error("Chat not found");
 
-  const messages = await Message.find({ chat: chatId }).sort({ createdAt: 1 });
+  // 2️⃣ Check if currentUser is a participant
+  const participant = chat.participants.find(
+    (p) => p.userId.toString() === currentUserId,
+  );
+  if (!participant) throw new Error("You are not part of this chat");
+
+  // 3️⃣ Business-specific filter for businessMan
+  if (participant.role === "businessMan") {
+    if (!businessId || chat.businessId.toString() !== businessId) {
+      throw new Error("Chat not found for this business");
+    }
+  }
+
+  // 4️⃣ Fetch messages
+  const messages = await Message.find({ chat: chatId })
+    .sort({ createdAt: 1 })
+    .lean();
+
+  return messages;
+};
+
+
+const getSenderMessages = async (chatId, userId) => {
+  const chat = await Chat.findOne({
+    _id: chatId,
+  });
+  if (!chat) throw new Error("Chat not found");
+
+  const messages = await Message.find({
+    chat: chatId,
+    $or: [{ senderId: userId }, { receiverId: userId }],
+  }).sort({ createdAt: 1 });
 
   return messages;
 };
@@ -68,6 +97,7 @@ const getMessages = async (chatId, businessId) => {
 const messageService = {
   sendMessage,
   getMessages,
+  getSenderMessages,
 };
 
 module.exports = messageService;
