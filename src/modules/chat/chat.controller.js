@@ -2,8 +2,8 @@ const chatService = require("./chat.service");
 
 const createChat = async (req, res) => {
   try {
-    const { participants } = req.body;
-    const result = await chatService.createChat(participants);
+    const { participants, businessId } = req.body;
+    const result = await chatService.createChat(participants, businessId);
 
     return res.status(201).json({
       success: true,

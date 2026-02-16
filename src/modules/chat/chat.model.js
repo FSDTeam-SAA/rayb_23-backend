@@ -12,6 +12,7 @@ const chatSchema = new Schema(
         },
       },
     ],
+    businessId: { type: Schema.Types.ObjectId, ref: "Business" },
     lastMessage: { type: Schema.Types.ObjectId, ref: "Message", default: null },
   },
   {
