@@ -17,7 +17,7 @@ const createChat = async (req, res) => {
 
 const getChat = async (req, res) => {
   try {
-    const { userId } = req.query;
+    const { userId } = req.params;
     const result = await chatService.getChat(userId);
 
     return res.status(200).json({

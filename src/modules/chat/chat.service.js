@@ -40,13 +40,13 @@ const createChat = async (participants) => {
 };
 
 const getChat = async (userId) => {
-  const user = await User.findById(userId).populate("chats");
+  const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
 
   const chats = await Chat.find({
-    participants: { $in: [user._id] },
+    "participants.userId": user._id,
   })
-    .populate("participants", "_id name role imageLink email")
+    .populate("participants.userId", "_id name role imageLink email")
     .populate("lastMessage")
     .sort({ updatedAt: -1 });
 
