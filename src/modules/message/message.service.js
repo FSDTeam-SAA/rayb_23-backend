@@ -77,7 +77,7 @@ const getMessages = async (chatId, businessId, currentUserId) => {
     .lean();
 
   return messages;
-};
+}; 
 
 
 const getSenderMessages = async (chatId, userId) => {
