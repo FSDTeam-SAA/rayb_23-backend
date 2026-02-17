@@ -9,7 +9,7 @@ router.post(
   upload.array("image", 5),
   messageController.sendMessage,
 );
-router.get("/get-messages", messageController.getMessage);
+router.post("/get-messages", messageController.getMessage);
 // router.get("/get-sender-messages", messageController.getSenderMessages);
 
 const messageRouter = router;
