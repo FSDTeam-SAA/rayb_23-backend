@@ -18,7 +18,8 @@ const createChat = async (req, res) => {
 const getChat = async (req, res) => {
   try {
     const { userId } = req.params;
-    const result = await chatService.getChat(userId);
+    const { businessId } = req.query;
+    const result = await chatService.getChat(userId, businessId);
 
     return res.status(200).json({
       success: true,
