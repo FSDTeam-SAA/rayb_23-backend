@@ -54,10 +54,20 @@ const getChat = async (userId) => {
     .populate("participants.userId", "_id name role imageLink email")
     .populate("businessId", "businessInfo")
     .populate("lastMessage")
-    .sort({ updatedAt: -1 });
+    .sort({ updatedAt: -1 })
+    .lean(); // important
 
-  return chats;
+  // 🔥 Remove current user from participants
+  const updatedChats = chats.map((chat) => {
+    chat.participants = chat.participants.filter(
+      (p) => p.userId._id.toString() !== userId,
+    );
+    return chat;
+  });
+
+  return updatedChats;
 };
+
 
 const chatService = {
   createChat,
