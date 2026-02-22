@@ -594,12 +594,12 @@ exports.addReplyMyBusinessReview = async (req, res) => {
     }
 
     // Only business owner can reply
-    if (String(review.business.userId) !== String(user._id)) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not allowed to reply to this review",
-      });
-    }
+    // if (String(review.business.userId) !== String(user._id)) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "You are not allowed to reply to this review",
+    //   });
+    // }
 
     // 🚨 HARD SAFETY (prevents future crashes)
     if (!Array.isArray(review.reply)) {
