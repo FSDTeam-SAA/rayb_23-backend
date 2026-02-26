@@ -7,6 +7,7 @@ const {
   deleteNotification,
   makeIgnore,
   getAllNotifications,
+  markAsAllRead,
 } = require("./notification.controller");
 
 const router = express.Router();
@@ -14,29 +15,35 @@ const router = express.Router();
 router.get(
   "/",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  getNotifications
+  getNotifications,
 );
 router.get(
   "/all",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  getAllNotifications
+  getAllNotifications,
 );
 
 router.put(
   "/read/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  markAsRead
+  markAsRead,
 );
 router.put(
   "/ignore/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  makeIgnore
+  makeIgnore,
+);
+
+router.put(
+  "/all-read",
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  markAsAllRead,
 );
 
 router.delete(
   "/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  deleteNotification
+  deleteNotification,
 );
 
 const notificationRouter = router;

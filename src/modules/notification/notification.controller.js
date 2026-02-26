@@ -1,7 +1,6 @@
 const Notification = require("./notification.model");
 const User = require("../user/user.model");
 
-
 exports.getNotifications = async (req, res) => {
   try {
     const { userId, userType } = req.user;
@@ -68,7 +67,7 @@ exports.makeIgnore = async (req, res) => {
     const updated = await Notification.findByIdAndUpdate(
       id,
       { isIgnored: true },
-      { new: true }
+      { new: true },
     );
 
     return res.status(200).json({
@@ -90,13 +89,33 @@ exports.markAsRead = async (req, res) => {
     const updated = await Notification.findByIdAndUpdate(
       id,
       { isRead: true },
-      { new: true }
+      { new: true },
     );
 
     return res.status(200).json({
       status: true,
       message: "Marked as read",
       updated,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: false, message: "Error", error: error.message });
+  }
+};
+
+exports.markAsAllRead = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const result = await Notification.updateMany(
+      { receiverId: userId },
+      { isRead: true },
+    );
+
+    return res.status(200).json({
+      status: true,
+      message: "Marked all notifications as read",
+      result,
     });
   } catch (error) {
     res
