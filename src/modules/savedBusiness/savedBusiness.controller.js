@@ -15,13 +15,9 @@ exports.createSavedBusiness = async (req, res) => {
       throw new Error("User not found");
     }
 
-
-
     if (!savedBusiness) {
       return res.status(400).json({ message: "Business ID is required" });
     }
-
-
 
     const alreadySaved = await SavedBusinessModel.findOne({
       savedBusiness: savedBusiness,
@@ -39,12 +35,10 @@ exports.createSavedBusiness = async (req, res) => {
 
     const savedData = await newSaved.save();
 
-
     const business = await Business.findById(savedBusiness);
     const businessOwner = business.userId;
     const businessId = business._id;
 
-  
     if (businessOwner && businessOwner._id.toString() !== userId) {
       const notifyOwner = await Notification.create({
         senderId: user._id,
@@ -59,7 +53,6 @@ exports.createSavedBusiness = async (req, res) => {
       io.to(`${businessOwner._id}`).emit("new_notification", notifyOwner);
     }
 
-   
     const admins = await User.find({ userType: "admin" });
     for (const admin of admins) {
       const notifyAdmin = await Notification.create({
@@ -74,7 +67,6 @@ exports.createSavedBusiness = async (req, res) => {
 
       io.to(`${admin._id}`).emit("new_notification", notifyAdmin);
     }
-
 
     return res.status(201).json({
       message: "Business saved successfully",
@@ -96,22 +88,13 @@ exports.getSavedBusinessesByUser = async (req, res) => {
       throw new Error("User not found");
     }
 
-
     const savedBusinesses = await SavedBusinessModel.find({ user: userId })
-      // .populate({
-      //   path: "savedBusiness",
-      //   populate: [
-      //     { path: "instrumentInfo" },
-      //     { path: "lessonServicePrice" },
-      //     {
-      //       path: "review",
-      //       match: { status: "approved" },
-      //       populate: { path: "user", select: "name email" },
-      //     },
-      //     { path: "user", select: "name email" },
-      //   ],
-      // })
-      .populate("savedBusiness")
+      .populate({
+        path: "savedBusiness",
+        populate: {
+          path: "review", // 👈 review populate হবে
+        },
+      })
       .populate("user", "name email");
 
     if (savedBusinesses.length === 0) {
