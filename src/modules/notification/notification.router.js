@@ -8,6 +8,7 @@ const {
   makeIgnore,
   getAllNotifications,
   markAsAllRead,
+  markAsAllReadForAdmin,
 } = require("./notification.controller");
 
 const router = express.Router();
@@ -38,6 +39,12 @@ router.put(
   "/all-read",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   markAsAllRead,
+);
+
+router.put(
+  "/all-read-admin",
+  auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  markAsAllReadForAdmin,
 );
 
 router.delete(

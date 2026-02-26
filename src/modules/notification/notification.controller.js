@@ -41,9 +41,14 @@ exports.getAllNotifications = async (req, res) => {
     }
     let notify;
     if (userType === "admin") {
-      notify = await Notification.find().sort({ createdAt: -1 });
+      notify = await Notification.find({ isRead: false }).sort({
+        createdAt: -1,
+      });
     } else {
-      notify = await Notification.find({ receiverId: userId }).sort({
+      notify = await Notification.find({
+        receiverId: userId,
+        isRead: false,
+      }).sort({
         createdAt: -1,
       });
     }
@@ -85,7 +90,6 @@ exports.makeIgnore = async (req, res) => {
 exports.markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
-
     const updated = await Notification.findByIdAndUpdate(
       id,
       { isRead: true },
@@ -121,6 +125,38 @@ exports.markAsAllRead = async (req, res) => {
     res
       .status(500)
       .json({ status: false, message: "Error", error: error.message });
+  }
+};
+
+exports.markAsAllReadForAdmin = async (req, res) => {
+  try {
+    const { userType } = req.user;
+
+    // 🔐 Only admin allowed
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: false,
+        message: "Access denied. Admin only.",
+      });
+    }
+
+    // ✅ Only unread notifications update
+    const result = await Notification.updateMany(
+      { isRead: false },
+      { $set: { isRead: true } },
+    );
+
+    return res.status(200).json({
+      status: true,
+      message: "All unread notifications marked as read",
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Error",
+      error: error.message,
+    });
   }
 };
 
