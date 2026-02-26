@@ -36,7 +36,6 @@ router.post(
     }
     next();
   },
-  // auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   optionalAuth,
   createBusiness
 );

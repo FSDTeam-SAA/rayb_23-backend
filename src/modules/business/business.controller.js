@@ -234,7 +234,6 @@ exports.getAllBusinesses = async (req, res) => {
     };
 
     /* ---------------- SEARCH FILTERS ---------------- */
-
     if (search) {
       const regexArr = toRegexArray(search);
       query.$and.push({
@@ -295,7 +294,6 @@ exports.getAllBusinesses = async (req, res) => {
     if (query.$and.length === 0) delete query.$and;
 
     /* ---------------- FETCH FROM DB ---------------- */
-
     const totalCount = await Business.countDocuments(query);
 
     let businesses = await Business.find(query)
