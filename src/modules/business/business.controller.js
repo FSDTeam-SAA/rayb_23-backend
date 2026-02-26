@@ -299,6 +299,10 @@ exports.getAllBusinesses = async (req, res) => {
     const totalCount = await Business.countDocuments(query);
 
     let businesses = await Business.find(query)
+      .populate({
+        path: "review",
+        options: { sort: { createdAt: -1 } }, 
+      })
       .skip(skip)
       .limit(limitNumber)
       .lean();
