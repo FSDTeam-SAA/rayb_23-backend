@@ -17,30 +17,77 @@ const isValidChat = (participants) => {
   return false;
 };
 
+// const createChat = async (participants, businessId) => {
+//   // 1️⃣ Validate combination
+//   if (!isValidChat(participants)) {
+//     throw new Error("This chat combination is not allowed");
+//   }
+
+//   // 2️⃣ Convert userIds to ObjectId
+//   const userIds = participants.map(
+//     (p) => new mongoose.Types.ObjectId(p.userId),
+//   );
+
+//   // 3️⃣ Check if chat already exists for same participants + businessId
+//   let chat = await Chat.findOne({
+//     "participants.userId": { $all: userIds }, // both participants
+//     businessId: businessId ? businessId : null, // match specific business
+//     $expr: { $eq: [{ $size: "$participants" }, 2] }, // exactly 2 participants
+//   });
+
+//   // 4️⃣ If not exists, create new chat
+//   if (!chat) {
+//     chat = await Chat.create({ participants, businessId });
+//   }
+
+//   return chat;
+// };
+
 const createChat = async (participants, businessId) => {
-  // 1️⃣ Validate combination
+  // 1️⃣ Validate role combination
   if (!isValidChat(participants)) {
     throw new Error("This chat combination is not allowed");
   }
 
-  // 2️⃣ Convert userIds to ObjectId
-  const userIds = participants.map(
-    (p) => new mongoose.Types.ObjectId(p.userId),
-  );
+  // 2️⃣ Convert IDs to ObjectId
+  const formattedParticipants = participants.map((p) => ({
+    userId: new mongoose.Types.ObjectId(p.userId),
+    role: p.role,
+  }));
 
-  // 3️⃣ Check if chat already exists for same participants + businessId
-  let chat = await Chat.findOne({
-    "participants.userId": { $all: userIds }, // both participants
-    businessId: businessId ? businessId : null, // match specific business
-    $expr: { $eq: [{ $size: "$participants" }, 2] }, // exactly 2 participants
-  });
+  const businessObjectId = businessId
+    ? new mongoose.Types.ObjectId(businessId)
+    : null;
 
-  // 4️⃣ If not exists, create new chat
-  if (!chat) {
-    chat = await Chat.create({ participants, businessId });
+  // 3️⃣ Create deterministic chatKey
+  const sortedIds = formattedParticipants
+    .map((p) => p.userId.toString())
+    .sort();
+
+  const chatKey =
+    sortedIds.join("_") + "_" + (businessObjectId?.toString() || "null");
+
+  try {
+    // 4️⃣ Try to find existing chat
+    let chat = await Chat.findOne({ chatKey });
+
+    if (chat) return chat;
+
+    // 5️⃣ Create new chat
+    chat = await Chat.create({
+      participants: formattedParticipants,
+      businessId: businessObjectId,
+      chatKey,
+    });
+
+    return chat;
+  } catch (error) {
+    // 6️⃣ Handle duplicate key (race condition case)
+    if (error.code === 11000) {
+      return await Chat.findOne({ chatKey });
+    }
+    throw error;
   }
-
-  return chat;
 };
 
 
