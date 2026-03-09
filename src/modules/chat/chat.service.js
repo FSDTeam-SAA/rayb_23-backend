@@ -2,7 +2,6 @@ const { default: mongoose } = require("mongoose");
 const User = require("../user/user.model");
 const Chat = require("./chat.model");
 
-
 const isValidChat = (participants) => {
   if (!participants || participants.length !== 2) return false;
 
@@ -90,7 +89,6 @@ const createChat = async (participants, businessId) => {
   }
 };
 
-
 const getChat = async (userId, businessId = null) => {
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
@@ -99,7 +97,7 @@ const getChat = async (userId, businessId = null) => {
   const query = { "participants.userId": user._id };
 
   if (businessId) {
-    query.businessId = businessId; // filter by business if provided
+    query.businessId = businessId; 
   }
 
   // 2️⃣ Find chats
@@ -120,8 +118,6 @@ const getChat = async (userId, businessId = null) => {
 
   return updatedChats;
 };
-
-
 
 const chatService = {
   createChat,
