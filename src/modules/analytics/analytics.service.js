@@ -1,4 +1,6 @@
 const Business = require("../business/business.model");
+const Chat = require("../chat/chat.model");
+const Message = require("../message/message.model");
 const PictureModel = require("../picture/picture.model");
 const ReviewModel = require("../review/review.model");
 const User = require("../user/user.model");
@@ -22,7 +24,7 @@ const businessManDashboardAnalytics = async (
     throw new Error("Business not found or not authorized");
   }
 
-  // 🔥 dynamic date range
+  // 🟢 dynamic date
   let startDate = new Date();
 
   if (filter === "day") {
@@ -33,15 +35,29 @@ const businessManDashboardAnalytics = async (
     startDate.setMonth(startDate.getMonth() - 1);
   }
 
-  // 🚀 parallel queries (fast)
-  const [totalReviews, newReviews, totalPhotos, newPhotos] = await Promise.all([
+  // 🔥 get chats for this business
+  const chats = await Chat.find({
+    businessId: businessId,
+  }).select("_id");
+
+  const chatIds = chats.map((c) => c._id);
+
+  // 🚀 parallel queries
+  const [
+    totalReviews,
+    totalNewReviews,
+    totalPhotos,
+    newPhotos,
+    newReviews,
+    newMessages,
+  ] = await Promise.all([
     // total reviews
     ReviewModel.countDocuments({
       business: businessId,
       status: "approved",
     }),
 
-    // filtered reviews
+    // new review count
     ReviewModel.countDocuments({
       business: businessId,
       status: "approved",
@@ -54,20 +70,39 @@ const businessManDashboardAnalytics = async (
       status: "approved",
     }),
 
-    // filtered photos
+    // new photos
     PictureModel.countDocuments({
       business: businessId,
       status: "approved",
       createdAt: { $gte: startDate },
     }),
+
+    // 🔥 new review list
+    ReviewModel.find({
+      business: businessId,
+      status: "approved",
+      createdAt: { $gte: startDate },
+    })
+      .sort({ createdAt: -1 })
+      .limit(5), // latest 5
+
+    // 🔥 new message list
+    Message.find({
+      chat: { $in: chatIds },
+      createdAt: { $gte: startDate },
+    })
+      .sort({ createdAt: -1 })
+      .limit(5),
   ]);
 
   return {
-    filter, 
+    filter,
     totalReviews,
-    newReviews,
+    totalNewReviews,
     totalPhotos,
     newPhotos,
+    newReviews,
+    newMessages,
   };
 };
 
