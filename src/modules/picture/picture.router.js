@@ -17,41 +17,42 @@ const router = express.Router();
 router.post(
   "/upload-image",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  upload.array("image", 5),
-  uploadPicture
+  upload.array("image", 10),
+  uploadPicture,
 );
+
 router.get("/get-all-pictures", auth(USER_ROLE.admin), getAllPicturesAdmin);
 router.get(
   "/get-all-pictures-by-user",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  getAllPicturesByUser
+  getAllPicturesByUser,
 );
 router.get(
   "/get-all-pictures-by-business/:businessId",
   //   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  getPictureByBusinessId
+  getPictureByBusinessId,
 );
 
 router.get(
   "/get-picture/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  getPictureById
+  getPictureById,
 );
 router.put(
   "/update-picture/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  upload.array("image", 5),
-  updatePictureById
+  upload.array("image", 10),
+  updatePictureById,
 );
 router.put(
   "/toggle-status/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  togglePictureStatus
+  togglePictureStatus,
 );
 router.delete(
   "/delete-picture/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
-  deletedPicture
+  deletedPicture,
 );
 
 const pictureRouter = router;
