@@ -3,13 +3,16 @@ const PictureModel = require("../picture/picture.model");
 const ReviewModel = require("../review/review.model");
 const User = require("../user/user.model");
 
-const businessManDashboardAnalytics = async (email, businessId) => {
+const businessManDashboardAnalytics = async (
+  email,
+  businessId,
+  filter = "day",
+) => {
   const user = await User.findOne({ email });
   if (!user) {
     throw new Error("User not found");
   }
 
-  // 🔥 check business belongs to this user
   const business = await Business.findOne({
     _id: businessId,
     userId: user._id,
@@ -19,37 +22,48 @@ const businessManDashboardAnalytics = async (email, businessId) => {
     throw new Error("Business not found or not authorized");
   }
 
-  // 🟢 time range for "new" (last 7 days)
-  const last7Days = new Date();
-  last7Days.setDate(last7Days.getDate() - 7);
+  // 🔥 dynamic date range
+  let startDate = new Date();
 
-  // ✅ total review
-  const totalReviews = await ReviewModel.countDocuments({
-    business: businessId,
-    status: "approved",
-  });
+  if (filter === "day") {
+    startDate.setHours(0, 0, 0, 0);
+  } else if (filter === "week") {
+    startDate.setDate(startDate.getDate() - 7);
+  } else if (filter === "month") {
+    startDate.setMonth(startDate.getMonth() - 1);
+  }
 
-  // ✅ new review
-  const newReviews = await ReviewModel.countDocuments({
-    business: businessId,
-    createdAt: { $gte: last7Days },
-    status: "approved",
-  });
+  // 🚀 parallel queries (fast)
+  const [totalReviews, newReviews, totalPhotos, newPhotos] = await Promise.all([
+    // total reviews
+    ReviewModel.countDocuments({
+      business: businessId,
+      status: "approved",
+    }),
 
-  // ✅ total photo (from Picture collection)
-  const totalPhotos = await PictureModel.countDocuments({
-    business: businessId,
-    status: "approved",
-  });
+    // filtered reviews
+    ReviewModel.countDocuments({
+      business: businessId,
+      status: "approved",
+      createdAt: { $gte: startDate },
+    }),
 
-  // ✅ new photo
-  const newPhotos = await PictureModel.countDocuments({
-    business: businessId,
-    status: "approved",
-    createdAt: { $gte: last7Days },
-  });
+    // total photos
+    PictureModel.countDocuments({
+      business: businessId,
+      status: "approved",
+    }),
+
+    // filtered photos
+    PictureModel.countDocuments({
+      business: businessId,
+      status: "approved",
+      createdAt: { $gte: startDate },
+    }),
+  ]);
 
   return {
+    filter, 
     totalReviews,
     newReviews,
     totalPhotos,
