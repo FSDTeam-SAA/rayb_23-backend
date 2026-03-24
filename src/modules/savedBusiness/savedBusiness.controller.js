@@ -53,19 +53,24 @@ exports.createSavedBusiness = async (req, res) => {
       io.to(`${businessOwner._id}`).emit("new_notification", notifyOwner);
     }
 
-    const admins = await User.find({ userType: "admin" });
-    for (const admin of admins) {
-      const notifyAdmin = await Notification.create({
-        senderId: user._id,
+    const admin = await User.findOne({ userType: "admin" });
+    if (admin) {
+      const alreadyNotified = await Notification.findOne({
         receiverId: admin._id,
-        userType: "admin",
         type: "business_saved",
-        title: "Business Saved",
-        message: `${user.name} has saved a business "${business.businessInfo.name}"`,
-        metadata: { businessId: businessId },
       });
 
-      io.to(`${admin._id}`).emit("new_notification", notifyAdmin);
+      if (!alreadyNotified) {
+        await Notification.create({
+          senderId: user._id,
+          receiverId: admin._id,
+          userType: "admin",
+          type: "business_saved",
+          title: "Business Saved",
+          message: `${user.name} has saved a business ${business.businessInfo.name}`,
+          metadata: { businessId: businessId },
+        });
+      }
     }
 
     return res.status(201).json({

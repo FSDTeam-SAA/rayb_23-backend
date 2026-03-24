@@ -1,30 +1,44 @@
+const Notification = require("../notification/notification.model");
+const User = require("../user/user.model");
 const serviceOfferedService = require("./serviceOffered.service");
 
 const createServiceOffered = async (req, res) => {
   try {
-    const io = req.app.get("io");
     const { email } = req.user;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
     const result = await serviceOfferedService.createServiceOffered(
       email,
-      req.body
+      req.body,
     );
 
-    const admins = await User.find({ userType: "admin" });
-
-    for (const admin of admins) {
-      const notify = await Notification.create({
-        senderId: user._id,
+    const admin = await User.find({ userType: "admin" });
+    if (admin) {
+      const alreadyNotified = await Notification.findOne({
         receiverId: admin._id,
-        userType: "admin",
         type: "service_offered_created",
-        title: "New Service Offered Created",
-        message: `${user.name} created a new service offered: "${
-          result.name || ""
-        }"`,
-        metadata: { serviceOfferedId: result._id },
+        metadata: {
+          serviceOfferedId: result._id,
+        },
       });
 
-      io.to(`admin_${admin._id}`).emit("new_notification", notify);
+      if (!alreadyNotified) {
+        await Notification.create({
+          senderId: user._id,
+          receiverId: admin._id,
+          userType: "admin",
+          type: "service_offered_created",
+          title: "New Service Offered Created",
+          message: `${user.name} created a new service offered: ${result.name || ""}`,
+          metadata: { serviceOfferedId: result._id },
+        });
+      }
     }
 
     return res.status(201).json({
@@ -68,7 +82,7 @@ const addServicePricing = async (req, res) => {
     const result = await serviceOfferedService.addServicePricing(
       email,
       req.body,
-      serviceOfferedId
+      serviceOfferedId,
     );
     const admins = await User.find({ userType: "admin" });
 
@@ -108,7 +122,7 @@ const updateServiceOffered = async (req, res) => {
     const result = await serviceOfferedService.updateServiceOffered(
       email,
       serviceOfferedId,
-      req.body
+      req.body,
     );
 
     return res.status(200).json({

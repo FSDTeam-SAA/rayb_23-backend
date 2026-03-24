@@ -388,24 +388,33 @@ exports.updatePictureById = async (req, res) => {
     }
 
     // Notify all Admins
-    const admins = await User.find({ userType: "admin" });
-    for (const admin of admins) {
-      const notifyAdmin = await Notification.create({
-        senderId: user._id,
+    const admin = await User.find({ userType: "admin" });
+    if (admin) {
+      const alreadyNotified = await Notification.findOne({
         receiverId: admin._id,
-        userType: "admin",
         type: "review_image_updated",
-        title: "Picture Updated",
-        message: `${user.name} updated a review image for business: ${
-          business.businessInfo?.businessName || "N/A"
-        }`,
         metadata: {
           businessId: business._id,
           pictureId: updatedPicture._id,
         },
       });
 
-      io.to(`${admin._id}`).emit("new_notification", notifyAdmin);
+      if (!alreadyNotified) {
+        await Notification.create({
+          senderId: user._id,
+          receiverId: admin._id,
+          userType: "admin",
+          type: "review_image_updated",
+          title: "Picture Updated",
+          message: `${user.name} updated a review image for business: ${
+            business.businessInfo?.businessName || "N/A"
+          }`,
+          metadata: {
+            businessId: business._id,
+            pictureId: updatedPicture._id,
+          },
+        });
+      }
     }
 
     return res.status(200).json({
@@ -466,24 +475,33 @@ exports.deletedPicture = async (req, res) => {
     }
 
     // Notify all Admins
-    const admins = await User.find({ userType: "admin" });
-    for (const admin of admins) {
-      const notifyAdmin = await Notification.create({
-        senderId: user._id,
+    const admin = await User.find({ userType: "admin" });
+    if (admin) {
+      const alreadyNotified = await Notification.findOne({
         receiverId: admin._id,
-        userType: "admin",
         type: "review_image_deleted",
-        title: "Picture Deleted",
-        message: `${user.name} deleted a review image from business: ${
-          business.businessInfo?.businessName || "N/A"
-        }`,
         metadata: {
           businessId: business._id,
           pictureId: deletedPicture._id,
         },
       });
 
-      io.to(`${admin._id}`).emit("new_notification", notifyAdmin);
+      if (!alreadyNotified) {
+        await Notification.create({
+          senderId: user._id,
+          receiverId: admin._id,
+          userType: "admin",
+          type: "review_image_deleted",
+          title: "Picture Deleted",
+          message: `${user.name} deleted a review image for business: ${
+            business.businessInfo?.businessName || "N/A"
+          }`,
+          metadata: {
+            businessId: business._id,
+            pictureId: deletedPicture._id,
+          },
+        });
+      }
     }
 
     return res.status(200).json({
