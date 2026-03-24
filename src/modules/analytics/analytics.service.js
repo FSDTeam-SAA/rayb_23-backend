@@ -3,6 +3,7 @@ const Chat = require("../chat/chat.model");
 const Message = require("../message/message.model");
 const PictureModel = require("../picture/picture.model");
 const ReviewModel = require("../review/review.model");
+const SavedBusinessModel = require("../savedBusiness/SavedBusiness.model");
 const User = require("../user/user.model");
 
 const businessManDashboardAnalytics = async (
@@ -46,6 +47,8 @@ const businessManDashboardAnalytics = async (
   const [
     totalReviews,
     totalNewReviews,
+    totalSaveBusiness,
+    totalNewSaveBusiness,
     totalPhotos,
     newPhotos,
     newReviews,
@@ -61,6 +64,19 @@ const businessManDashboardAnalytics = async (
     ReviewModel.countDocuments({
       business: businessId,
       status: "approved",
+      createdAt: { $gte: startDate },
+    }),
+
+    // total saved businesses
+    SavedBusinessModel.countDocuments({
+      user: user._id,
+      //   business: businessId,
+    }),
+
+    // new saved businesses
+    SavedBusinessModel.countDocuments({
+      user: user._id,
+      //   business: businessId,
       createdAt: { $gte: startDate },
     }),
 
@@ -99,6 +115,8 @@ const businessManDashboardAnalytics = async (
     filter,
     totalReviews,
     totalNewReviews,
+    totalSaveBusiness,
+    totalNewSaveBusiness,
     totalPhotos,
     newPhotos,
     newReviews,
