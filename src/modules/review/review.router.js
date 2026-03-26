@@ -18,7 +18,7 @@ const router = express.Router();
 
 router.post(
   "/create",
-  upload.array("image", 5), 
+  upload.array("image", 10),
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
   createReview,
 );
@@ -36,6 +36,7 @@ router.get(
 router.put(
   "/edit/:id",
   auth(USER_ROLE.admin, USER_ROLE.businessMan, USER_ROLE.user),
+  upload.array("image", 10),
   updateReview,
 );
 

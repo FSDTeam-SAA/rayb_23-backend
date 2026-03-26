@@ -242,45 +242,79 @@ exports.updateReview = async (req, res) => {
     const io = req.app.get("io");
     const { email } = req.user;
     const { id } = req.params;
+    // Support both form-data with a `data` JSON field and plain form fields
+    let data = {};
+    if (req.body && req.body.data) {
+      try {
+        data = JSON.parse(req.body.data);
+      } catch (e) {
+        // If parsing fails, continue with empty data and pick from fields below
+        data = {};
+      }
+    } else {
+      data.rating = req.body.rating;
+      data.feedback = req.body.feedback;
+    }
+    const { rating, feedback } = data;
+
     const user = await User.findOne({ email });
     if (!user) {
-      throw new Error("User not found");
+      return res.status(404).json({ status: false, error: "User not found" });
     }
 
-    const review = await ReviewModel.findById(id);
+    // Ensure the user is the owner of the review
+    const review = await ReviewModel.findOne({ _id: id, user: user._id });
     if (!review) {
-      throw new Error("Review not found");
+      return res
+        .status(404)
+        .json({ status: false, error: "Your review was not found" });
+    }
+    // Handle uploaded images (upload.array is used in the router)
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      const uploadedImages = await Promise.all(
+        req.files.map(async (file) => {
+          const imageName = `reviews/${Date.now()}_${file.originalname}`;
+          const path = file.path;
+          const { secure_url } = await sendImageToCloudinary(imageName, path);
+          return secure_url;
+        }),
+      );
+
+      if (!Array.isArray(review.image)) review.image = [];
+      review.image.push(...uploadedImages);
     }
 
-    const file = req.file;
-    if (file) {
-      const imageName = `${Date.now()}-${file.originalname}`;
-      const path = file.path;
-      const { secure_url } = await sendImageToCloudinary(imageName, path);
-      review.image = secure_url;
-    }
+    // Update fields and persist
+    if (typeof rating !== "undefined") review.rating = rating;
+    if (typeof feedback !== "undefined") review.feedback = feedback;
 
-    const result = await ReviewModel.findByIdAndUpdate(id, req.body, {
-      new: true,
-    });
+    const updatedReview = await review.save();
 
-    const adminUsers = await User.find({ userType: "admin" });
-    const business = await Business.findById(result.business);
-    const ownerId = business?.user;
+    const business = await Business.findById(review.business);
+    const ownerId = business?.userId;
 
-    for (const admin of adminUsers) {
-      const notify = await Notification.create({
-        senderId: user._id,
+    const admin = await User.findOne({ userType: "admin" });
+    if (admin) {
+      const alreadyNotified = await Notification.findOne({
         receiverId: admin._id,
-        userType: "admin",
-        type: "review_updated",
-        title: "Review Updated",
-        message: `${user.name || "A user"} updated a review.`,
-        metadata: { businessId: business?._id, reviewId: result._id },
+        type: "review",
+        "metadata.businessId": business._id,
       });
-      io.to(`${admin._id}`).emit("new_notification", notify);
+
+      if (!alreadyNotified) {
+        await Notification.create({
+          senderId: user._id,
+          receiverId: admin._id,
+          userType: "admin",
+          type: "review",
+          title: `${user.name} review is updated`,
+          message: `${user.name} updated a review on ${business.businessInfo.name}.`,
+          metadata: { businessId: business._id, reviewId: updatedReview._id },
+        });
+      }
     }
 
+    // Owner notification
     if (ownerId) {
       const notify = await Notification.create({
         senderId: user._id,
@@ -288,10 +322,8 @@ exports.updateReview = async (req, res) => {
         userType: "businessMan",
         type: "review_updated",
         title: "A Review Was Updated",
-        message: `${
-          user.name || "A user"
-        } updated their review on your business.`,
-        metadata: { businessId: business._id, reviewId: result._id },
+        message: `${user.name || "A user"} updated their review on your business.`,
+        metadata: { businessId: business._id, reviewId: updatedReview._id },
       });
       io.to(`${ownerId}`).emit("new_notification", notify);
     }
@@ -299,7 +331,7 @@ exports.updateReview = async (req, res) => {
     return res.json({
       status: true,
       message: "Review updated successfully",
-      data: result,
+      data: updatedReview,
     });
   } catch (error) {
     return res.status(500).json({ status: false, error: error.message });
@@ -479,11 +511,14 @@ exports.deleteReview = async (req, res) => {
       });
     }
 
-    const review = await ReviewModel.findByIdAndDelete(id);
+    const review = await ReviewModel.findByIdAndDelete({
+      _id: id,
+      user: user._id,
+    });
     if (!review) {
       return res.status(404).json({
         status: false,
-        message: "Review not found",
+        message: "Your add review was not found",
       });
     }
 
@@ -585,7 +620,7 @@ exports.addReplyMyBusinessReview = async (req, res) => {
       });
     }
 
-    const review = await ReviewModel.findById(reviewId)
+    const review = await ReviewModel.findById(reviewId);
     if (!review) {
       return res.status(404).json({
         success: false,
