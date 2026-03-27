@@ -582,7 +582,7 @@ exports.getMyApprovedBusinesses = async (req, res) => {
       return res.status(404).json({ success: false, error: "User not found" });
     }
     const businesses = await Business.find({
-      userId: user._id,
+      email: user.email,
       status: "approved",
     });
 
