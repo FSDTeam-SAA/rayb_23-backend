@@ -607,16 +607,17 @@ exports.getDashboardData = async (req, res) => {
   try {
     const { range = "day" } = req.query;
 
+    // Set start date based on range
     const start = new Date();
     start.setHours(0, 0, 0, 0);
 
     if (range === "week") {
-      start.setDate(start.getDate() - 7);
+      start.setDate(start.getDate() - 7); // last 7 days
     } else if (range === "month") {
-      start.setDate(1);
+      start.setDate(1); // start of current month
     }
 
-    // Helper to count total and new
+    // Helper function to count total and new items
     const countData = async (Model, extraFilter = {}) => {
       const total = await Model.countDocuments(extraFilter);
       const newCount = await Model.countDocuments({
@@ -626,12 +627,14 @@ exports.getDashboardData = async (req, res) => {
       return { total, new: newCount };
     };
 
+    // ====== Count total & new ======
     const businesses = await countData(Business);
     const reviews = await countData(ReviewModel);
     const photos = await countData(PictureModel);
     const claims = await countData(ClaimBussiness);
     const users = await countData(User);
 
+    // ====== Count pending / submissions ======
     const businessSubmissions = await countData(Business, {
       status: "pending",
     });
@@ -644,10 +647,9 @@ exports.getDashboardData = async (req, res) => {
     const claimRequests = await countData(ClaimBussiness, {
       status: "pending",
     });
-    const profilesUnderReview = await countData(User, {
-      status: "pending",
-    });
+    const profilesUnderReview = await countData(User, { status: "pending" });
 
+    // ====== Dashboard response ======
     const dashboardData = {
       businesses,
       reviews,
@@ -663,10 +665,11 @@ exports.getDashboardData = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Dashboard data get successfully",
+      message: "Dashboard data retrieved successfully",
       data: dashboardData,
     });
   } catch (error) {
+    console.error("Dashboard Error:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 };
