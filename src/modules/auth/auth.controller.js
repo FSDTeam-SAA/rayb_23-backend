@@ -41,7 +41,6 @@ const loginUser = async (req, res) => {
   }
 };
 
-
 const loginWithToken = async (req, res) => {
   try {
     const result = await authService.loginWithToken(req.body);
@@ -51,7 +50,6 @@ const loginWithToken = async (req, res) => {
       message: "User logged in successfully",
       data: result,
     });
-
   } catch (error) {
     return res.status(400).json({
       success: false,
@@ -165,6 +163,21 @@ const toggleTwoFactorAuthentication = async (req, res) => {
   }
 };
 
+const clearRestoreFlag = async (req, res) => {
+  try {
+    const { email } = req.user;
+    const result = await authService.clearRestoreFlag(email);
+
+    return res.status(200).json({
+      success: true,
+      message: "Restore flag cleared successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 const authController = {
   loginUser,
   refreshToken,
@@ -173,7 +186,8 @@ const authController = {
   resetPassword,
   changePassword,
   toggleTwoFactorAuthentication,
-  loginWithToken
+  loginWithToken,
+  clearRestoreFlag,
 };
 
 module.exports = authController;

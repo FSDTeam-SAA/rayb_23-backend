@@ -112,10 +112,6 @@ const createNewAccountInDB = async (payload) => {
     }
   }
 
-  await User.findByIdAndUpdate(result._id, {
-    justRestored: false,
-  });
-
   return {
     user: {
       _id: result._id,

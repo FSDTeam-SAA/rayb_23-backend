@@ -91,6 +91,7 @@ const loginUser = async (payload) => {
     return {
       message: "Please verify your email",
       accessToken,
+      // justRestored: user.justRestored,
     };
   }
 
@@ -351,6 +352,20 @@ const loginWithToken = async (payload) => {
   }
 };
 
+const clearRestoreFlag = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  const result = await User.findOneAndUpdate(
+    { email },
+    {
+      justRestored: false,
+    },
+    { new: true },
+  );
+  return result;
+};
+
 const authService = {
   loginUser,
   LoginRefreshToken,
@@ -360,6 +375,7 @@ const authService = {
   changePassword,
   toggleTwoFactorAuthentication,
   loginWithToken,
+  clearRestoreFlag,
 };
 
 module.exports = authService;

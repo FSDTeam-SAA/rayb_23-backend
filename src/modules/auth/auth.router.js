@@ -15,27 +15,31 @@ router.post("/forgot-password", authController.forgotPassword);
 router.post(
   "/verify-token",
   auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
-  authController.verifyToken
+  authController.verifyToken,
 );
 
 router.post(
   "/reset-password",
   auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
-  authController.resetPassword
+  authController.resetPassword,
 );
-
-
 
 router.post(
   "/change-password",
   auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
-  authController.changePassword
+  authController.changePassword,
 );
 
 router.post(
   "/toggle-auth",
   auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
-  authController.toggleTwoFactorAuthentication
+  authController.toggleTwoFactorAuthentication,
+);
+
+router.patch(
+  "/restore-flag",
+  auth(USER_ROLE.businessMan, USER_ROLE.user, USER_ROLE.admin),
+  authController.clearRestoreFlag,
 );
 
 const authRouter = router;

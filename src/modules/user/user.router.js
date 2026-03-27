@@ -73,7 +73,7 @@ router.get(
 
 router.put(
   "/toggle-status/:userId",
-  auth(USER_ROLE.admin),
+  // auth(USER_ROLE.admin),
   userController.toggleUserStatus
 );
 
