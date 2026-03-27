@@ -112,6 +112,10 @@ const createNewAccountInDB = async (payload) => {
     }
   }
 
+  await User.findByIdAndUpdate(result._id, {
+    justRestored: false,
+  });
+
   return {
     user: {
       _id: result._id,
@@ -408,7 +412,6 @@ const toggleUserStatus = async (userId) => {
   } else {
     // user currently inactive → unsuspend
     user.isActive = true;
-
 
     const lastSuspension =
       user.suspensionHistory[user.suspensionHistory.length - 1];
