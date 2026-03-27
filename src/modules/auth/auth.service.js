@@ -46,12 +46,8 @@ const loginUser = async (payload) => {
     }
   }
 
-console.log("Email:", email);
-console.log("Plain password:", payload.password);
-console.log("DB password hash:", user.password);
-
   const isPasswordValid = await bcrypt.compare(payload.password, user.password);
-console.log("Password match result:", isPasswordValid);
+
   if (!isPasswordValid) throw new Error("Invalid password");
 
   const tokenPayload = {

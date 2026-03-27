@@ -23,7 +23,7 @@ exports.uploadPicture = async (req, res) => {
       });
     }
     const data = JSON.parse(req.body.data);
-    console.log(data);
+
     if (!data.business) {
       return res
         .status(400)

@@ -34,7 +34,7 @@ const userModel = new Schema(
       type: String,
       enum: ["user", "businessMan", "admin"],
     },
-    isActive: {  
+    isActive: {
       type: Boolean,
       default: true,
     },
@@ -50,11 +50,13 @@ const userModel = new Schema(
       type: String,
       default: null,
     },
-    isDeactivate: {  // isDeactivate false means user can login in 30 days
+    isDeactivate: {
+      // isDeactivate false means user can login in 30 days
       type: Boolean,
       default: false,
     },
-    isDelete: {  // isDelete true means it's deleted by admin like permanently deleted.
+    isDelete: {
+      // isDelete true means it's deleted by admin like permanently deleted.
       type: Boolean,
       default: false,
     },
@@ -63,6 +65,19 @@ const userModel = new Schema(
       default: null,
     },
     toFactorAuth: {
+      type: Boolean,
+      default: false,
+    },
+    suspensionHistory: {
+      type: [
+        {
+          suspendedAt: { type: Date },
+          unsuspendAt: { type: Date },
+        },
+      ],
+      default: [],
+    },
+    justRestored: {
       type: Boolean,
       default: false,
     },
@@ -79,7 +94,7 @@ const userModel = new Schema(
       type: String,
     },
   },
-  { timestamps: true, versionKey: false }
+  { timestamps: true, versionKey: false },
 );
 
 userModel.pre("save", async function (next) {

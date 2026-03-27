@@ -181,7 +181,7 @@ const verifyUserEmail = async (payload, email) => {
 
 const resendOtpCode = async ({ email }) => {
   const existingUser = await User.findOne({ email });
-  // console.log(existingUser);
+
   if (!existingUser) throw new Error("User not found");
 
   if (existingUser.isVerified) {
@@ -394,15 +394,35 @@ const toggleUserStatus = async (userId) => {
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
 
-  const result = await User.findByIdAndUpdate(
-    userId,
-    {
-      $set: { isActive: !user.isActive },
-    },
-    { new: true },
-  );
+  // যদি current isActive = true → এবার suspend করতে হবে
+  if (user.isActive) {
+    user.isActive = false;
 
-  return result;
+    // suspensionHistory update
+    user.suspensionHistory.push({
+      suspendedAt: new Date(),
+      unsuspendAt: null,
+    });
+
+    user.justRestored = false; // suspend হলে restore message OFF
+  } else {
+    // user currently inactive → unsuspend
+    user.isActive = true;
+
+
+    const lastSuspension =
+      user.suspensionHistory[user.suspensionHistory.length - 1];
+    if (lastSuspension && !lastSuspension.unsuspendAt) {
+      lastSuspension.unsuspendAt = new Date();
+    }
+
+    // frontend message trigger
+    user.justRestored = true;
+  }
+
+  await user.save();
+
+  return user; // optional: return updated user
 };
 
 const userService = {
