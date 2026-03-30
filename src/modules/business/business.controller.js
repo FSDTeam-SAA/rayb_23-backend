@@ -215,6 +215,7 @@ exports.getAllBusinesses = async (req, res) => {
       offerMusicLessons,
       tradeInstruments,
       rentInstruments,
+      isMusicLessons,
       sort,
       openNow,
       postalCode,
@@ -305,6 +306,7 @@ exports.getAllBusinesses = async (req, res) => {
     if (offerMusicLessons === "true") query.offerMusicLessons = true;
     if (tradeInstruments === "true") query.tradeInstruments = true;
     if (rentInstruments === "true") query.rentInstruments = true;
+    if (isMusicLessons === "true") query.isMusicLessons = true;
 
     if (query.$and.length === 0) delete query.$and;
 
