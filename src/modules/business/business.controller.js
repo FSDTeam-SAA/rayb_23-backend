@@ -204,6 +204,7 @@ exports.getAllBusinesses = async (req, res) => {
   try {
     const {
       search,
+      searchLocation,
       instrumentFamily,
       selectedInstrumentsGroup,
       newInstrumentName,
@@ -239,11 +240,21 @@ exports.getAllBusinesses = async (req, res) => {
       query.$and.push({
         $or: regexArr.flatMap((regex) => [
           { "businessInfo.name": regex },
-          { "businessInfo.address": regex },
+          // { "businessInfo.address": regex },
           { "services.newInstrumentName": regex },
           { "musicLessons.newInstrumentName": regex },
           { "services.instrumentFamily": regex },
         ]),
+      });
+    }
+
+    // 🔹 Location search (NEW)
+    if (searchLocation) {
+      const regexArr = toRegexArray(searchLocation);
+      query.$and.push({
+        $or: regexArr.map((regex) => ({
+          "businessInfo.address": regex,
+        })),
       });
     }
 
@@ -299,7 +310,7 @@ exports.getAllBusinesses = async (req, res) => {
     let businesses = await Business.find(query)
       .populate({
         path: "review",
-        options: { sort: { createdAt: -1 } }, 
+        options: { sort: { createdAt: -1 } },
       })
       .skip(skip)
       .limit(limitNumber)
@@ -433,9 +444,6 @@ exports.getBusinessById = async (req, res) => {
       status: "approved",
     });
 
-
-    
-
     // 3️⃣ Fetch approved review images
     const reviews = await ReviewModel.find({
       business: businessId,
@@ -520,7 +528,6 @@ exports.getBusinessById = async (req, res) => {
     });
   }
 };
-
 
 //! Check the logic again.
 exports.getBusinessesByUser = async (req, res) => {
