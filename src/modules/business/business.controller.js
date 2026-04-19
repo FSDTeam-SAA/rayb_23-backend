@@ -253,11 +253,9 @@ exports.getAllBusinesses = async (req, res) => {
 
     // 🔹 Location search (NEW)
     if (searchLocation) {
-      const regexArr = toRegexArray(searchLocation);
+      const regex = new RegExp(`,\\s*${searchLocation}(,|$)`, "i");
       query.$and.push({
-        $or: regexArr.map((regex) => ({
-          "businessInfo.address": regex,
-        })),
+        "businessInfo.address": regex,
       });
     }
 
@@ -535,7 +533,7 @@ exports.getBusinessById = async (req, res) => {
   }
 };
 
-//! Check the logic again.
+
 exports.getBusinessesByUser = async (req, res) => {
   try {
     const { userId } = req.user;
