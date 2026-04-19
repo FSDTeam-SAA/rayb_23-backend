@@ -593,8 +593,8 @@ exports.getMyApprovedBusinesses = async (req, res) => {
       return res.status(404).json({ success: false, error: "User not found" });
     }
     const businesses = await Business.find({
-      email: user.email,
       status: "approved",
+      $or: [{ email: user.email }, { userId: user._id }],
     });
 
     // console.log("Found businesses:", businesses);
