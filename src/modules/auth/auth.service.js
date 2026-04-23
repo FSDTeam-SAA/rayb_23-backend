@@ -66,7 +66,7 @@ const loginUser = async (payload) => {
     tokenPayload,
     config.refreshTokenSecret,
     config.jwtRefreshTokenExpiresIn,
-  );
+  );    
 
   if (String(user.toFactorAuth) === "true") {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -91,7 +91,6 @@ const loginUser = async (payload) => {
     return {
       message: "Please verify your email",
       accessToken,
-      // justRestored: user.justRestored,
     };
   }
 

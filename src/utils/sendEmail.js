@@ -10,7 +10,7 @@ const sendEmail = async ({ to, subject, html }) => {
       auth: {
         user: config.email.emailAddress,
         pass: config.email.emailPass,
-      },
+      },  
       tls: {
         rejectUnauthorized: false,
       },
