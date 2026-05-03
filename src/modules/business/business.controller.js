@@ -251,7 +251,6 @@ exports.getAllBusinesses = async (req, res) => {
       });
     }
 
-    // 🔹 Location search (NEW)
     if (searchLocation) {
   const arr = Array.isArray(searchLocation)
     ? searchLocation
@@ -260,7 +259,6 @@ exports.getAllBusinesses = async (req, res) => {
   const regexArr = arr.map((loc) => {
     const escaped = loc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    // 🔥 Exact word match (not part of another word)
     return new RegExp(`(^|,|\\s)${escaped}(,|$|\\s)`, "i");
   });
 
@@ -435,7 +433,7 @@ exports.getBusinessById = async (req, res) => {
   try {
     const { businessId } = req.params;
 
-    // 1️⃣ Fetch business
+    // Fetch business
     const business = await Business.findById(businessId)
       .populate("services")
       .populate("musicLessons")
