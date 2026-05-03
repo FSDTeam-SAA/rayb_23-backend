@@ -253,11 +253,23 @@ exports.getAllBusinesses = async (req, res) => {
 
     // 🔹 Location search (NEW)
     if (searchLocation) {
-      const regexArr = toRegexArray(searchLocation);
-      query.$and.push({
-        $or: regexArr.map((regex) => ({ "businessInfo.address": regex })),
-      });
-    }
+  const arr = Array.isArray(searchLocation)
+    ? searchLocation
+    : [searchLocation];
+
+  const regexArr = arr.map((loc) => {
+    const escaped = loc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    // 🔥 Exact word match (not part of another word)
+    return new RegExp(`(^|,|\\s)${escaped}(,|$|\\s)`, "i");
+  });
+
+  query.$and.push({
+    $or: regexArr.map((regex) => ({
+      "businessInfo.address": regex,
+    })),
+  });
+}
 
     if (postalCode) {
       const regexArr = toRegexArray(postalCode);
