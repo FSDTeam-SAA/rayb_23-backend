@@ -97,7 +97,7 @@ const getChat = async (userId, businessId = null) => {
   const query = { "participants.userId": user._id };
 
   if (businessId) {
-    query.businessId = businessId; 
+    query.businessId = businessId;
   }
 
   // 2️⃣ Find chats
@@ -108,10 +108,10 @@ const getChat = async (userId, businessId = null) => {
     .sort({ updatedAt: -1 })
     .lean();
 
-  // 3️⃣ Remove current user from participants
+  // 3️⃣ Remove current user from participants (FIXED)
   const updatedChats = chats.map((chat) => {
     chat.participants = chat.participants.filter(
-      (p) => p.userId._id.toString() !== userId,
+      (p) => p?.userId && p.userId._id.toString() !== userId,
     );
     return chat;
   });
