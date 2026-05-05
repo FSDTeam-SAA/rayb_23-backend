@@ -269,10 +269,24 @@ const toggleClaimBussinessStatus = async (claimBusinessId, payload) => {
     { new: true },
   );
 
+  // if (status === "approved") {
+  //   await Business.findByIdAndUpdate(
+  //     business._id,
+  //     { $set: { isClaimed: true } },
+  //     { new: true },
+  //   );
+  // }
+
+
   if (status === "approved") {
     await Business.findByIdAndUpdate(
       business._id,
-      { $set: { isClaimed: true } },
+      {
+        $set: {
+          isClaimed: true,
+          userId: user._id, 
+        },
+      },
       { new: true },
     );
   }
