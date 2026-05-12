@@ -252,22 +252,22 @@ exports.getAllBusinesses = async (req, res) => {
     }
 
     if (searchLocation) {
-  const arr = Array.isArray(searchLocation)
-    ? searchLocation
-    : [searchLocation];
+      const arr = Array.isArray(searchLocation)
+        ? searchLocation
+        : [searchLocation];
 
-  const regexArr = arr.map((loc) => {
-    const escaped = loc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const locationConditions = arr.map((loc) => {
+        const exactPattern = `(^|, )${loc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(,|$)`;
 
-    return new RegExp(`(^|,|\\s)${escaped}(,|$|\\s)`, "i");
-  });
+        return {
+          "businessInfo.address": new RegExp(exactPattern, "i"),
+        };
+      });
 
-  query.$and.push({
-    $or: regexArr.map((regex) => ({
-      "businessInfo.address": regex,
-    })),
-  });
-}
+      query.$and.push({
+        $or: locationConditions,
+      });
+    }
 
     if (postalCode) {
       const regexArr = toRegexArray(postalCode);
@@ -542,7 +542,6 @@ exports.getBusinessById = async (req, res) => {
     });
   }
 };
-
 
 exports.getBusinessesByUser = async (req, res) => {
   try {
