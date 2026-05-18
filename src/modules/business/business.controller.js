@@ -264,11 +264,12 @@ exports.getAllBusinesses = async (req, res) => {
       const locationConditions = arr.map((loc) => {
         const escaped = loc.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-        // Match the location as a complete segment between commas (or start/end)
-        // (?:^|,\s*) ensures it starts at beginning or after a comma
-        // (?=\s*,|\s*$) ensures it ends at a comma or end of string
-        // \s* handles optional spaces
-        const exactPattern = `(?:^|,\\s*)\\s*${escaped}\\s*(?:,|$)`;
+        // Match the location:
+        // - Anywhere after a comma+space (handles street prefix before it)
+        // - OR at the very start of the string
+        // - Followed optionally by a zip code
+        // - Followed by comma or end of string
+        const exactPattern = `(?:^|,\\s*)\\s*${escaped}(\\s+\\d{5}(-\\d{4})?)?\\s*(?:,|$)`;
 
         return {
           'businessInfo.address': new RegExp(exactPattern, 'i'),
