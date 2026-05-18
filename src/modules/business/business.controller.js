@@ -113,30 +113,42 @@ exports.createBusiness = async (req, res) => {
       });
     }
 
-    // ---------- Google Place Reviews ----------
     let placeReviews = [];
     let placeId = null;
 
     try {
+      // STEP 1: Geocoding API → Get Place ID
       const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        businessInfo.address,
+        `${businessInfo.name} ${businessInfo.address}`,
       )}&key=${GOOGLE_API_KEY}`;
 
       const geoResponse = await axios.get(geoUrl);
+
       console.log('Geo Status:', geoResponse.data.status);
-      console.log('Place ID:', placeId);
 
       if (geoResponse.data.status === 'OK' && geoResponse.data.results.length > 0) {
         placeId = geoResponse.data.results[0].place_id;
 
-        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=rating,reviews&key=${GOOGLE_API_KEY}`;
-        const detailsResponse = await axios.get(detailsUrl);
-        console.log('Details Response:', detailsResponse.data);
+        console.log('Place ID:', placeId);
 
-        if (detailsResponse.data.result?.reviews?.length > 0) {
-          placeReviews = detailsResponse.data.result.reviews.slice(0, 5).map((r) => ({
-            rating: r.rating,
-            feedback: r.text || 'No feedback',
+        // STEP 2: Places API (New)
+        const detailsUrl = `https://places.googleapis.com/v1/places/${placeId}`;
+
+        const detailsResponse = await axios.get(detailsUrl, {
+          headers: {
+            'X-Goog-Api-Key': GOOGLE_API_KEY,
+            'X-Goog-FieldMask': 'displayName,rating,reviews',
+          },
+        });
+
+        console.log('Details Response:', JSON.stringify(detailsResponse.data, null, 2));
+
+        const reviews = detailsResponse.data.reviews || [];
+
+        if (reviews.length > 0) {
+          placeReviews = reviews.slice(0, 5).map((r) => ({
+            rating: r.rating || 0,
+            feedback: r.originalText?.text || r.text?.text || 'No feedback',
             user: null,
             business: business._id,
             googlePlaceId: placeId,
@@ -145,7 +157,7 @@ exports.createBusiness = async (req, res) => {
         }
       }
     } catch (err) {
-      console.warn('Google review fetch failed:', err.message);
+      console.warn('Google review fetch failed:', err.response?.data || err.message);
     }
 
     if (placeReviews.length > 0) {
@@ -250,16 +262,20 @@ exports.getAllBusinesses = async (req, res) => {
       const arr = Array.isArray(searchLocation) ? searchLocation : [searchLocation];
 
       const locationConditions = arr.map((loc) => {
-        const exactPattern = `(^|, )${loc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(,|$)`;
+        const escaped = loc.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // Match the location as a complete segment between commas (or start/end)
+        // (?:^|,\s*) ensures it starts at beginning or after a comma
+        // (?=\s*,|\s*$) ensures it ends at a comma or end of string
+        // \s* handles optional spaces
+        const exactPattern = `(?:^|,\\s*)\\s*${escaped}\\s*(?:,|$)`;
 
         return {
           'businessInfo.address': new RegExp(exactPattern, 'i'),
         };
       });
 
-      query.$and.push({
-        $or: locationConditions,
-      });
+      query.$and.push({ $or: locationConditions });
     }
 
     if (postalCode) {
