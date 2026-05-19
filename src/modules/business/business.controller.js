@@ -72,18 +72,6 @@ exports.createBusiness = async (req, res) => {
       }),
     );
 
-    // if (type === "addABusiness") {
-    //   const isEmailAlreadyInUse = await Business.findOne({ email });
-    //   if (isEmailAlreadyInUse) {
-    //     throw new Error("Email is already use by another business");
-    //   }
-
-    //   const isEmailUseAsUser = await User.findOne({ email });
-    //   if (isEmailUseAsUser) {
-    //     throw new Error("Email is already use by another user");
-    //   }
-    // }
-
     // ---------- Create Business (NO AUTO APPROVAL) ----------
     const business = await Business.create({
       ...rest,
@@ -98,8 +86,8 @@ exports.createBusiness = async (req, res) => {
       businessHours,
       longitude,
       latitude,
-      isVerified: false, // ❌ no auto approval
-      status: 'pending', // ❌ always pending
+      isVerified: false,
+      status: 'pending',
       email: type === 'addABusiness' ? email : null,
       isClaimed: type === 'addABusiness' ? false : true,
     });
@@ -124,14 +112,8 @@ exports.createBusiness = async (req, res) => {
 
       const geoResponse = await axios.get(geoUrl);
 
-      console.log('Geo Status:', geoResponse.data.status);
-
       if (geoResponse.data.status === 'OK' && geoResponse.data.results.length > 0) {
         placeId = geoResponse.data.results[0].place_id;
-
-        console.log('Place ID:', placeId);
-
-        // STEP 2: Places API (New)
         const detailsUrl = `https://places.googleapis.com/v1/places/${placeId}`;
 
         const detailsResponse = await axios.get(detailsUrl, {
@@ -140,8 +122,6 @@ exports.createBusiness = async (req, res) => {
             'X-Goog-FieldMask': 'displayName,rating,reviews',
           },
         });
-
-        console.log('Details Response:', JSON.stringify(detailsResponse.data, null, 2));
 
         const reviews = detailsResponse.data.reviews || [];
 
@@ -153,6 +133,8 @@ exports.createBusiness = async (req, res) => {
             business: business._id,
             googlePlaceId: placeId,
             status: 'approved',
+            googleAuthorName: r.authorAttribution?.displayName || '',
+            googleAuthorPhoto: r.authorAttribution?.photoUri || '',
           }));
         }
       }
@@ -429,6 +411,116 @@ exports.getAllBusinesses = async (req, res) => {
   }
 };
 
+// exports.getBusinessById = async (req, res) => {
+//   try {
+//     const { businessId } = req.params;
+
+//     // Fetch business
+//     const business = await Business.findById(businessId)
+//       .populate('services')
+//       .populate('musicLessons')
+//       .populate({
+//         path: 'review',
+//         populate: {
+//           path: 'user',
+//           select: 'name email imageLink',
+//         },
+//       });
+
+//     if (!business) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'Business not found',
+//       });
+//     }
+
+//     // 2️⃣ Fetch ONLY approved claim (important)
+//     const claim = await ClaimBussiness.findOne({
+//       businessId,
+//       status: 'approved',
+//     });
+
+//     // 3️⃣ Fetch approved review images
+//     const reviews = await ReviewModel.find({
+//       business: businessId,
+//       status: 'approved',
+//     }).select('image');
+
+//     const reviewImages = reviews.flatMap((r) => r.image || []);
+
+//     // 4️⃣ Fetch approved picture images
+//     const pictures = await PictureModel.find({
+//       business: businessId,
+//       status: 'approved',
+//     }).select('image');
+
+//     const pictureImages = pictures.flatMap((p) => p.image || []);
+
+//     // 5️⃣ Combine all images
+//     const allImages = [...(business.businessInfo?.image || []), ...reviewImages, ...pictureImages];
+
+//     // 6️⃣ Fetch user-added photos with user info
+//     const userAddPhotos = await PictureModel.find({
+//       business: businessId,
+//       status: 'approved',
+//     })
+//       .populate('user', 'name imageLink')
+//       .select('image user createdAt');
+
+//     const userPhotoMap = {};
+
+//     userAddPhotos.forEach((photo) => {
+//       const userId = photo.user?._id?.toString() || 'anonymous';
+
+//       if (!userPhotoMap[userId]) {
+//         userPhotoMap[userId] = {
+//           addedBy: {
+//             name: photo.user?.name || 'Anonymous',
+//             profilePhoto: photo.user?.imageLink || null,
+//           },
+//           images: [],
+//         };
+//       }
+
+//       userPhotoMap[userId].images.push(...(photo.image || []));
+//     });
+
+//     const userAddedPhotos = Object.values(userPhotoMap);
+
+//     // 7️⃣ Final response object (NO overwrite bug)
+//     const businessWithDetails = {
+//       ...business.toObject(),
+
+//       // ✅ DO NOT override isClaimed unless approved claim exists
+//       isClaimed: business.isClaimed,
+
+//       claimInfo: claim
+//         ? {
+//             userId: claim.userId,
+//             status: claim.status,
+//             isVerified: claim.isVerified,
+//             documents: claim.documents,
+//           }
+//         : null,
+
+//       images: allImages,
+//       userAddedPhotos,
+//     };
+
+//     // 8️⃣ Send response
+//     return res.status(200).json({
+//       success: true,
+//       message: 'Business fetched successfully',
+//       data: businessWithDetails,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
 exports.getBusinessById = async (req, res) => {
   try {
     const { businessId } = req.params;
@@ -452,13 +544,45 @@ exports.getBusinessById = async (req, res) => {
       });
     }
 
-    // 2️⃣ Fetch ONLY approved claim (important)
+    // =========================================================
+    // REVIEW FILTER LOGIC
+    // =========================================================
+
+    // Genuine reviews = reviews added by your platform users
+    // Google reviews = reviews having googlePlaceId
+
+    const allReviews = business.review || [];
+
+    const genuineReviews = allReviews.filter(
+      (review) => !review.googlePlaceId && review.status === 'approved',
+    );
+
+    const googleReviews = allReviews.filter((review) => review.googlePlaceId);
+
+    // If genuine approved reviews >= 3
+    // then DO NOT show Google reviews
+    let finalReviews = [];
+
+    if (genuineReviews.length >= 3) {
+      finalReviews = genuineReviews;
+    } else {
+      // Otherwise show all reviews
+      finalReviews = allReviews;
+    }
+
+    // =========================================================
+    // Fetch ONLY approved claim
+    // =========================================================
+
     const claim = await ClaimBussiness.findOne({
       businessId,
       status: 'approved',
     });
 
-    // 3️⃣ Fetch approved review images
+    // =========================================================
+    // Fetch approved review images
+    // =========================================================
+
     const reviews = await ReviewModel.find({
       business: businessId,
       status: 'approved',
@@ -466,7 +590,10 @@ exports.getBusinessById = async (req, res) => {
 
     const reviewImages = reviews.flatMap((r) => r.image || []);
 
-    // 4️⃣ Fetch approved picture images
+    // =========================================================
+    // Fetch approved picture images
+    // =========================================================
+
     const pictures = await PictureModel.find({
       business: businessId,
       status: 'approved',
@@ -474,10 +601,16 @@ exports.getBusinessById = async (req, res) => {
 
     const pictureImages = pictures.flatMap((p) => p.image || []);
 
-    // 5️⃣ Combine all images
+    // =========================================================
+    // Combine all images
+    // =========================================================
+
     const allImages = [...(business.businessInfo?.image || []), ...reviewImages, ...pictureImages];
 
-    // 6️⃣ Fetch user-added photos with user info
+    // =========================================================
+    // Fetch user-added photos with user info
+    // =========================================================
+
     const userAddPhotos = await PictureModel.find({
       business: businessId,
       status: 'approved',
@@ -505,11 +638,17 @@ exports.getBusinessById = async (req, res) => {
 
     const userAddedPhotos = Object.values(userPhotoMap);
 
-    // 7️⃣ Final response object (NO overwrite bug)
+    // =========================================================
+    // Final response object
+    // =========================================================
+
     const businessWithDetails = {
       ...business.toObject(),
 
-      // ✅ DO NOT override isClaimed unless approved claim exists
+      // Replace review with filtered review list
+      review: finalReviews,
+
+      // DO NOT override isClaimed
       isClaimed: business.isClaimed,
 
       claimInfo: claim
@@ -525,7 +664,10 @@ exports.getBusinessById = async (req, res) => {
       userAddedPhotos,
     };
 
-    // 8️⃣ Send response
+    // =========================================================
+    // Send response
+    // =========================================================
+
     return res.status(200).json({
       success: true,
       message: 'Business fetched successfully',

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema(
   {
@@ -7,18 +7,20 @@ const reviewSchema = new mongoose.Schema(
     image: [String],
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
     },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     business: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Business",
+      ref: 'Business',
       required: true,
     },
+    googleAuthorName: { type: String, default: null },
+    googleAuthorPhoto: { type: String, default: null },
     report: {
       isReported: { type: Boolean, default: false },
-      reportMessage: { type: String, default: "" },
+      reportMessage: { type: String, default: '' },
     },
     reply: {
       type: [
@@ -26,7 +28,7 @@ const reviewSchema = new mongoose.Schema(
           text: { type: String, required: true },
           repliedBy: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
+            ref: 'User',
           },
           repliedAt: { type: Date, default: Date.now },
         },
@@ -39,5 +41,5 @@ const reviewSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const ReviewModel = mongoose.model("Review", reviewSchema);
+const ReviewModel = mongoose.model('Review', reviewSchema);
 module.exports = ReviewModel;
