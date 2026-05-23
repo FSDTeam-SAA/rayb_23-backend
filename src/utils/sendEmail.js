@@ -1,16 +1,16 @@
-const nodemailer = require("nodemailer");
-const config = require("../config/index");
+const nodemailer = require('nodemailer');
+const config = require('../config/index');
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
+      host: 'smtp.gmail.com',
       port: 587,
       secure: false,
       auth: {
         user: config.email.emailAddress,
         pass: config.email.emailPass,
-      },  
+      },
       tls: {
         rejectUnauthorized: false,
       },
@@ -27,7 +27,7 @@ const sendEmail = async ({ to, subject, html }) => {
     // console.log("Email sent successfully");
     return { success: true };
   } catch (error) {
-    console.error("Email send error:", error.message);
+    // console.error("Email send error:", error.message);
     return { success: false, error: error.message };
   }
 };

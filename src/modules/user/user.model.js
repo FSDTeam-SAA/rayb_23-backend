@@ -1,22 +1,22 @@
-const { Schema, model } = require("mongoose");
-const bcrypt = require("bcrypt");
+const { Schema, model } = require('mongoose');
+const bcrypt = require('bcrypt');
 
 const userModel = new Schema(
   {
     name: {
       type: String,
-      required: [true, "Name is required"],
+      required: [true, 'Name is required'],
     },
     email: {
       type: String,
       required: true,
-      unique: [true, "Email is required"],
+      unique: [true, 'Email is required'],
     },
     bio: { type: String, default: null },
     password: {
       type: String,
       // required: [true, "Password is required"],
-      min: [8, "Password must be at least 8 characters"],
+      min: [8, 'Password must be at least 8 characters'],
     },
     phone: {
       type: String,
@@ -32,7 +32,7 @@ const userModel = new Schema(
     resetPasswordOtpExpires: { type: Date, default: null },
     userType: {
       type: String,
-      enum: ["user", "businessMan", "admin"],
+      enum: ['user', 'businessMan', 'admin'],
     },
     isActive: {
       type: Boolean,
@@ -87,7 +87,7 @@ const userModel = new Schema(
     },
     businessId: {
       type: Schema.Types.ObjectId,
-      ref: "Business",
+      ref: 'Business',
       default: null,
     },
     type: {
@@ -97,16 +97,16 @@ const userModel = new Schema(
   { timestamps: true, versionKey: false },
 );
 
-userModel.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+userModel.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-userModel.post("save", function (doc, next) {
-  doc.password = "";
+userModel.post('save', function (doc, next) {
+  doc.password = '';
   next();
 });
 
-const User = model("User", userModel);
+const User = model('User', userModel);
 module.exports = User;
